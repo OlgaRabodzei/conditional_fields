@@ -1,0 +1,4 @@
+
+Conditional Fields 0.1, 2008-01-04
+----------------------
+- Initial commit of module
