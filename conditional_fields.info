@@ -1,0 +1,6 @@
+; $Id$
+
+name = Conditional Fields
+description = Content fields and groups visibility based on the values of user defined 'trigger' fields.
+dependencies = content
+package = CCK

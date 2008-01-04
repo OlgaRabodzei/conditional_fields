@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function conditional_fields_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {conditional_fields} (
+        control_field_name varchar(32) NOT NULL default '',
+        field_name varchar(32) NOT NULL default '',
+        type varchar(127) NOT NULL default '',
+        trigger_values mediumtext NOT NULL
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      // Untested
+      db_query("CREATE TABLE {conditional_fields} (
+        control_field_name varchar(32) NOT NULL default '',
+        field_name varchar(32) NOT NULL default '',
+        type varchar(127) NOT NULL default '',
+        trigger_values text NOT NULL
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+  }
+  
+  // Increase module weight to 10, over fieldgroup.module which has 9.
+  db_query("UPDATE {system} SET weight = 10 WHERE name = 'conditional_fields'");
+
+}
+
+/**
+* Implementation of hook_uninstall().
+*/
+function conditional_fields_uninstall() {
+  
+  // Delete all the conditional fields variables and then clear the variable cache  
+  db_query("DELETE FROM {variable} WHERE name LIKE 'c_fields_%'");
+  cache_clear_all('variables', 'cache');
+
+  db_query('DROP TABLE {conditional_fields}');
+}
