@@ -1,4 +1,10 @@
+$Id$
 
-Conditional Fields 0.1, 2008-01-04
+Conditional Fields 0.1.alpha1, 2008-06-27
+----------------------
+- First point release. Still very experimental.
+  To see the list of changes: http://drupal.org/project/cvs/206178
+
+Conditional Fields 0.1-dev, 2008-01-04
 ----------------------
 - Initial commit of module

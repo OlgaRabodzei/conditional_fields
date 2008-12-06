@@ -11,11 +11,36 @@ Drupal.ConditionalFields.switchField = function(id, values) {
       var isActive = false;
       /* Find the settings of the controlled field */
       $.each(controlledFields, function(i, fieldSettings) {
-        $(fieldSettings.field_id).hide();
+        /* Multiple fields are enclosed in fieldsets */
+        var parentTag = $(fieldSettings.field_id).parent().get(0).tagName;
+        var parentId = $(fieldSettings.field_id).parent().attr('class');
+        if (parentTag == 'FIELDSET' && parentId.indexOf("group-") != 0) {
+          var toSwitch = $(fieldSettings.field_id).parent();
+        } else {
+          var toSwitch = $(fieldSettings.field_id);
+        }
+        if (Drupal.settings.ConditionalFields.ui_settings == "disable") {
+          toSwitch.find("textarea, input, select").attr("disabled", "disabled");
+        }
+        else {
+          toSwitch.hide();
+        }
+        
         /* Find the trigger values of the controlled field (for this controlling field) */
         $.each(fieldSettings.trigger_values, function(ii, val) {
           if (Drupal.ConditionalFields.inArray(val, values) != -1) {
-            $(fieldSettings.field_id).show();
+            if (parentTag == 'FIELDSET' && parentId.indexOf("group-") != 0) {
+              var toSwitch = $(fieldSettings.field_id).parent();
+            } else {
+              var toSwitch = $(fieldSettings.field_id);
+            }
+            if (Drupal.settings.ConditionalFields.ui_settings == "disable") {
+              toSwitch.find("textarea, input, select").attr("disabled", "");
+            }
+            else {
+              toSwitch.show();
+            }
+            
             /* Stop searching in this field */
             return false;
           }
@@ -44,8 +69,13 @@ Drupal.ConditionalFields.docReady = function() {
     var id = '#' + $(this).attr('id');
     Drupal.ConditionalFields.switchField(id, values);
   });
-  /* Add events */
-  $('.controlling-field').change(Drupal.ConditionalFields.fieldChange);
+  /* Add events. Apparently, Explorer doesn't catch the change event? */
+  if ($.browser.msie == true) {
+    $('.controlling-field').click(Drupal.ConditionalFields.fieldChange);
+  }
+  else {
+    $('.controlling-field').change(Drupal.ConditionalFields.fieldChange);
+  }
 }
 
 Drupal.ConditionalFields.fieldChange = function() {
