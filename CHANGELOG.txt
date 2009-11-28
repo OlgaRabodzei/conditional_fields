@@ -1,5 +1,8 @@
 $Id$
 
+Conditional Fields 1.0, 2009-28-11
+- First official release. Enjoy!
+
 Conditional Fields 0.1.alpha1, 2008-06-27
 ----------------------
 - First point release. Still very experimental.

@@ -10,15 +10,19 @@ Drupal.ConditionalFields.switchField = function(id, values, onPageReady) {
     if (controllingField == id) {
       /* Find the settings of the controlled field */
       $.each(controlledFields, function(i, fieldSettings) {
-        Drupal.ConditionalFields.doAnimation(fieldSettings, 'hide', onPageReady);
+        var hideField = true;
         /* Find the trigger values of the controlled field (for this controlling field) */
         $.each(fieldSettings.trigger_values, function(ii, val) {
           if (jQuery.inArray(val, values) != -1) {
-            Drupal.ConditionalFields.doAnimation(fieldSettings, 'show', onPageReady); 
+            Drupal.ConditionalFields.doAnimation(fieldSettings, 'show', onPageReady);
+            hideField = false;
             /* Stop searching in this field */
             return false;
           }
         });
+        if (hideField) {
+          Drupal.ConditionalFields.doAnimation(fieldSettings, 'hide', onPageReady);
+        }
         /* To do: Feature: Multiple controlling fields on the same field, are
            not supported for now. Test: other controlling fields types and widgets. */
       });
@@ -37,7 +41,7 @@ Drupal.ConditionalFields.doAnimation = function(fieldSettings, showOrHide, onPag
   if (Drupal.settings.ConditionalFields.ui_settings == 'disable') {
     var disabled = '';
     if (showOrHide == 'hide') {
-      disabled = '';
+      disabled = 'disabled';
     }
     toSwitch.find('textarea, input, select').attr('disabled', disabled);
   }
@@ -51,8 +55,21 @@ Drupal.ConditionalFields.doAnimation = function(fieldSettings, showOrHide, onPag
       case 0:
         showOrHide == 'show' ? toSwitch.show() : toSwitch.hide();
       case 1:
-        showOrHide == 'show' ? toSwitch.slideDown(Drupal.settings.ConditionalFields.ui_settings.anim_speed) :
-                               toSwitch.slideUp(Drupal.settings.ConditionalFields.ui_settings.anim_speed);
+        /* Don't double top and bottom margins while sliding. */
+        var firstChild = toSwitch.children(':first-child');
+        var marginTop = firstChild.css('margin-top');
+        var marginBottom = firstChild.css('margin-bottom');
+        firstChild.css('margin-top', '0').css('margin-bottom', '0');
+        if (showOrHide == 'show') {
+          toSwitch.slideDown(Drupal.settings.ConditionalFields.ui_settings.anim_speed, function() {
+            firstChild.css('margin-top', marginTop).css('margin-bottom', marginBottom);
+          });
+        }
+        else {
+          toSwitch.slideUp(Drupal.settings.ConditionalFields.ui_settings.anim_speed, function() {
+            firstChild.css('margin-top', marginTop).css('margin-bottom', marginBottom);
+          });
+        }
       case 2:
         showOrHide == 'show' ? toSwitch.fadeIn(Drupal.settings.ConditionalFields.ui_settings.anim_speed) :
                                toSwitch.fadeOut(Drupal.settings.ConditionalFields.ui_settings.anim_speed);
@@ -77,7 +94,7 @@ Drupal.ConditionalFields.fieldChange = function() {
 }
 
 Drupal.behaviors.ConditionalFields = function (context) {
-  $('.node-form, #user-register').find('.controlling-field:not(.conditional-field-processed)', context).addClass('conditional-field-processed').each(function () {
+  $('.conditional-field.controlling-field:not(.conditional-field-processed)').addClass('conditional-field-processed').each(function () {
     /* Set default state */
     Drupal.ConditionalFields.switchField('#' + $(this).attr('id'), Drupal.ConditionalFields.findValues($(this)), true);
     /* Add events. Apparently, Explorer doesn't catch the change event? */

@@ -25,43 +25,30 @@ You can, for example, make a custom "article teaser" field that is shown only if
 
 Dependencies:
 --------------------
-- CCK / content.module -> http://drupal.org/project/cck
-- Fieldgroups / fieldgroups.module (included in CCK) -> Not required, but if enabled you can also set groups as controlled fields.
+- Drupal core: 6.x or 5.x (note that the 5.x branch of Conditional Fields is very outdated, while the 6.x branch is actively maintained).
+- CCK / content.module > http://drupal.org/project/cck
+- OPTIONAL: Fieldgroups (included in CCK) > If enabled you can also set groups as controlled fields
 
 
 Installation:
 --------------------
-- Copy the unpacked folder "conditional_fields" in drupal/sites/all
-- Go to the modules administration page (admin/build/modules) and activate it (it’s in the CCK package)
+- Copy the unpacked folder "conditional_fields" in your modules folder (usually [base_path]/sites/all/module).
+- Go to the modules administration page (admin/build/modules) and activate the module (you will find it in the "CCK" package)
 - Assign the "Administer conditional fields" permission to the desired user roles.
+
 
 Usage:
 --------------------
-Once the module is activated, a new set of options will appear in the field editing form, from where you can select which of the allowed values available will make the field "controlled". If "- Not controlling -" or no value is selected, the field will be shown as usual.
+Read the Conditional Fields handbook:
+http://drupal.org/node/475488
 
-There is a "Conditional fields" tab in every content type admin page with the following options:
-
-- User Interface options.
-  * Javascript: You can decide if you want to use javascript to dynamically disable (grey out) or hide the fields when editing a node.
-  * Animation: There are three animations currently available: show/hide (default), slide down/slide up, and fade in/fade out. You can also set the speed of the animation.
-
-- Orphaned controlled fields settings.
-  These settings control the visibility (on node view) and editability (on node edit) of controlled fields when the controlling fields are not visible (e.g.: set to 'Hidden' in the fields display settings) or not editable (e.g.: by an access control module).
-
-- Administrators see all fields.
-  If checked, users with 'administer conditional fields' permission will see all controlled fields of a node, even if the weren't triggered.
-
-- Reset. 
-  If checked, all conditional fields configurations for this content type will be reset (though the fields themselves will remain untouched).
 
 Limitations:
 --------------------
-- Each field or group can be controlled from only one field (though a field can control any number of fields and groups). This is a bug, and will be corrected in later develpment.
+- Each field or group can be controlled from only one field (though a field can control any number of fields and groups). This will be corrected in later development.
 - If the controlling field is in a group, it can only control or be controlled only by fields that are in the same group.
-- Currently works only with checkbox, select, and radio controlling fields. Controlled fields can be of any type.
-- There are reported incompatibilities with the following modules:
-    * tinyMCE
-    * Multigroup
+- Conditional Fields, for now, supports only core CCK fields and widgets (checkbox, select, and radio) as controlling fields. Fields from other modules might work, but probably won't. There are confirmed incompatibilities with many non-core CCK modules (Date, Multigroup, Content Taxonomy, etc). 
+
 
 To Do:
 --------------------
@@ -70,11 +57,9 @@ Any help is welcome!
 Check the issue queue of this module for more information:
 http://drupal.org/project/issues/conditional_fields
 
-Bug: multiple controlling fields on the same field don’t work
-Bug: some required fields are not correctly handled (e.g.: date)
-Testing: test different types of CCK fields for compatibility
-Feature: allow more kinds of controlling fields (e.g.: taxonomy)
-Feature: allow nested conditional fields
-Feature: views integration
-Feature: add confirmation step to the reset option in conditional fields administration page
-Feature: tune performance (using more static variables, adding cache)
+These are the top priority future features:
+- Extend compatibility with non-core CCK modules
+- Negate conditions (so that a field can be triggered when some allowed values are *not* selected)
+- Allow multiple controlling fields on the same field
+- Views integration
+- Allow nested conditional fields
