@@ -1,4 +1,3 @@
-$Id$
 
 Conditional Fields:
 --------------------

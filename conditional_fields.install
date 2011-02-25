@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Install, update and uninstall functions for the Conditional Fields module.
