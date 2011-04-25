@@ -1,12 +1,14 @@
-; $Id$
 name = Conditional Fields
-description = ...
-package = Fields
-dependencies[] = field
+description = Define dependencies between fields based on their states and values.
 core = 7.x
+package = Fields
+
+dependencies[] = field
+
 files[] = conditional_fields.module
 files[] = conditional_fields.install
 files[] = includes/conditional_fields.admin.inc
 files[] = js/states.js
 files[] = js/conditional_fields.admin.js
+
 configure = admin/structure/dependencies
