@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function conditional_fields_admin_settings() {
   $bundles = field_info_bundles();

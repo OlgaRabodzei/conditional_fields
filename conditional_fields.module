@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /* TODO: Grouping
 define('CONDITIONAL_FIELDS_GROUPING_AND', 0);
@@ -379,19 +378,6 @@ function conditional_fields_field_access($op, $field, $entity_type, $entity, $ac
   }
 }
 
-function conditional_fields_field_check_condition($field_value, $options_value, $options_values_set = array()) {
-  
-  switch ($options) {
-    case 'value':
-      # code...
-      break;
-    
-    default:
-      # code...
-      break;
-  }
-}
-
 /**
  * Entity types have no human readable names. We provide some for the entity types in core.
  */
@@ -505,27 +491,4 @@ function conditional_fields_js_alter(&$javascript) {
   if (isset($javascript['misc/states.js'])) {
     $javascript['misc/states.js']['data'] = drupal_get_path('module', 'conditional_fields') . '/js/states.js';
   }
-}
-
-/**
- * Implements hook_theme().
- */
-function conditional_fields_theme() {
-  return array(
-    'conditional_fields_field_wrapper' => array(
-      'variables' => array('field' => NULL),
-    ),
-  );
-}
-
-/**
- * 
- * 
- * @param 
- *   
- * @return void
- *   
- */
-function theme_conditional_fields_field_wrapper($field) {
-  return $field;
 }
