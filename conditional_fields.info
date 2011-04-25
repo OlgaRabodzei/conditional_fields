@@ -1,12 +1,12 @@
+; $Id$
 name = Conditional Fields
-description = Content fields and groups visibility based on the values of user defined 'trigger' fields.
-dependencies[] = content
-package = CCK
-core = 6.x
-
-; Information added by drupal.org packaging script on 2009-02-02
-version = "6.x-1.x-dev"
-core = "6.x"
-project = "conditional_fields"
-datestamp = "1233533111"
-
+description = ...
+package = Fields
+dependencies[] = field
+core = 7.x
+files[] = conditional_fields.module
+files[] = conditional_fields.install
+files[] = includes/conditional_fields.admin.inc
+files[] = js/states.js
+files[] = js/conditional_fields.admin.js
+configure = admin/structure/dependencies
