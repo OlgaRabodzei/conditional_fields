@@ -211,9 +211,15 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         if (drupal_array_get_nested_value($form[$field_name], $required_position) == TRUE) {
           drupal_array_set_nested_value($form[$field_name], $required_position, FALSE);
 
+          // Add validation function to element.
           $element_validate = (array) drupal_array_get_nested_value($form[$field_name], array_merge($structure, array('#element_validate')));
           $element_validate = array_merge($element_validate, array('conditional_fields_required_dependent_validate'));
           drupal_array_set_nested_value($form[$field_name], array_merge($structure, array('#element_validate')), $element_validate);
+
+          // Add pre render function to element.
+          $element_pre_render = (array) drupal_array_get_nested_value($form[$field_name], array_merge($structure, array('#pre_render')));
+          $element_pre_render = array_merge($element_pre_render, array('conditional_fields_required_dependent_pre_render'));
+          drupal_array_set_nested_value($form[$field_name], array_merge($structure, array('#pre_render')), $element_pre_render);
         }
       }
     }
@@ -259,6 +265,17 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
       form_error($elements);
     }
   }
+}
+
+/**
+ * Marks condinally required dependents as required for themeing.
+ */
+function conditional_fields_required_dependent_pre_render($elements) {
+  // Mark as required here, so it will be themed accordingly.
+  // Does not affect validation.
+  $elements['#required'] = TRUE;
+
+  return $elements;
 }
 
 /**
