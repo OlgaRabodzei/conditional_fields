@@ -58,7 +58,6 @@ http://drupal.org/project/issues/conditional_fields
 
 These are the top priority future features:
 - Polish and bugfix!
-- Manage required dependent fields
 - Extend compatibility with non-core CCK modules
 - Views integration
 - Field group integration

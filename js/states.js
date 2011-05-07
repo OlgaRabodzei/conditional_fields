@@ -59,6 +59,20 @@ states.Dependent = function (args) {
  * found in this list, the === operator is used by default.
  */
 states.Dependent.comparisons = {
+  'Array': function (reference, value) {
+    if (value === null) {
+      return (reference.length == 0) ? true : false;
+    }
+    if (reference.length > value.length) {
+      return false;
+    }
+    for (var i in reference) {
+      if ($.inArray(reference[i], value) < 0) {
+        return false;
+      }
+    }
+    return true;
+  },
   'RegExp': function (reference, value) {
     return reference.test(value);
   },
@@ -86,7 +100,9 @@ states.Dependent.prototype = {
 
     $.each(dependeeStates, function (i, state) {
       // Make sure we're not initializing this selector/state combination twice.
-      if (dependeeStates.indexOf(state) < i) return;
+      if ($.inArray(state, dependeeStates) < i) {
+        return;
+      }
 
       state = states.State.sanitize(state);
 
@@ -187,12 +203,14 @@ states.Dependent.prototype = {
     var result = undefined;
     if ($.isArray(constraints)) {
       // This constraint is an array (OR or XOR).
-      var or = constraints.indexOf('xor') < 0;
+      var or = $.inArray('xor', constraints) < 0;
       for (var i = 0, len = constraints.length; i < len; i++) {
         var constraint = this.checkConstraints(constraints[i], selector, i);
         // Return if this is OR and we have a satisfied constraint or if this is
         // XOR and we have a second satisfied constraint.
-        if (constraint && (or || result)) return or;
+        if (constraint && (or || result)) {
+          return or;
+        }
         result = result || constraint;
       }
     }
