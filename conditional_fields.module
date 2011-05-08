@@ -101,6 +101,13 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
     return;
   }
 
+  // Some entity types do not always pass $langcode to this hook.
+  // We cannot use field_valid_language() since it will return the site default
+  // language even when fields are language neutral.
+  if (!$langcode) {
+    $langcode = 'und';
+  }
+
   foreach ($dependencies as $field_name => $dependency) {
     // TODO: Check in Field groups.
     if (!isset($form[$field_name]) || !isset($dependency['dependees'])) {
