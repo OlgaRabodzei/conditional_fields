@@ -12,14 +12,14 @@
 define('CONDITIONAL_FIELDS_GROUPING_AND', 0);
 define('CONDITIONAL_FIELDS_GROUPING_OR',  1);
 define('CONDITIONAL_FIELDS_GROUPING_XOR', 2);
-*/
+ */
 
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE'   , 1);
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN', 2);
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT'  , 3);
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_perm().
  */
 function conditional_fields_permission() {
   return array(
@@ -31,7 +31,7 @@ function conditional_fields_permission() {
 }
 
 /**
- * Implementationation of hook_menu().
+ * Implements hook_menu().
  */
 function conditional_fields_menu() {
   $items = array();
@@ -136,10 +136,10 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
           if ($data['options']['value'] == 'conditional_fields_dependency_value_not') {
             $state = '!' . $state;
           }
-          else if ($data['options']['value'] == 'conditional_fields_dependency_value_xor') {
+          elseif ($data['options']['value'] == 'conditional_fields_dependency_value_xor') {
             $values[] = 'xor';
           }
-          
+
           switch ($data['options']['value']) {
             case 'conditional_fields_dependency_value_not':
             case 'conditional_fields_dependency_value_xor':
@@ -160,9 +160,9 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         }
       }
 
-      // #states should be applied to the field itself, not one of
-      // its containers. For now, we need an ugly solution: field handling
-      // based on widget type.
+      // #states should be applied to the field itself, not one of its
+      // containers. For now, we need an ugly solution: field handling based on
+      // widget type.
       // TODO: Find a better way to obtain the structure of these fields with
       // no hard coding...
       $widget_type = $form_state['field'][$field_name][$langcode]['instance']['widget']['type'];
@@ -204,7 +204,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
             case 'conditional_fields_dependency_value_not':
               $checkboxes_selector[] = array(str_replace('%key', $value, $selector) => array('checked' => TRUE));
               break;
-            
+
             default:
               $checkboxes_selector[str_replace('%key', $data['options']['value'], $selector)] = array('checked' => TRUE);
               break;
@@ -287,7 +287,7 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
 }
 
 /**
- * Marks condinally required dependents as required for themeing.
+ * Marks conditionally required dependents as required for themeing.
  */
 function conditional_fields_required_dependent_pre_render($elements) {
   // Mark as required here, so it will be themed accordingly.
@@ -471,7 +471,7 @@ function conditional_fields_field_structure($widget_type, $form_field, $form_val
     case 'options_select':
       if ($form_field[$langcode]['#multiple']) {
         // Multiple select
-        $structure = array('language' => $langcode, '');        
+        $structure = array('language' => $langcode, '');
       }
       else {
         // Single select
@@ -507,7 +507,7 @@ function conditional_fields_field_structure($widget_type, $form_field, $form_val
 /**
  * Builds a jQuery selector for a field.
  *
- * For the structure of the selector, @see conditional_fields_field_structure().
+ * @see conditional_fields_field_structure()
  */
 function conditional_fields_field_selector($field_name, $widget_type, $field) {
   $structure = conditional_fields_field_structure($widget_type, $field);
@@ -545,8 +545,9 @@ function conditional_fields_dependency_default_options() {
 }
 
 /**
- * Load all dependencies from the database.
- * You may filter ther result providing an entity type and/or a bundle name.
+ * Loads all dependencies from the database.
+ *
+ * The result can be filtered by providing an entity type and/or a bundle name.
  */
 function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
   // Use the advanced drupal_static() pattern.
@@ -570,11 +571,19 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
     $select->addField('fci_dependee', 'bundle');
 
     if ($entity_type) {
-      $select->condition(db_and()->condition('fci_dependee.entity_type', $entity_type)->condition('fci_dependent.entity_type', $entity_type));
+      $select->condition(
+        db_and()
+          ->condition('fci_dependee.entity_type', $entity_type)
+          ->condition('fci_dependent.entity_type', $entity_type)
+      );
     }
 
     if ($bundle) {
-      $select->condition(db_and()->condition('fci_dependee.bundle', $bundle)->condition('fci_dependent.bundle', $bundle));
+      $select->condition(
+        db_and()
+          ->condition('fci_dependee.bundle', $bundle)
+          ->condition('fci_dependent.bundle', $bundle)
+      );
     }
 
     $result = $select->execute();

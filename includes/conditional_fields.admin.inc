@@ -123,9 +123,9 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
 
 /**
  * Dependency add form validate.
- * 
+ *
  * @see conditional_fields_dependency_add_form()
- * @see conditional_fields_dependency_add_form_submit()   
+ * @see conditional_fields_dependency_add_form_submit()
  */
 function conditional_fields_dependency_add_form_validate($form, &$form_state) {
   if ($form_state['values']['dependee'] == $form_state['values']['dependent']) {
@@ -136,7 +136,7 @@ function conditional_fields_dependency_add_form_validate($form, &$form_state) {
 
 /**
  * Dependency add form submit.
- * 
+ *
  * @see conditional_fields_dependency_add_form()
  * @see conditional_fields_dependency_add_form_validate()
  */
@@ -151,11 +151,9 @@ function conditional_fields_dependency_add_form_submit($form, &$form_state) {
 
 /**
  * Dependency edit form.
- * 
- * @param 
- *   
- * @return void
- *   
+ *
+ * @see conditional_fields_dependency_edit_form_submit()
+ * @ingroup forms
  */
 function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   if (!is_numeric($id) || !$form['#dependency'] = $dependency = conditional_fields_dependency_load_by_id($id)) {
@@ -196,7 +194,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $selector_description .= '<li>' . t('%lang: current language of the field.') . "</li>\n";
   $selector_description .= '<li>' . t('%key: the key corresponding to the value or set of values inserted below (use only with checkboxes).') . "</li>\n";
   $selector_description .= '</ul>';
-  $selector_description .= 'Leave the field empty to reset the selector to its default value.';
+  $selector_description .= t('Leave the field empty to reset the selector to its default value.');
 
   $form['dependee_fieldset']['selector'] = array(
     '#type' => 'textfield',
@@ -311,7 +309,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     FUNCTION_NAME => 'Description',
     */
   );
-  
+
   $form['dependent_fieldset']['element_view'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Rendered field behaviour'),
@@ -381,6 +379,8 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
 
 /**
  * Dependency edit form submit.
+ *
+ * @see conditional_fields_dependency_edit_form()
  */
 function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
   // TODO: validate the set of values
@@ -426,7 +426,7 @@ function conditional_fields_dependency_delete_form($form, $form_state, $dependen
       '#type' => 'value',
       '#value' => $dependency,
     ),
-  ), 
+  ),
     t('Are you sure you want to delete this dependency?'),
     'admin/structure/dependencies',
     t('This action cannot be undone.'),
@@ -445,11 +445,6 @@ function conditional_fields_dependency_delete_form_submit($form, &$form_state) {
 
 /**
  * Build a textual description of a dependency
- *
- * @param 
- *
- * @return string
- *
  */
 function conditional_fields_dependency_description($dependee_name, $dependent_name, $options) {
   if ($options['condition'] == 'value') {
