@@ -19,6 +19,18 @@ define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN', 2);
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT'  , 3);
 
 /**
+ * Implementation of hook_perm().
+ */
+function conditional_fields_permission() {
+  return array(
+    'administer dependencies' => array(
+      'title' => t('Administer dependencies'),
+      'description' => t('View, edit and delete dependencies.'),
+    ),
+  );
+}
+
+/**
  * Implementationation of hook_menu().
  */
 function conditional_fields_menu() {
@@ -28,7 +40,7 @@ function conditional_fields_menu() {
     'title' => 'Dependencies',
     'description' =>  'Administer field dependencies for the site.',
     'page callback' => 'conditional_fields_admin_settings',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer dependencies'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/conditional_fields.admin.inc',
   );
@@ -41,7 +53,7 @@ function conditional_fields_menu() {
         'title' => 'Add dependency',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('conditional_fields_dependency_add_form', 4, 5),
-        'access arguments' => array('administer site configuration'),
+        'access arguments' => array('administer dependencies'),
         'file' => 'includes/conditional_fields.admin.inc',
       );
     }
@@ -51,7 +63,7 @@ function conditional_fields_menu() {
     'title' => 'Edit dependency',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('conditional_fields_dependency_edit_form', 4),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer dependencies'),
     'file' => 'includes/conditional_fields.admin.inc',
   );
 
@@ -59,7 +71,7 @@ function conditional_fields_menu() {
     'title' => 'Delete dependency',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('conditional_fields_dependency_delete_form', 4),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer dependencies'),
     'file' => 'includes/conditional_fields.admin.inc',
   );
 
