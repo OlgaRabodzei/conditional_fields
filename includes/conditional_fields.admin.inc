@@ -19,7 +19,7 @@ function conditional_fields_admin_settings() {
 
   foreach ($bundles as $entity_type => $bundle) {
     $entity_name = (isset($entities_names[$entity_type])) ? $entities_names[$entity_type] : $entity_type;
-    $output .= '<div class="conditional-fields-entities-list clearfix">';
+    $collapsed = TRUE;
     $items = array();
 
     foreach ($bundle as $bundle_name => $bundle_info) {
@@ -33,6 +33,7 @@ function conditional_fields_admin_settings() {
       $item .= '<p>' . l(t('Add dependency'), 'admin/structure/dependencies/add/' . $entity_type . '/' . $bundle_name) . '</p>';
 
       if (isset($dependencies[$entity_type][$bundle_name])) {
+        $collapsed = FALSE;
         $rows = array();
 
         foreach ($dependencies[$entity_type][$bundle_name] as $dependent_name => $field_dependencies) {
@@ -55,7 +56,28 @@ function conditional_fields_admin_settings() {
       $items[] = $item;
     }
 
-    $output .= theme('item_list', array('items' => $items,  'title' => $entity_name, 'type' => 'ul')) . '</div>';
+    $entity_fieldset = array(
+      '#theme' => 'fieldset',
+      '#title' => $entity_name,
+      '#collapsible' => TRUE,
+      '#collapsed' => $collapsed,
+      '#attached' => array(
+        'js' => array(
+          'misc/form.js',
+          'misc/collapse.js',
+        ),
+      ),
+      '#attributes' => array(
+        'class' => array('collapsible'),
+      ),
+      '#children' => theme('item_list', array('items' => $items, 'type' => 'ul')),
+    );
+
+    if ($collapsed) {
+      $entity_fieldset['#attributes']['class'][] = 'collapsed';
+    }
+
+    $output .= drupal_render($entity_fieldset);
   }
 
   return $output;
