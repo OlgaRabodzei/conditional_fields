@@ -219,8 +219,8 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         drupal_array_set_nested_value($form[$field_name], $states_array, $values);
       }
 
+      // Manage required dependent fields.
       if ($condition == 'value') {
-        // Manage required dependent fields.
         // Validation of required fields is hard coded in _form_validate(), so we
         // must mark these fields as not required if we want to do a conditional
         // validation. When the form is submitted, we will check if the dependency
@@ -229,6 +229,9 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         $required_position = array_merge($structure, array('#required'));
         if (drupal_array_get_nested_value($form[$field_name], $required_position) == TRUE) {
           drupal_array_set_nested_value($form[$field_name], $required_position, FALSE);
+
+          // Add dependencies data to form for use in validation.
+          $form['#conditional_fields'] = $dependencies;
 
           // Add validation function to element.
           $element_validate = (array) drupal_array_get_nested_value($form[$field_name], array_merge($structure, array('#element_validate')));
@@ -251,9 +254,6 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       }
     }
   }
-
-  // Add dependencies data to form for use in validation.
-  $form['#conditional_fields'] = $dependencies;
 }
 
 /**
@@ -329,6 +329,12 @@ function conditional_fields_entity_view_alter(&$build, $type) {
     foreach ($dependency['dependees'] as $dependee => $dependency_options) {
       $options = $dependency_options['options'];
 
+      // We can interface with the States API only through the Value, Checked
+      // and Unchecked conditions, since the others are purely presentational.
+      if (!in_array($options['condition'], array('value', 'checked', 'unchecked'))) {
+        continue;
+      }
+
       // Determine field view logic
       // If this dependent has multiple dependencies, only the logic of the
       // first dependency will be taken into account.
@@ -346,12 +352,6 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         }
 
         $logic = array_filter($logic);
-      }
-
-      // We can interface with the States API only through the Value, Checked
-      // and Unchecked conditions, since the others are purely presentational.
-      if (!in_array($options['condition'], array('value', 'checked', 'unchecked'))) {
-        continue;
       }
 
       // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
@@ -494,6 +494,7 @@ function conditional_fields_field_structure($widget_type, $form_field, $form_val
 
     case 'file_generic':
     case 'image_image':
+      // Files
       $structure = array();
       break;
 
@@ -513,7 +514,6 @@ function conditional_fields_field_structure($widget_type, $form_field, $form_val
         // Text
         $value = 'value';
       }
-
       $structure = array('language' => $langcode, 0, $value);
   }
 
