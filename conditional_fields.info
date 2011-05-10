@@ -9,6 +9,7 @@ files[] = conditional_fields.module
 files[] = conditional_fields.install
 files[] = includes/conditional_fields.admin.inc
 files[] = js/states.js
+files[] = js/conditional_fields.effect.js
 files[] = js/conditional_fields.admin.js
 
 configure = admin/structure/dependencies

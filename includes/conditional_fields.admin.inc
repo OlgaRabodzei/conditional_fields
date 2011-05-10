@@ -297,17 +297,6 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     ),
   );
 
-  /* TODO: Find a way to add effects to visible/invisible transitions of States API.
-  $form['effect'] = array(
-    '#type' => 'select',
-    '#title' => t('Effect'),
-    '#multiple' => TRUE,
-    '#description' => 'TODO',
-    '#options' => array('fade in...'),
-    '#default_value' => $dependency['options']['effect'],
-  );
-  */
-
   $form['dependent_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dependent field settings'),
@@ -321,6 +310,22 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#options' => conditional_fields_states(),
     '#default_value' => $dependency['options']['state'],
     '#required' => TRUE,
+  );
+
+  $form['dependent_fieldset']['effect'] = array(
+    '#type' => 'select',
+    '#title' => t('Effect'),
+    '#description' => t('Select the effect that should be applied when the element visibility is toggled.'),
+    '#options' => conditional_fields_effects(),
+    '#default_value' => $dependency['options']['effect'],
+    '#states' => array(
+      'visible' => array(
+        ':input[name="state"]' => array(
+          array('value' => 'visible'),
+          array('value' => 'invisible'),
+        ),
+      ),
+    ),
   );
 
   $element_view_options = array(
@@ -422,7 +427,7 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
       'value'                 => $form_state['values']['value'],
       'values_set'            => $values_set,
 //      'grouping'              => $form_state['values']['grouping'],
-//      'effect'              => $form_state['values']['effect'],
+      'effect'                => $form_state['values']['effect'],
       'element_view'          => $form_state['values']['element_view'],
       'element_view_per_role' => $form_state['values']['element_view_per_role'],
       'element_view_roles'    => $form_state['values']['element_view_roles'],

@@ -244,6 +244,14 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
     }
   }
 
+  // Add effect handler for visible/invisible state.
+  if (($state == 'visible' || $state == 'invisible') && $data['options']['effect'] != 'show') {
+    $dependent_name = str_replace('%lang', $langcode, $field_name . '[' . implode('][', $structure) . ']');
+
+    drupal_add_js(drupal_get_path('module', 'conditional_fields') .'/js/conditional_fields.effect.js');
+    drupal_add_js(array('conditionalFields' => array('effect' => array($dependent_name => $data['options']['effect']))), 'setting');
+  }
+
   // Add dependencies data to form for use in validation.
   $form['#conditional_fields'] = $dependencies;
 }
@@ -535,7 +543,7 @@ function conditional_fields_dependency_default_options() {
     'value'                 => 'conditional_fields_dependency_value_or',
     'values_set'            => array(),
     // TODO 'grouping'      => CONDITIONAL_FIELDS_GROUPING_AND,
-    // TODO 'effect'        => 0,
+    'effect'                => 'show',
     'element_view'          => array(
       CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE,
       CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
@@ -779,6 +787,23 @@ function conditional_fields_states() {
   drupal_alter('conditional_fields_states', $states);
 
   return $states;
+}
+
+/**
+ * Builds a list of supported effects that may be applied to a dependent field
+ * when it changes from visible to invisible and viceversa.
+ */
+function conditional_fields_effects() {
+  $effects = array(
+    'show'   => t('Show/Hide'),
+    'fade'   => t('Fade in/Fade out'),
+    'slide'  => t('Slide down/Slide up'),
+  );
+
+  // Allow other modules to modify the effects
+  drupal_alter('conditional_fields_effects', $effects);
+
+  return $effects;
 }
 
 /**
