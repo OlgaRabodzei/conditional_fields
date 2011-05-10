@@ -241,15 +241,15 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
           drupal_array_set_nested_value($form[$field_name], array_merge($structure, array('#pre_render')), $element_pre_render);
         }
       }
+
+      // Add effect handler for visible/invisible state.
+      if (($state == 'visible' || $state == 'invisible') && $data['options']['effect'] != 'show') {
+        $dependent_name = str_replace('%lang', $langcode, $field_name . '[' . implode('][', $structure) . ']');
+
+        drupal_add_js(drupal_get_path('module', 'conditional_fields') .'/js/conditional_fields.effect.js');
+        drupal_add_js(array('conditionalFields' => array('effect' => array($dependent_name => $data['options']['effect']))), 'setting');
+      }
     }
-  }
-
-  // Add effect handler for visible/invisible state.
-  if (($state == 'visible' || $state == 'invisible') && $data['options']['effect'] != 'show') {
-    $dependent_name = str_replace('%lang', $langcode, $field_name . '[' . implode('][', $structure) . ']');
-
-    drupal_add_js(drupal_get_path('module', 'conditional_fields') .'/js/conditional_fields.effect.js');
-    drupal_add_js(array('conditionalFields' => array('effect' => array($dependent_name => $data['options']['effect']))), 'setting');
   }
 
   // Add dependencies data to form for use in validation.
