@@ -499,21 +499,22 @@ function conditional_fields_field_structure($widget_type, $form_field, $form_val
       break;
 
     default:
-      // By default, we assume that a field is located at
-      // [language][cardinality][column] (column is usually 'value')
+      // By default, we assume that the value of a field is located at
+      // [language][cardinality][column][0] (column is usually 'value')
       // TODO: support multiple value fields
       if (isset($form_field[$langcode]['#value_key'])) {
         // Fields that reuse options widgets
         $value = $form_field[$langcode]['#value_key'];
       }
-      elseif (isset($form_field[$langcode]['#columns'][0])) {
+      elseif (isset($form_field[$langcode][0]['#columns'][0])) {
         // Other fields
-        $value = $form_field[$langcode]['#columns'][0];
+        $value = $form_field[$langcode][0]['#columns'][0];
       }
       else {
         // Text
         $value = 'value';
       }
+
       $structure = array('language' => $langcode, 0, $value);
   }
 
