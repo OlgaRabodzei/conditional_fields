@@ -38,7 +38,7 @@ Installation:
 
 Usage:
 --------------------
-Users with the Òadminister site configurationÓ permission can administer dependencies at admin/structure/dependencies.
+Users with the Òadminister dependenciesÓ permission can administer dependencies at admin/structure/dependencies.
 
 For more information, read the Conditional Fields handbook:
 http://drupal.org/node/475488
