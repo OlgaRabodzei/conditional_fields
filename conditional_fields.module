@@ -211,7 +211,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
           // Add dependencies data to form for use in validation.
           $form['#conditional_fields'] = $dependencies;
-          $form['#condtionals_fields']['required_fields'][$dependee] = $dependee_structure;
+          $form['#conditional_fields']['required_fields'][$dependee] = $dependee_structure;
 
           // Add pre render function to element.
           $form_dependent['#pre_render'] = array_merge(array('conditional_fields_required_dependent_pre_render'), isset($form_dependent['#pre_render']) ? $form_dependent['#pre_render'] : array());
@@ -251,7 +251,7 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
   $evaluated_dependees = array();
 
   foreach ($dependees as $dependee => $options) {
-    $values = drupal_array_get_nested_value($form_state['values'][$dependee], $form['#condtionals_fields']['required_fields'][$dependee]);
+    $values = drupal_array_get_nested_value($form_state['values'][$dependee], $form['#conditional_fields']['required_fields'][$dependee]);
 
     // TODO: OR/XOR grouping of dependencies.
     $evaluated_dependees[$elements['#field_name']]['AND'][] = conditional_fields_evaluate_dependency($options['options'], $values);
