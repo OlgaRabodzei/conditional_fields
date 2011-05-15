@@ -101,7 +101,9 @@ function conditional_fields_js_alter(&$javascript) {
 /**
  * Implements hook_field_attach_form().
  *
- * Add states information to the fields.
+ * Builds and attaches #states properties to dependent fields, processes
+ * required dependent fields and adds additional visual effects handling to
+ * the States API.
  */
 function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
   if (!$dependencies = conditional_fields_load_dependencies($entity_type, $form['#bundle'])) {
@@ -120,10 +122,27 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       continue;
     }
 
+    // The position in the form tree where the #states property should be added
+    // varies depending on the widget type of the field.
+    $widget_type = $form_state['field'][$dependent][$langcode]['instance']['widget']['type'];
+    $parents = conditional_fields_dependent_structure($widget_type, $form[$dependent]);
+
+    $states = array();
+
     foreach ($dependency['dependees'] as $dependee => $data) {
       $options = $data['options'];
 
-      // Build the values that trigger the condition.
+      // Build the jQuery selector of the dependee if it was not overridden by
+      // a custom selector.
+      $dependee_widget_type = $form_state['field'][$dependee][$langcode]['instance']['widget']['type'];
+      if (!$options['selector_custom']) {
+        $options['selector'] = conditional_fields_field_selector($dependee, $dependee_widget_type, $form[$dependee]);
+      }
+
+      // Replace the language placeholder in the selector with current language.
+      $options['selector'] = str_replace('%lang', $langcode, $options['selector']);
+
+      // Build the values that trigger the dependency.
       $values = array();
 
       if ($options['condition'] != 'value') {
@@ -158,41 +177,21 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         }
       }
 
-      // Build the selector if it was not overridden by a custom selector.
-      $dependee_widget_type = $form_state['field'][$dependee][$langcode]['instance']['widget']['type'];
-
-      if (!$options['selector_custom']) {
-        $options['selector'] = conditional_fields_field_selector($dependee, $dependee_widget_type, $form[$dependee]);
-      }
-
-      // Replace the language placeholder in the selector with current language.
-      $options['selector'] = str_replace('%lang', $langcode, $options['selector']);
-
-      // #states should be applied to the field itself, not one of its
-      // containers.
-      $widget_type = $form_state['field'][$dependent][$langcode]['instance']['widget']['type'];
-      $structure = conditional_fields_dependent_structure($widget_type, $form[$dependent]);
-
-      // Complete the hierarchy of the state.
-      $state_position = array_merge($structure, array('#states', $options['state'], $options['selector']));
+      $state = array($options['state'] => array($options['selector'] => $values));
 
       // Execute special handler for fields that need further processing.
       // The handler has no return value. Modify the parameters by reference if
       // needed.
-      $dependee_structure = conditional_fields_dependee_structure($dependee_widget_type, $form[$dependee]);
-      $dependee_form_field = drupal_array_get_nested_value($form[$dependee], $dependee_structure);
+      $dependee_parents = conditional_fields_dependee_structure($dependee_widget_type, $form[$dependee]);
+      $dependee_form_field = drupal_array_get_nested_value($form[$dependee], $dependee_parents);
 
       if (isset($dependee_form_field['#type'])) {
         $handler = conditional_fields_states_handlers($dependee_form_field['#type']);
 
         if ($handler && function_exists($handler)) {
-          $handler($form_state['field'][$dependee][$langcode], $dependee, $state_position, $structure, $values, $options);
+          $handler($form_state['field'][$dependee][$langcode], $options, $state);
         }
       }
-
-      // Insert this part of the #states array in the form.
-      // TODO: insert outside foreach to merge states from different dependencies
-      drupal_array_set_nested_value($form[$dependent], $state_position, $values);
 
       // Manage required dependent fields.
       if ($options['condition'] == 'value') {
@@ -201,7 +200,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         // validation. When the form is submitted, we will check if the dependency
         // was triggered and only then revalidate the field with the required
         // attribute restored.
-        $form_dependent = drupal_array_get_nested_value($form[$dependent], $structure);
+        $form_dependent = drupal_array_get_nested_value($form[$dependent], $parents);
 
         if (isset($form_dependent['#required']) && $form_dependent['#required'] == TRUE) {
           $form_dependent['#required'] = FALSE;
@@ -211,25 +210,31 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
           // Add dependencies data to form for use in validation.
           $form['#conditional_fields'] = $dependencies;
-          $form['#conditional_fields']['required_fields'][$dependee] = $dependee_structure;
+          $form['#conditional_fields']['required_fields'][$dependee] = $dependee_parents;
 
           // Add pre render function to element.
           $form_dependent['#pre_render'] = array_merge(array('conditional_fields_required_dependent_pre_render'), isset($form_dependent['#pre_render']) ? $form_dependent['#pre_render'] : array());
 
           // Save the modified field back into the form.
-          drupal_array_set_nested_value($form[$dependent], $structure, $form_dependent);
+          drupal_array_set_nested_value($form[$dependent], $parents, $form_dependent);
         }
       }
 
       // Add effect handler for visible/invisible state.
-      // TODO: $structure here might be wrong, must rebuild with updated conditional_fields_dependeny_structure()
       if (in_array($options['state'], array('visible', 'invisible', '!visible')) && $options['effect'] != 'show') {
-        $dependent_name = str_replace('%lang', $langcode, $dependent . '[' . implode('][', $structure) . ']');
+        // TODO: $parents here might be wrong, must rebuild with updated conditional_fields_dependent_structure()
+        $dependent_name = str_replace('%lang', $langcode, $dependent . '[' . implode('][', $parents) . ']');
 
         drupal_add_js(drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.effect.js');
         drupal_add_js(array('conditionalFields' => array('effect' => array($dependent_name => $options['effect']))), 'setting');
       }
+
+      // Merge this dependency with the states array.
+      $states = array_merge_recursive($states, $state);
     }
+
+    // Add the #states property to the dependent field.
+    drupal_array_set_nested_value($form[$dependent], array_merge($parents, array('#states')), $states);
   }
 }
 
@@ -895,8 +900,8 @@ function conditional_fields_conditions($checkboxes = FALSE) {
  * Builds a list of special fields handlers to be executed
  * when building the #states array.
  *
- * The handlers themselves must accept the parameters $form_state,
- * $state_position, $structure, $values and $options.
+ * The handlers themselves must accept the parameters $field_info
+ * $options and $state.
  *
  * @see conditional_fields_field_attach_form()
  * @see conditional_fields_states_handler_checkboxes()
@@ -923,60 +928,58 @@ function conditional_fields_states_handlers($handler = FALSE) {
 /**
  * States handler for checkboxes.
  */
-function conditional_fields_states_handler_checkboxes($field_info, $dependee, &$state_position, $structure, &$values, &$options) {
-  // Checkboxes are actually different form fields, so the #states array
-  // has to include a condition for each checkbox.
+function conditional_fields_states_handler_checkboxes($field_info, $options, &$state) {
+  // Checkboxes are actually different form fields, so the #states property
+  // has to include a state for each checkbox.
+  $checkboxes_selectors = array();
+
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
       foreach ($options['value'] as $value) {
-        $checkboxes_selector[str_replace('%key', $value['value'], $options['selector'])] = array('checked' => TRUE);
+        $checkboxes_selectors[str_replace('%key', $value['value'], $options['selector'])] = array('checked' => TRUE);
       }
       break;
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
       foreach ($options['values'] as $value) {
-        $checkboxes_selector[str_replace('%key', $value, $options['selector'])] = array('checked' => TRUE);
+        $checkboxes_selectors[str_replace('%key', $value, $options['selector'])] = array('checked' => TRUE);
       }
       break;
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
-      $checkboxes_selector[] = 'xor';
+      $checkboxes_selectors[] = 'xor';
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
       foreach ($options['values'] as $value) {
-        $checkboxes_selector[] = array(str_replace('%key', $value, $options['selector']) => array('checked' => TRUE));
+        $checkboxes_selectors[] = array(str_replace('%key', $value, $options['selector']) => array('checked' => TRUE));
       }
       break;
   }
 
-  // Overwrite variables passed by reference
-  $values = $checkboxes_selector;
-  $state_position = array_merge($structure, array('#states', $options['state']));
+  $state = array($options['state'] => $checkboxes_selectors);
 }
 
 /**
  * States handler for text fields and text areas.
  */
-function conditional_fields_states_handler_text($field_info, $dependee, &$state_position, $structure, &$values, &$options) {
+function conditional_fields_states_handler_text($field_info, $options, &$state) {
   // Text fields values are always keyed by cardinality.
   // TODO: support multiple values.
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
-    $values = $values['value'][0];
+    $state[$options['state']][$options['selector']] = $state[$options['state']][$options['selector']]['value'][0];
   }
 }
 
 /**
  * States handler for date combos.
  */
-function conditional_fields_states_handler_date_combo($field_info, $dependee, &$state_position, $structure, &$values, &$options) {
-  $date_selector = array();
+function conditional_fields_states_handler_date_combo($field_info, $options, &$state) {
+  $date_selectors = array();
 
   // Add a condition for each date part.
   foreach ($field_info['field']['settings']['granularity'] as $date_part) {
-    $date_selector[str_replace('%key', $date_part, $options['selector'])] = array('value' => $options['value_form'][0]['value'][$date_part]);
+    $date_selectors[str_replace('%key', $date_part, $options['selector'])] = array('value' => $options['value_form'][0]['value'][$date_part]);
   }
 
-  // Overwrite variables passed by reference
-  $values = $date_selector;
-  $state_position = array_merge($structure, array('#states', $options['state']));
+  $state = array($options['state'] => $date_selectors);
 }
 
 /**
