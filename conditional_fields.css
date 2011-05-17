@@ -1,0 +1,9 @@
+/* Dependencies overview */
+table.conditional-fields-overview .add-new-placeholder {
+  font-weight: bold;
+  padding-bottom: .5em;
+}
+
+table.conditional-fields-overview .form-submit {
+  margin-top: 1em;
+}

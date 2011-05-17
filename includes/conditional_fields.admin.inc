@@ -7,168 +7,250 @@
 /**
  * Dependencies administration page.
  *
- * Builds a table for each entity type, grouped by bundle.
+ * Builds a list of dependencies for each entity type, grouped by bundle.
+ *
+ * @see conditional_fields_dependencies_overview_form_submit()
+ * @see conditional_fields_dependencies_overview_form_validate()
+ * @ingroup forms
  */
-function conditional_fields_admin_settings() {
+function conditional_fields_dependencies_overview_form($form, &$form_state) {
+  // When displaying the form, make sure the list of fields is up-to-date.
+  if (empty($form_state['post'])) {
+    field_info_cache_clear();
+  }
+
+  // Gather bundles and dependencies information.
   $bundles = field_info_bundles();
   $instances = field_info_instances();
   $entities_names = conditional_fields_entities_names();
   $dependencies = conditional_fields_load_dependencies();
-  $output = '';
+
   $header = array(t('Dependee'), t('Dependent'), t('Description'), array('data' => t('Operations'), 'colspan' => 2));
+  $states = array_map('drupal_strtolower', conditional_fields_states());
+  $conditions = array();
+  foreach (conditional_fields_conditions(TRUE) as $condition => $label) {
+    $conditions[$condition] = $condition == 'value' ? t('has value...') : t('is !label', array('!label' => drupal_strtolower($label)));
+  }
 
   foreach ($bundles as $entity_type => $bundle) {
     $entity_name = (isset($entities_names[$entity_type])) ? $entities_names[$entity_type] : $entity_type;
     $collapsed = TRUE;
     $items = array();
 
+    $form[$entity_type] = array(
+      '#type' => 'fieldset',
+      '#title' => $entity_name,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
     foreach ($bundle as $bundle_name => $bundle_info) {
-      $item = '<h4 class="conditional-fields-bundles-list clearfix">' . $bundles[$entity_type][$bundle_name]['label'] . '</h4>';
+      $form[$entity_type][$bundle_name]['title'] = array(
+        '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundles[$entity_type][$bundle_name]['label'] . '</h4>',
+      );
 
       if (count($instances[$entity_type][$bundle_name]) < 2) {
-        $items[] = $item . '<p>' . t('Add at least two fields to enable dependencies') . '</p>';
+        $form[$entity_type][$bundle_name]['dependencies'] = array(
+          '#markup' => '<p>' . t('Add at least two fields to enable dependencies') . '</p>',
+        );
         continue;
       }
 
-      $item .= '<p>' . l(t('Add dependency'), 'admin/structure/dependencies/add/' . $entity_type . '/' . $bundle_name) . '</p>';
+      $form[$entity_type]['#collapsed'] = FALSE;
+
+      $table = array(
+        '#type' => 'conditional_fields_table',
+        '#entity_type' => $entity_type,
+        '#bundle_name' => $bundle_name,
+        '#header' => array(
+          t('Dependent'),
+          t('Dependee'),
+          t('Description'),
+          array('data' => t('Options'), 'colspan' => 2),
+        ),
+        '#attributes' => array(
+          'class' => array('conditional-fields-overview'),
+        ),
+        'dependencies' => array(),
+      );
 
       if (isset($dependencies[$entity_type][$bundle_name])) {
-        $collapsed = FALSE;
-        $rows = array();
-
         foreach ($dependencies[$entity_type][$bundle_name] as $dependent_name => $field_dependencies) {
           if (!isset($field_dependencies['dependees'])) {
             continue;
           }
 
           foreach ($field_dependencies['dependees'] as $dependee_name => $options) {
-            $description = conditional_fields_dependency_description($dependee_name, $dependent_name, $options['options']);
-            $edit = l(t('edit'), 'admin/structure/dependencies/edit/' . $options['id']);
-            $delete = l(t('delete'), 'admin/structure/dependencies/delete/' . $options['id']);
-            $rows[] = array('data' => array($dependee_name, $dependent_name, $description, $edit, $delete));
+            $table['dependencies'][$options['id']] = array(
+              'dependee' => array(
+                '#markup' => $dependee_name,
+              ),
+              'dependent' => array(
+                '#markup' => $dependent_name,
+              ),
+              'description' => array(
+                '#markup' => conditional_fields_dependency_description($dependee_name, $dependent_name, $options['options']),
+              ),
+              'edit' => array(
+                '#type' => 'link',
+                '#title' => t('edit'),
+                '#href' => 'admin/structure/dependencies/edit/' . $options['id'],
+                '#options' => array('attributes' => array('title' => t('Edit dependency settings.'))),
+              ),
+              'delete' => array(
+                '#type' => 'link',
+                '#title' => t('delete'),
+                '#href' => 'admin/structure/dependencies/delete/' . $options['id'],
+                '#options' => array('attributes' => array('title' => t('Delete dependency.'))),
+              ),
+            );
           }
         }
-
-        ksort($rows);
-        $item .= theme('table', array('header' => $header, 'rows' => $rows));
       }
 
-      $items[] = $item;
-    }
+      // Add new dependency.
+      $fields = array();
 
-    $entity_fieldset = array(
-      '#theme' => 'fieldset',
-      '#title' => $entity_name,
-      '#collapsible' => TRUE,
-      '#collapsed' => $collapsed,
-      '#attached' => array(
-        'js' => array(
-          'misc/form.js',
-          'misc/collapse.js',
+      foreach ($instances[$entity_type][$bundle_name] as $field) {
+        if ($field['deleted']) {
+          continue;
+        }
+
+        $fields[$field['id']] = check_plain($field['label']);
+      }
+
+      $table['_add_new_dependency'] = array(
+        $entity_type . '_' . $bundle_name => array(
+          '#tree' => TRUE,
+          $entity_type . '_' . $bundle_name . '_dependent' => array(
+            '#type' => 'select',
+            '#title' => t('Dependent'),
+            '#title_display' => 'invisible',
+            '#description' => t('Dependent'),
+            '#options' => $fields,
+            '#prefix' => '<div class="add-new-placeholder">' . t('Add new dependency') . '</div>',
+          ),
+          $entity_type . '_' . $bundle_name . '_dependee' => array(
+            '#type' => 'select',
+            '#title' => t('Dependee'),
+            '#title_display' => 'invisible',
+            '#description' => t('Dependee'),
+            '#options' => $fields,
+            '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
+          ),
         ),
-      ),
-      '#attributes' => array(
-        'class' => array('collapsible'),
-      ),
-      '#children' => theme('item_list', array('items' => $items, 'type' => 'ul')),
-    );
+        $entity_type . '_' . $bundle_name . '_state' => array(
+          '#type' => 'select',
+          '#title' => t('State'),
+          '#title_display' => 'invisible',
+          '#options' => $states,
+          '#default_value' => 'visible',
+          '#prefix' => t('The dependent field is') . '&nbsp;<span class="description-select">',
+          '#suffix' => '</span>&nbsp;' . t('when the dependee'),
+        ),
+        $entity_type . '_' . $bundle_name . '_condition' => array(
+          '#type' => 'select',
+          '#title' => t('Condition'),
+          '#title_display' => 'invisible',
+          '#options' => $conditions,
+          '#default_value' => 'value',
+          '#prefix' => '&nbsp;<span class="description-select">',
+          '#suffix' => '</span>',
+        ),
+        $entity_type . '_' . $bundle_name . '_submit' => array(
+          '#type' => 'submit',
+          '#name' => $entity_type . '_' . $bundle_name . '_op',
+          '#value' => t('Add dependency'),
+          '#entity_type' => $entity_type,
+          '#bundle_name' => $bundle_name,
+        ),
+      );
 
-    if ($collapsed) {
-      $entity_fieldset['#attributes']['class'][] = 'collapsed';
+      $form[$entity_type][$bundle_name]['dependencies'] = $table;
     }
-
-    $output .= drupal_render($entity_fieldset);
   }
 
-  return $output;
-}
-
-/**
- * Dependency add form with selection of dependee and dependent fields.
- *
- * @param $entity_type
- *   The entity type where fields are instantiated.
- * @param $bundle_name
- *   The bundle where fields are instantiated.
- *
- * @see conditional_fields_dependency_add_form_validate()
- * @see conditional_fields_dependency_add_form_submit()
- * @ingroup forms
- */
-function conditional_fields_dependency_add_form($form, &$form_state, $entity_type, $bundle_name) {
-  $instances = field_info_instances($entity_type, $bundle_name);
-
-  $options = array();
-
-  foreach ($instances as $field) {
-    if ($field['deleted']) {
-      continue;
-    }
-
-    $options[$field['id']] = $field['label'];
-  }
-
-  $form['dependee'] = array(
-    '#type' => 'select',
-    '#title' => t('Dependee'),
-    '#description' => t('Select a dependee field.'),
-    '#options' => $options,
-  );
-
-  $form['dependent'] = array(
-    '#type' => 'select',
-    '#title' => t('Dependent'),
-    '#description' => t('Select a dependent field.'),
-    '#options' => $options,
-  );
-
-  $form['actions'] = array(
-    '#type' => 'action',
-    'create' => array(
-      '#type' => 'submit',
-      '#value' => t('Create'),
-    ),
-  );
-
-  $form['#entity_type'] = array(
-    '#type' => 'value',
-    '#value' => $entity_type,
-  );
-
-  $form['#bundle_name'] = array(
-    '#type' => 'value',
-    '#value' => $bundle_name,
-  );
+  $form['#attached']['css'][] = drupal_get_path('module', 'conditional_fields') . '/conditional_fields.css';
 
   return $form;
 }
 
 /**
- * Dependency add form validate.
+ * Dependencies overview form validate.
  *
- * @see conditional_fields_dependency_add_form()
- * @see conditional_fields_dependency_add_form_submit()
+ * @see conditional_fields_dependencies_overview_form()
+ * @see conditional_fields_dependencies_overview_form_submit()
  */
-function conditional_fields_dependency_add_form_validate($form, &$form_state) {
-  if ($form_state['values']['dependee'] == $form_state['values']['dependent']) {
-    form_set_error('dependent', t('You should select two different fields.'));
+function conditional_fields_dependencies_overview_form_validate($form, &$form_state) {
+  $value_prefix = $form_state['clicked_button']['#entity_type'] . '_' . $form_state['clicked_button']['#bundle_name'];
+
+  if ($form_state['values'][$value_prefix][$value_prefix . '_dependee'] == $form_state['values'][$value_prefix][$value_prefix . '_dependent']) {
+    form_set_error($value_prefix, t('You should select two different fields.'));
     return;
   }
 }
 
 /**
- * Dependency add form submit.
+ * Dependencies overview form submit.
  *
- * @see conditional_fields_dependency_add_form()
- * @see conditional_fields_dependency_add_form_validate()
+ * @see conditional_fields_dependencies_overview_form()
+ * @see conditional_fields_dependencies_overview_form_validate()
  */
-function conditional_fields_dependency_add_form_submit($form, &$form_state) {
-  if (!$id = conditional_fields_dependency_insert($form_state['values']['dependee'], $form_state['values']['dependent'])) {
+function conditional_fields_dependencies_overview_form_submit($form, &$form_state) {
+  $value_prefix = $form_state['clicked_button']['#entity_type'] . '_' . $form_state['clicked_button']['#bundle_name'];
+
+  $options = array('state' => $form_state['values'][$value_prefix . '_state'], 'condition' => $form_state['values'][$value_prefix . '_condition']);
+
+  if (!$id = conditional_fields_dependency_insert($form_state['values'][$value_prefix][$value_prefix . '_dependee'], $form_state['values'][$value_prefix][$value_prefix . '_dependent'], $options)) {
     drupal_set_message(t('There was an error while trying to create the dependency.'), 'error');
     return;
   }
 
   drupal_goto('admin/structure/dependencies/edit/' . $id);
+}
+
+/**
+ * Returns HTML for Conditional Fields overview tables.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing a Form API structure to be
+ *     rendered as a table.
+ *
+ * @ingroup themeable
+ */
+function theme_conditional_fields_table($variables) {
+  $elements = $variables['elements'];
+  $table = array();
+
+  // Add table headers and attributes.
+  foreach (array('header', 'attributes') as $key) {
+    if (isset($elements["#$key"])) {
+      $table[$key] = $elements["#$key"];
+    }
+  }
+
+  // Dependencies rows.
+  foreach (element_children($elements['dependencies']) as $dependency) {
+    foreach (element_children($elements['dependencies'][$dependency]) as $cell_key) {
+      $table['rows'][$dependency][] = drupal_render($elements['dependencies'][$dependency][$cell_key]);
+    }
+  }
+
+  // Add new dependency row.
+  $element_prefix = $elements['#entity_type'] . '_' . $elements['#bundle_name'];
+
+  $table['rows'][] = array(
+    drupal_render($elements['_add_new_dependency'][$element_prefix][$element_prefix . '_dependent']),
+    drupal_render($elements['_add_new_dependency'][$element_prefix][$element_prefix . '_dependee']),
+    drupal_render($elements['_add_new_dependency'][$element_prefix . '_state']) . drupal_render($elements['_add_new_dependency'][$element_prefix . '_condition']),
+    array(
+      'data' => drupal_render($elements['_add_new_dependency'][$element_prefix . '_submit']),
+      'colspan' => 2,
+    ),
+  );
+
+  return theme('table', $table);
 }
 
 /**

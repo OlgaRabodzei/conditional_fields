@@ -14,16 +14,50 @@ define('CONDITIONAL_FIELDS_GROUPING_OR',  1);
 define('CONDITIONAL_FIELDS_GROUPING_XOR', 2);
  */
 
+/**
+ * Dependency is triggered if the dependee has a certain value.
+ */
 define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE', 1);
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND',    2);
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR',     3);
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR',    4);
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT',    5);
 
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE'   , 1);
+/**
+ * Dependency is triggered if the dependee has all values.
+ */
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND', 2);
+
+/**
+ * Dependency is triggered if the dependee has any of the values.
+ */
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR', 3);
+
+/**
+ * Dependency is triggered if the dependee has only one of the values.
+ */
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR', 4);
+
+/**
+ * Dependency is triggered if the dependee does not have any of the values.
+ */
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT', 5);
+
+/**
+ * Dependent is shown only if the dependency is triggered.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE', 1);
+
+/**
+ * Dependent is shown only if the dependee is shown as well.
+ */
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN', 2);
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT'  , 3);
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE'   , 4);
+
+/**
+ * Dependent is highlighted if the dependency is not triggered.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT', 3);
+
+/**
+ * Dependent has a textual description of the dependency.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE', 4);
 
 /**
  * Implements hook_perm().
@@ -46,7 +80,8 @@ function conditional_fields_menu() {
   $items['admin/structure/dependencies'] = array(
     'title' => 'Dependencies',
     'description' =>  'Administer field dependencies for the site.',
-    'page callback' => 'conditional_fields_admin_settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('conditional_fields_dependencies_overview_form'),
     'access arguments' => array('administer dependencies'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/conditional_fields.admin.inc',
@@ -146,7 +181,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       $values = array();
 
       if ($options['condition'] != 'value') {
-        // Conditions different than value are always evaluated against TRUE.
+        // Conditions different than "value" are always evaluated against TRUE.
         $values[$options['condition']] = TRUE;
       }
       else {
@@ -169,7 +204,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
           // OR, NOT and XOR conditions are obtained with a nested array.
           foreach ($options['values'] as $value) {
             // Multiple select fields always require an array as value
-            if ($form_state['field'][$dependee][$langcode]['instance']['widget']['type'] == 'options_select' &&               $form_state['field'][$dependee][$langcode]['field']['cardinality'] != 1) {
+            if ($dependee_widget_type == 'options_select' && $form_state['field'][$dependee][$langcode]['field']['cardinality'] != 1) {
               $value = array($value);
             }
             $values[] = array($options['condition'] => $value);
@@ -180,15 +215,13 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       $state = array($options['state'] => array($options['selector'] => $values));
 
       // Execute special handler for fields that need further processing.
-      // The handler has no return value. Modify the parameters by reference if
-      // needed.
+      // The handler has no return value. Modify the $state parameter by
+      // reference if needed.
       $dependee_parents = conditional_fields_dependee_structure($dependee_widget_type, $form[$dependee]);
       $dependee_form_field = drupal_array_get_nested_value($form[$dependee], $dependee_parents);
 
       if (isset($dependee_form_field['#type'])) {
-        $handler = conditional_fields_states_handlers($dependee_form_field['#type']);
-
-        if ($handler && function_exists($handler)) {
+        if ($handler = conditional_fields_states_handlers($dependee_form_field['#type'])) {
           $handler($form_state['field'][$dependee][$langcode], $options, $state);
         }
       }
@@ -198,8 +231,8 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         // Validation of required fields is hard coded in _form_validate(), so we
         // must mark these fields as not required if we want to do a conditional
         // validation. When the form is submitted, we will check if the dependency
-        // was triggered and only then revalidate the field with the required
-        // attribute restored.
+        // was triggered and only then revalidate the field with the #required
+        // property restored.
         $form_dependent = drupal_array_get_nested_value($form[$dependent], $parents);
 
         if (isset($form_dependent['#required']) && $form_dependent['#required'] == TRUE) {
@@ -470,10 +503,10 @@ function conditional_fields_dependent_structure($widget_type, $field) {
 }
 
 /**
- * Create an array representing the parent keys of a dependee field
- * in a form. Here is where the #required and #pre_render values will
- * be retrieved and modified with drupal_array_set_nested_value
- * and drupal_array_set_nested_value().
+ * Creates an array representing the parent keys of a dependee field in a form.
+ *
+ * The #required and #pre_render properties will be retrieved and modified from
+ * here with drupal_array_set_nested_value and drupal_array_set_nested_value().
  *
  * @param $widget_type
  *   The widget type of the instance.
@@ -576,7 +609,7 @@ function conditional_fields_field_selector($field_name, $widget_type, $field) {
  */
 function conditional_fields_dependency_default_options() {
   return array(
-    // A default value is built later using conditional_fields_field_selector()
+    // A default selector is built later using conditional_fields_field_selector()
     'selector'              => '',
     'selector_custom'       => 0,
     // See conditional_fields_states() for available states
@@ -601,7 +634,7 @@ function conditional_fields_dependency_default_options() {
 /**
  * Loads all dependencies from the database.
  *
- * The result can be filtered by providing an entity type and/or a bundle name.
+ * The result can be filtered by providing an entity type and a bundle name.
  */
 function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
   // Use the advanced drupal_static() pattern.
@@ -668,7 +701,7 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
 }
 
 /**
- * Load a dependency by id of the fields, entity type and bundle name
+ * Loads a dependency by id of the fields, entity type and bundle name.
  */
 function conditional_fields_dependency_load($dependee_id, $dependent_id, $entity_type, $bundle) {
   $select = db_select('conditional_fields', 'cf');
@@ -706,7 +739,7 @@ function conditional_fields_dependency_load($dependee_id, $dependent_id, $entity
 }
 
 /**
- * Load a dependency from the database by id
+ * Loads a dependency from the database by id.
  */
 function conditional_fields_dependency_load_by_id($id) {
   $result = db_select('conditional_fields', 'cf')
@@ -723,14 +756,12 @@ function conditional_fields_dependency_load_by_id($id) {
 }
 
 /**
- * Insert a new dependency in the database.
+ * Inserts a new dependency in the database.
  * For the format of $options,
  * @see conditional_fields_dependency_default_options()
  */
-function conditional_fields_dependency_insert($dependee_id, $dependent_id, $options = NULL) {
-  if (!$options) {
-    $options = conditional_fields_dependency_default_options();
-  }
+function conditional_fields_dependency_insert($dependee_id, $dependent_id, $options = array()) {
+  $options += conditional_fields_dependency_default_options();
 
   return db_insert('conditional_fields')
     ->fields(array(
@@ -742,7 +773,7 @@ function conditional_fields_dependency_insert($dependee_id, $dependent_id, $opti
 }
 
 /**
- * Update a dependency.
+ * Updates a dependency.
  */
 function conditional_fields_dependency_update($dependency) {
   return db_update('conditional_fields')
@@ -756,7 +787,7 @@ function conditional_fields_dependency_update($dependency) {
 }
 
 /**
- * Delete dependencies.
+ * Deletes dependencies.
  */
 function conditional_fields_dependency_delete($dependency_ids) {
   $or = db_or();
@@ -781,6 +812,28 @@ function conditional_fields_field_delete_instance($instance) {
         ->condition('dependee', $instance['id'])
         ->condition('dependent', $instance['id']))
     ->execute();
+}
+
+/**
+ * Implements hook_theme().
+ */
+function conditional_fields_theme() {
+  return array(
+    'conditional_fields_table' => array(
+      'render element' => 'elements',
+    ),
+  );
+}
+
+/**
+ * Implements hook_element_info().
+ */
+function conditional_fields_element_info() {
+  return array(
+    'conditional_fields_table' => array(
+      '#theme' => 'conditional_fields_table',
+    ),
+  );
 }
 
 /**
