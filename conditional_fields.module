@@ -242,7 +242,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
           $form_dependent['#element_validate'] = array_merge(array('conditional_fields_required_dependent_validate'), isset($form_dependent['#element_validate']) ? $form_dependent['#element_validate'] : array());
 
           // Add dependencies data to form for use in validation.
-          $form['#conditional_fields'] = $dependencies;
+          $form['#conditional_fields']['dependencies'] = $dependencies;
           $form['#conditional_fields']['required_fields'][$dependee] = $dependee_parents;
 
           // Add pre render function to element.
@@ -285,7 +285,7 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
   }
 
   // Check if the dependency was triggered.
-  $dependees = $form['#conditional_fields'][$elements['#field_name']]['dependees'];
+  $dependees = $form['#conditional_fields']['dependencies'][$elements['#field_name']]['dependees'];
   $evaluated_dependees = array();
 
   foreach ($dependees as $dependee => $options) {
