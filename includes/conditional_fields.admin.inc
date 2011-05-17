@@ -82,11 +82,11 @@ function conditional_fields_dependencies_overview_form($form, &$form_state) {
 
           foreach ($field_dependencies['dependees'] as $dependee_name => $options) {
             $table['dependencies'][$options['id']] = array(
-              'dependee' => array(
-                '#markup' => $dependee_name,
-              ),
               'dependent' => array(
                 '#markup' => $dependent_name,
+              ),
+              'dependee' => array(
+                '#markup' => $dependee_name,
               ),
               'description' => array(
                 '#markup' => conditional_fields_dependency_description($dependee_name, $dependent_name, $options['options']),
