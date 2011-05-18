@@ -499,7 +499,8 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'file_generic':
     case 'image_image':
     case 'date_select':
-      // Files, images and date select combos.
+    case 'link_field':
+      // Files, images, links and date select combos.
       $structure = array();
       break;
 
@@ -546,6 +547,11 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
       $structure = array('language' => $langcode, 0);
       break;
 
+    case 'link_field':
+      // Links
+      $structure = array('language' => $langcode, 0);
+      break;
+
     default:
       // Any other field.
       $other_widget = TRUE;
@@ -576,6 +582,10 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
         $structure[] = 'value';
         $structure['key'] = '%key';
         break;
+
+      case 'link_field':
+        // Links
+        $structure['key'] = '%key';
 
       default:
         if ($other_widget) {
@@ -979,6 +989,7 @@ function conditional_fields_states_handlers($handler = FALSE) {
     'textfield'  => 'conditional_fields_states_handler_text',
     'textarea'   => 'conditional_fields_states_handler_text',
     'date_combo' => 'conditional_fields_states_handler_date_combo',
+    'link_field' => 'conditional_fields_states_handler_link_field',
   );
 
   // Allow other modules to modify the handlers
@@ -1048,6 +1059,20 @@ function conditional_fields_states_handler_date_combo($field_info, $options, &$s
   $state = array($options['state'] => $date_selectors);
 }
 
+/**
+ * States handler for links provided by the Link module.
+ */
+function conditional_fields_states_handler_link_field($field_info, $options, &$state) {
+  $link_selectors = array();
+
+  // Add a condition for each link part (Title and URL)
+  if ($field_info['instance']['settings']['title'] == 'optional' || $field_info['instance']['settings']['title'] == 'required') {
+    $link_selectors[str_replace('%key', 'title', $options['selector'])] = array('value' => $options['value_form'][0]['title']);
+  }
+  $link_selectors[str_replace('%key', 'url', $options['selector'])] = array('value' => $options['value_form'][0]['url']);
+
+  $state = array($options['state'] => $link_selectors);
+}
 
 /**
  * Builds a list of special fields handlers to be executed
@@ -1063,6 +1088,7 @@ function conditional_fields_entity_view_handlers() {
   $handlers = array(
     'text'       => 'conditional_fields_entity_view_handler_text',
     'text_long'  => 'conditional_fields_entity_view_handler_text',
+    'link_field' => 'conditional_fields_entity_view_handler_link_field',
   );
 
   // Allow other modules to modify the handlers
@@ -1077,6 +1103,16 @@ function conditional_fields_entity_view_handlers() {
 function conditional_fields_entity_view_handler_text($entity, $options, &$items) {
   // Remove extra items that do not correspond to actual field values.
   unset($items[0]['safe_value']);
+}
+
+/**
+ * View handler for links provided by the Link module.
+ */
+function conditional_fields_entity_view_handler_link_field($entity, $options, &$items) {
+  // Remove extra items that do not correspond to actual field values.
+  unset($items[0]['attributes']);
+  unset($items[0]['display_url']);
+  unset($items[0]['html']);
 }
 
 /**
