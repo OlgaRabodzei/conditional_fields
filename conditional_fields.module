@@ -617,11 +617,6 @@ function conditional_fields_field_selector($field_name, $widget_type, $field) {
     $structure['language'] = '%lang';
   }
 
-  // Ensure that a placeholder is used instead of delta.
-  if (isset($structure['delta'])) {
-    $structure['delta'] = '%delta';
-  }
-
   return '[name="' . $field_name . '[' . implode('][', $structure) . ']"]';
 }
 

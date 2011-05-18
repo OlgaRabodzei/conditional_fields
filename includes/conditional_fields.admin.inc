@@ -326,7 +326,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['dependee_fieldset']['condition'] = array(
     '#type' => 'radios',
     '#title' => t('Condition'),
-    '#description' => t('Select the condition that should be met by the dependee field to activate the dependency.'),
+    '#description' => t('The condition that should be met by the dependee field to activate the dependency.'),
     '#options' => conditional_fields_conditions($dependee_instance['widget']['type'] == 'options_buttons' && $dependee['cardinality'] != 1 ? TRUE : FALSE),
     '#default_value' => $dependency['options']['condition'],
     '#required' => TRUE,
@@ -398,7 +398,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['dependent_fieldset']['state'] = array(
     '#type' => 'select',
     '#title' => t('Form state'),
-    '#description' => t('Select the form state that should be applied to the dependent field when the Condition is met.'),
+    '#description' => t('The form state that should be applied to the dependent field when the Condition is met.'),
     '#options' => conditional_fields_states(),
     '#default_value' => $dependency['options']['state'],
     '#required' => TRUE,
@@ -407,7 +407,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['dependent_fieldset']['effect'] = array(
     '#type' => 'select',
     '#title' => t('Effect'),
-    '#description' => t('Select the effect that should be applied when the element visibility is toggled.'),
+    '#description' => t('The effect that should be applied when the element visibility is toggled.'),
     '#options' => conditional_fields_effects(),
     '#default_value' => $dependency['options']['effect'],
     '#states' => array(
@@ -433,7 +433,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['dependent_fieldset']['element_view'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Rendered field behaviour'),
-    '#description' => t('Choose the behaviours of the dependent field when shown in content. This only applies when the Condition is Value.'),
+    '#description' => t('The behaviours of the dependent field when shown in content. This only applies when the Condition is Value.'),
     '#options' => $element_view_options,
     '#default_value' => $dependency['options']['element_view'],
     '#states' => array(
