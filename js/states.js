@@ -63,7 +63,7 @@ states.Dependent.comparisons = {
     if (value === null || value === undefined) {
       return (reference.length == 0) ? true : false;
     }
-    if (reference.length != value.length) {
+    if (reference.length > value.length) {
       return false;
     }
     for (var i in reference) {

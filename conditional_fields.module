@@ -203,10 +203,6 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
           // OR, NOT and XOR conditions are obtained with a nested array.
           foreach ($options['values'] as $value) {
-            // Multiple select fields always require an array as value
-            if ($dependee_widget_type == 'options_select' && $form_state['field'][$dependee][$langcode]['field']['cardinality'] != 1) {
-              $value = array($value);
-            }
             $values[] = array($options['condition'] => $value);
           }
         }
@@ -986,6 +982,7 @@ function conditional_fields_conditions($checkboxes = FALSE) {
  */
 function conditional_fields_states_handlers() {
   $handlers = array(
+    'select'     => 'conditional_fields_states_handler_select',
     'checkbox'   => 'conditional_fields_states_handler_checkboxes',
     'checkboxes' => 'conditional_fields_states_handler_checkboxes',
     'textfield'  => 'conditional_fields_states_handler_text',
@@ -998,6 +995,44 @@ function conditional_fields_states_handlers() {
   drupal_alter('conditional_fields_states_handlers', $handlers);
 
   return $handlers;
+}
+
+/**
+ * States handler for multiple select lists.
+ *
+ * Multiple select fields always require an array as value.
+ * In addition, since our modified States API triggers a dependency only if all
+ * reference values of type Array are selected, a different selector must be
+ * added for each value of a set for OR, XOR and NOT evaluations.
+ */
+function conditional_fields_states_handler_select($field_info, $options, &$state) {
+  if ($field_info['field']['cardinality'] == 1) {
+    return;
+  }
+
+  switch ($options['values_set']) {
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+      return;
+
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
+      $select_states[$options['state']][] = 'xor';
+
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
+      $select_states = array();
+
+      foreach ($options['values'] as $value) {
+        $select_states[$options['state']][] = array(
+          $options['selector'] => array(
+            $options['condition'] => array($value),
+          ),
+        );
+      }
+      break;
+  }
+
+  $state = $select_states;
 }
 
 /**
