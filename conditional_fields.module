@@ -374,7 +374,20 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         $evaluated_dependents[$dependent]['AND'][] = TRUE;
       }
       else {
-        $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options, $build[$dependee]['#items']);
+        $items = $build[$dependee]['#items'];
+
+        // Execute special handler for fields that need further processing.
+        // The handler has no return value. Modify the $items parameter by
+        // reference if needed.
+        if (!isset($handlers)) {
+          $handlers = conditional_fields_entity_view_handlers();
+        }
+
+        if (isset($handlers[$build[$dependee]['#field_type']])) {
+          $handlers[$build[$dependee]['#field_type']]($build[$dependee], $options, $items);
+        }
+
+        $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options, $items);
       }
     }
 
@@ -1033,6 +1046,37 @@ function conditional_fields_states_handler_date_combo($field_info, $options, &$s
   }
 
   $state = array($options['state'] => $date_selectors);
+}
+
+
+/**
+ * Builds a list of special fields handlers to be executed
+ * when viewing an entity.
+ *
+ * The handlers themselves must accept the parameters $entity,
+ * $options and $items.
+ *
+ * @see conditional_fields_entity_view_alter()
+ * @see conditional_fields_entity_view_handler_text()
+ */
+function conditional_fields_entity_view_handlers() {
+  $handlers = array(
+    'text'       => 'conditional_fields_entity_view_handler_text',
+    'text_long'  => 'conditional_fields_entity_view_handler_text',
+  );
+
+  // Allow other modules to modify the handlers
+  drupal_alter('conditional_fields_entity_view_handlers', $handlers);
+
+  return $handlers;
+}
+
+/**
+ * View handler for text fields and text areas.
+ */
+function conditional_fields_entity_view_handler_text($entity, $options, &$items) {
+  // Remove extra items that do not correspond to actual field values.
+  unset($items[0]['safe_value']);
 }
 
 /**
