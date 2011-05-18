@@ -220,10 +220,12 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       $dependee_parents = conditional_fields_dependee_structure($dependee_widget_type, $form[$dependee]);
       $dependee_form_field = drupal_array_get_nested_value($form[$dependee], $dependee_parents);
 
-      if (isset($dependee_form_field['#type'])) {
-        if ($handler = conditional_fields_states_handlers($dependee_form_field['#type'])) {
-          $handler($form_state['field'][$dependee][$langcode], $options, $state);
-        }
+      if (!isset($handlers)) {
+        $handlers = conditional_fields_states_handlers();
+      }
+
+      if (isset($handlers[$dependee_form_field['#type']])) {
+        $handlers[$dependee_form_field['#type']]($form_state['field'][$dependee][$langcode], $options, $state);
       }
 
       // Manage required dependent fields.
@@ -982,7 +984,7 @@ function conditional_fields_conditions($checkboxes = FALSE) {
  * @see conditional_fields_field_attach_form()
  * @see conditional_fields_states_handler_checkboxes()
  */
-function conditional_fields_states_handlers($handler = FALSE) {
+function conditional_fields_states_handlers() {
   $handlers = array(
     'checkbox'   => 'conditional_fields_states_handler_checkboxes',
     'checkboxes' => 'conditional_fields_states_handler_checkboxes',
@@ -993,11 +995,7 @@ function conditional_fields_states_handlers($handler = FALSE) {
   );
 
   // Allow other modules to modify the handlers
-  drupal_alter('conditional_fields_handlers', $handlers);
-
-  if ($handler) {
-    return isset($handlers[$handler]) ? $handlers[$handler] : FALSE;
-  }
+  drupal_alter('conditional_fields_states_handlers', $handlers);
 
   return $handlers;
 }
