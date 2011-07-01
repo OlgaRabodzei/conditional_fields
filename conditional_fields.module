@@ -96,6 +96,7 @@ function conditional_fields_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('conditional_fields_dependency_add_form', 4, 5),
         'access arguments' => array('administer dependencies'),
+        'type' => MENU_CALLBACK,
         'file' => 'includes/conditional_fields.admin.inc',
       );
     }
