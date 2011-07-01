@@ -28,7 +28,7 @@ function conditional_fields_dependencies_overview_form($form, &$form_state) {
   $header = array(t('Dependee'), t('Dependent'), t('Description'), array('data' => t('Operations'), 'colspan' => 2));
   $states = array_map('drupal_strtolower', conditional_fields_states());
   $conditions = array();
-  foreach (conditional_fields_conditions(TRUE) as $condition => $label) {
+  foreach (conditional_fields_conditions() as $condition => $label) {
     $conditions[$condition] = $condition == 'value' ? t('has value...') : t('is !label', array('!label' => drupal_strtolower($label)));
   }
 
@@ -323,11 +323,13 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#default_value' => $dependency['options']['selector_custom'],
   );
 
+  $checkboxes = ($dependee_instance['widget']['type'] == 'options_buttons' && $dependee['cardinality'] != 1) || $dependee_instance['widget']['type'] == 'options_onoff' ? TRUE : FALSE;
+
   $form['dependee_fieldset']['condition'] = array(
     '#type' => 'radios',
     '#title' => t('Condition'),
     '#description' => t('The condition that should be met by the dependee field to activate the dependency.'),
-    '#options' => conditional_fields_conditions($dependee_instance['widget']['type'] == 'options_buttons' && $dependee['cardinality'] != 1 ? TRUE : FALSE),
+    '#options' => conditional_fields_conditions($checkboxes),
     '#default_value' => $dependency['options']['condition'],
     '#required' => TRUE,
   );

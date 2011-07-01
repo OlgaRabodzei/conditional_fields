@@ -926,7 +926,7 @@ function conditional_fields_effects() {
 /**
  * List of states of a dependee field that may be used to evaluate a condition.
  */
-function conditional_fields_conditions($checkboxes = FALSE) {
+function conditional_fields_conditions($checkboxes = TRUE) {
   // Supported by States API
   $conditions = array(
     'visible'    => t('Visible'),
