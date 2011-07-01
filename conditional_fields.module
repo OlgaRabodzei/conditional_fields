@@ -499,7 +499,8 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'image_image':
     case 'date_select':
     case 'link_field':
-      // Files, images, links and date select combos.
+    case 'cck_select_other':
+      // Fields composed of multiple widgets.
       $structure = array();
       break;
 
@@ -543,13 +544,13 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'file_generic':
     case 'image_image':
     case 'date_select':
-      // Files, images and date select combos.
+    case 'link_field':
+      // Fields composed of multiple widgets.
       $structure = array('language' => $langcode, 0);
       break;
 
-    case 'link_field':
-      // Links
-      $structure = array('language' => $langcode, 0);
+    case 'cck_select_other':
+      $structure = array('language' => $langcode, 0, 'select_other_list');
       break;
 
     default:
@@ -586,6 +587,7 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
       case 'link_field':
         // Links
         $structure['key'] = '%key';
+        break;
 
       default:
         if ($other_widget) {
