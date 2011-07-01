@@ -490,6 +490,7 @@ function conditional_fields_dependent_structure($widget_type, $field) {
   switch ($widget_type) {
     case 'text_textfield':
     case 'text_textarea':
+    case 'number':
       // Text fields and text areas.
       $structure = array('language' => $langcode, 0, 'value');
       break;
@@ -534,6 +535,7 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
   switch ($widget_type) {
     case 'text_textfield':
     case 'text_textarea':
+    case 'number':
       // Text field and Text area.
       $structure = array('language' => $langcode, 0, 'value');
       break;
