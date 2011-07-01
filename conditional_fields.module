@@ -1068,7 +1068,7 @@ function conditional_fields_states_handler_checkboxes($field_info, $options, &$s
 function conditional_fields_states_handler_text($field_info, $options, &$state) {
   // Text fields values are always keyed by cardinality.
   // TODO: support multiple values.
-  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+  if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
     $state[$options['state']][$options['selector']] = $state[$options['state']][$options['selector']]['value'][0];
   }
 }
