@@ -154,7 +154,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
   }
 
   foreach ($dependencies as $dependent => $dependency) {
-    if (!isset($form[$dependent]) || !isset($dependency['dependees'])) {
+    if (!isset($dependency['dependees']) || !isset($form[$dependent]) || !isset($form_state['field'][$dependent])) {
       continue;
     }
 
@@ -166,6 +166,10 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
     $states = array();
 
     foreach ($dependency['dependees'] as $dependee => $data) {
+      if (!isset($form_state['field'][$dependee])) {
+        continue;
+      }
+
       $options = $data['options'];
 
       // Build the jQuery selector of the dependee if it was not overridden by
