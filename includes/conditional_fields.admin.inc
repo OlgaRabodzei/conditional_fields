@@ -276,7 +276,8 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   // want dependencies to be shared between bundles.
   // So we first load the instance information, so we can obtain the entity id.
   // Then we load the entity using field_info_field().
-  $dependee_instance = array_shift(field_read_instances(array('id' => $dependency['dependee'])));
+  $instances = field_read_instances(array('id' => $dependency['dependee']));
+  $dependee_instance = array_shift($instances);
   $dependee = field_info_field($dependee_instance['field_name']);
 
   // Build a dummy field widget to extract the jQuery selector and to use as
