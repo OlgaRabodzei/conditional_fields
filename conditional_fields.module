@@ -509,6 +509,11 @@ function conditional_fields_dependent_structure($widget_type, $field) {
       $structure = array();
       break;
 
+    case 'email_textfield':
+      // Text fields and text areas.
+      $structure = array('language' => $langcode, 0, 'email');
+      break;
+
     default:
       // Any other field.
       $structure = array('language' => $langcode);
@@ -556,6 +561,11 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
 
     case 'cck_select_other':
       $structure = array('language' => $langcode, 0, 'select_other_list');
+      break;
+
+    case 'email_textfield':
+      // Text fields and text areas.
+      $structure = array('language' => $langcode, 0, 'email');
       break;
 
     default:
@@ -1078,7 +1088,7 @@ function conditional_fields_states_handler_text($field_info, $options, &$state) 
   // Text fields values are always keyed by cardinality.
   // TODO: support multiple values.
   if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
-    $state[$options['state']][$options['selector']] = $state[$options['state']][$options['selector']]['value'][0];
+    $state[$options['state']][$options['selector']]['value'] = reset($state[$options['state']][$options['selector']]['value'][0]);
   }
 }
 
