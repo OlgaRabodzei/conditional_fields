@@ -80,8 +80,7 @@ function conditional_fields_menu() {
   $items['admin/structure/dependencies'] = array(
     'title' => 'Dependencies',
     'description' =>  'Administer field dependencies for the site.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('conditional_fields_dependencies_overview_form'),
+    'page callback' => 'conditional_fields_dependencies_overview_page',
     'access arguments' => array('administer dependencies'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/conditional_fields.admin.inc',
@@ -119,6 +118,27 @@ function conditional_fields_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_forms().
+ *
+ * Maps all dependency add forms to the same callback.
+ */
+function conditional_fields_forms() {
+  // Gather bundles information.
+  $bundles = field_info_bundles();
+
+  foreach ($bundles as $entity_type => $bundle) {
+    foreach ($bundle as $bundle_name => $bundle_info) {
+      $forms[$entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form'] = array(
+        'callback' => 'conditional_fields_dependency_add_form',
+        'callback arguments' => array($entity_type, $bundle_name),
+      );
+    }
+  }
+
+  return $forms;
 }
 
 /**
