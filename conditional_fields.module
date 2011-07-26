@@ -517,6 +517,7 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'file_generic':
     case 'image_image':
     case 'date_select':
+    case 'date_text':
     case 'link_field':
     case 'cck_select_other':
       // Fields composed of multiple widgets.
@@ -577,6 +578,7 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'image_image':
     case 'date_select':
     case 'link_field':
+    case 'date_text':
       // Fields composed of multiple widgets.
       $structure = array('language' => $langcode, 0);
       break;
@@ -593,7 +595,7 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'node_reference_autocomplete':
       $structure = array('language' => $langcode, 0, 'nid');
       break;
-      
+
     case 'user_reference_autocomplete':
       $structure = array('language' => $langcode, 0, 'uid');
       break;
@@ -632,6 +634,11 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
       case 'link_field':
         // Links
         $structure['key'] = '%key';
+        break;
+
+      case 'date_text':
+        $structure[] = 'value';
+        $structure[] = 'date';
         break;
 
       default:
@@ -1150,11 +1157,25 @@ function conditional_fields_states_handler_text($field, $field_info, $options, &
  * States handler for date combos.
  */
 function conditional_fields_states_handler_date_combo($field, $field_info, $options, &$state) {
+
+  // Date text.
+  if ($field_info['instance']['widget']['type'] == 'date_text') {
+    if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+      $state[$options['state']][$options['selector']]['value'] = $state[$options['state']][$options['selector']]['value'][0]['value']['date'];
+    }
+    return;
+  }
+
+  // Date select.
   $date_selectors = array();
 
   // Add a condition for each date part.
   foreach ($field_info['field']['settings']['granularity'] as $date_part) {
-    $date_selectors[str_replace('%key', $date_part, $options['selector'])] = array('value' => $options['value_form'][0]['value'][$date_part]);
+    if ($date_part) {
+      $date_selectors[str_replace('%key', $date_part, $options['selector'])] = array(
+        'value' => $options['value_form'][0]['value'][$date_part],
+      );
+    }
   }
 
   $state = array($options['state'] => $date_selectors);
