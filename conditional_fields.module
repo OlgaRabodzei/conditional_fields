@@ -298,7 +298,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 }
 
 /**
- * Validate conditinally required dependent fields.
+ * Validate conditionally required dependent fields.
  */
 function conditional_fields_required_dependent_validate($elements, $form_state, $form) {
   // Check if field was left empty.
@@ -401,18 +401,6 @@ function conditional_fields_entity_view_alter(&$build, $type) {
       }
       else {
         $items = $build[$dependee]['#items'];
-
-        // Execute special handler for fields that need further processing.
-        // The handler has no return value. Modify the $items parameter by
-        // reference if needed.
-        if (!isset($handlers)) {
-          $handlers = conditional_fields_entity_view_handlers();
-        }
-
-        if (isset($handlers[$build[$dependee]['#field_type']])) {
-          $handlers[$build[$dependee]['#field_type']]($build[$dependee], $options, $items);
-        }
-
         $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options, $items);
       }
     }
@@ -478,8 +466,11 @@ function conditional_fields_evaluate_dependency($options, $form_values) {
       return count($options['value'] == 1) && $options['value'][0]['value'] === $form_values;
     }
 
+    // Filter out unwanted items.
+    $compare_values = array(array_intersect_key($form_values[0], $options['value'][0]));
+
     // PHP 5 compares arrays recursively.
-    return $options['value'] === $form_values;
+    return $options['value'] == $compare_values;
   }
 
   // Flatten array of values.
@@ -602,7 +593,7 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'node_reference_autocomplete':
       $structure = array('language' => $langcode, 0, 'nid');
       break;
-
+      
     case 'user_reference_autocomplete':
       $structure = array('language' => $langcode, 0, 'uid');
       break;
@@ -1182,47 +1173,6 @@ function conditional_fields_states_handler_link_field($field, $field_info, $opti
   $link_selectors[str_replace('%key', 'url', $options['selector'])] = array('value' => $options['value_form'][0]['url']);
 
   $state = array($options['state'] => $link_selectors);
-}
-
-/**
- * Builds a list of special fields handlers to be executed
- * when viewing an entity.
- *
- * The handlers themselves must accept the parameters $entity,
- * $options and $items.
- *
- * @see conditional_fields_entity_view_alter()
- * @see conditional_fields_entity_view_handler_text()
- */
-function conditional_fields_entity_view_handlers() {
-  $handlers = array(
-    'text'       => 'conditional_fields_entity_view_handler_text',
-    'text_long'  => 'conditional_fields_entity_view_handler_text',
-    'link_field' => 'conditional_fields_entity_view_handler_link_field',
-  );
-
-  // Allow other modules to modify the handlers
-  drupal_alter('conditional_fields_entity_view_handlers', $handlers);
-
-  return $handlers;
-}
-
-/**
- * View handler for text fields and text areas.
- */
-function conditional_fields_entity_view_handler_text($entity, $options, &$items) {
-  // Remove extra items that do not correspond to actual field values.
-  unset($items[0]['safe_value']);
-}
-
-/**
- * View handler for links provided by the Link module.
- */
-function conditional_fields_entity_view_handler_link_field($entity, $options, &$items) {
-  // Remove extra items that do not correspond to actual field values.
-  unset($items[0]['attributes']);
-  unset($items[0]['display_url']);
-  unset($items[0]['html']);
 }
 
 /**
