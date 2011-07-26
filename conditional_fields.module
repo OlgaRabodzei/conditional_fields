@@ -246,7 +246,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       }
 
       if (isset($handlers[$dependee_form_field['#type']])) {
-        $handlers[$dependee_form_field['#type']]($form_state['field'][$dependee][$langcode], $options, $state);
+        $handlers[$dependee_form_field['#type']]($dependee_form_field, $form_state['field'][$dependee][$langcode], $options, $state);
       }
 
       // Manage required dependent fields.
@@ -1008,10 +1008,10 @@ function conditional_fields_conditions($checkboxes = TRUE) {
 }
 
 /**
- * Builds a list of special fields handlers to be executed
- * when building the #states array.
+ * Builds a list of special fields handlers to be executed when building the
+ * #states array.
  *
- * The handlers themselves must accept the parameters $field_info
+ * The handlers themselves must accept the parameters $field, $field_info,
  * $options and $state.
  *
  * @see conditional_fields_field_attach_form()
@@ -1020,7 +1020,7 @@ function conditional_fields_conditions($checkboxes = TRUE) {
 function conditional_fields_states_handlers() {
   $handlers = array(
     'select'     => 'conditional_fields_states_handler_select',
-    'checkbox'   => 'conditional_fields_states_handler_checkboxes',
+    'checkbox'   => 'conditional_fields_states_handler_checkbox',
     'checkboxes' => 'conditional_fields_states_handler_checkboxes',
     'textfield'  => 'conditional_fields_states_handler_text',
     'textarea'   => 'conditional_fields_states_handler_text',
@@ -1042,7 +1042,7 @@ function conditional_fields_states_handlers() {
  * reference values of type Array are selected, a different selector must be
  * added for each value of a set for OR, XOR and NOT evaluations.
  */
-function conditional_fields_states_handler_select($field_info, $options, &$state) {
+function conditional_fields_states_handler_select($field, $field_info, $options, &$state) {
   if ($field_info['field']['cardinality'] == 1) {
     return;
   }
@@ -1073,9 +1073,31 @@ function conditional_fields_states_handler_select($field_info, $options, &$state
 }
 
 /**
+ * States handler for single on/off checkbox.
+ */
+function conditional_fields_states_handler_checkbox($field, $field_info, $options, &$state) {
+  switch ($options['values_set']) {
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
+      $checked = $options['value'][0]['value'] == $field['#on_value'] ? TRUE : FALSE;
+      break;
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+      // ANDing values of a single checkbox doesn't make sense: just use the first value.
+      $checked = $options['values'][0] == $field['#on_value'] ? TRUE : FALSE;
+      break;
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
+      $checked = in_array($field['#on_value'], $options['values']) ? TRUE : FALSE;
+      break;
+  }
+
+  $state[$options['state']][$options['selector']] = array('checked' => $checked);
+}
+
+/**
  * States handler for checkboxes.
  */
-function conditional_fields_states_handler_checkboxes($field_info, $options, &$state) {
+function conditional_fields_states_handler_checkboxes($field, $field_info, $options, &$state) {
   // Checkboxes are actually different form fields, so the #states property
   // has to include a state for each checkbox.
   $checkboxes_selectors = array();
@@ -1107,7 +1129,7 @@ function conditional_fields_states_handler_checkboxes($field_info, $options, &$s
 /**
  * States handler for text fields and text areas.
  */
-function conditional_fields_states_handler_text($field_info, $options, &$state) {
+function conditional_fields_states_handler_text($field, $field_info, $options, &$state) {
   // Text fields values are always keyed by cardinality.
   // TODO: support multiple values.
   if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
@@ -1118,7 +1140,7 @@ function conditional_fields_states_handler_text($field_info, $options, &$state) 
 /**
  * States handler for date combos.
  */
-function conditional_fields_states_handler_date_combo($field_info, $options, &$state) {
+function conditional_fields_states_handler_date_combo($field, $field_info, $options, &$state) {
   $date_selectors = array();
 
   // Add a condition for each date part.
@@ -1132,7 +1154,7 @@ function conditional_fields_states_handler_date_combo($field_info, $options, &$s
 /**
  * States handler for links provided by the Link module.
  */
-function conditional_fields_states_handler_link_field($field_info, $options, &$state) {
+function conditional_fields_states_handler_link_field($field, $field_info, $options, &$state) {
   $link_selectors = array();
 
   // Add a condition for each link part (Title and URL)
