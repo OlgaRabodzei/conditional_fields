@@ -17,8 +17,8 @@
               $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'slideDown' : 'slideUp']();
               break;
             default:
-              // The "effect" variable is a function.
-              effect(e);
+              // The "effect" variable is treated as a jQuery plugin.
+              $(e.target)[effect](e);
           }
         }
         // Prevent bubbling of the event to document.
