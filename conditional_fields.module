@@ -537,6 +537,14 @@ function conditional_fields_dependent_structure($widget_type, $field) {
       $structure = array('language' => $langcode, 0, 'email');
       break;
 
+    case 'node_reference_autocomplete':
+      $structure = array('language' => $langcode, 0, 'nid');
+      break;
+
+    case 'user_reference_autocomplete':
+      $structure = array('language' => $langcode, 0, 'uid');
+      break;
+
     default:
       // Any other field.
       $structure = array('language' => $langcode);
@@ -589,6 +597,14 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'email_textfield':
       // Text fields and text areas.
       $structure = array('language' => $langcode, 0, 'email');
+      break;
+
+    case 'node_reference_autocomplete':
+      $structure = array('language' => $langcode, 0, 'nid');
+      break;
+
+    case 'user_reference_autocomplete':
+      $structure = array('language' => $langcode, 0, 'uid');
       break;
 
     default:
