@@ -277,7 +277,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       }
 
       // Add effect handler for visible/invisible state.
-      if (in_array($options['state'], array('visible', 'invisible', '!visible')) && $options['effect'] != 'show') {
+      if (in_array($options['state'], array('visible', '!visible')) && $options['effect'] != 'show') {
         // TODO: $parents here might be wrong, must rebuild with updated conditional_fields_dependent_structure()
         $dependent_name = str_replace('%lang', $langcode, $dependent . '[' . implode('][', $parents) . ']');
 

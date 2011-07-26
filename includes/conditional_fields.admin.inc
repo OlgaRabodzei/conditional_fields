@@ -441,7 +441,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
       'visible' => array(
         ':input[name="state"]' => array(
           array('value' => 'visible'),
-          array('value' => 'invisible'),
+          array('value' => '!visible'),
         ),
       ),
     ),
