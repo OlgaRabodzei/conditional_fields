@@ -269,7 +269,10 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
           $form['#conditional_fields']['required_fields'][$dependee] = $dependee_parents;
 
           // Add pre render function to element.
-          $form_dependent['#pre_render'] = array_merge(array('conditional_fields_required_dependent_pre_render'), isset($form_dependent['#pre_render']) ? $form_dependent['#pre_render'] : array());
+          if (isset($form_dependent['#type'])) {
+            $pre_render_default = element_info_property($form_dependent['#type'], '#pre_render', array());
+          }
+          $form_dependent['#pre_render'] = array_merge(array('conditional_fields_required_dependent_pre_render'), isset($form_dependent['#pre_render']) ? $form_dependent['#pre_render'] : $pre_render_default);
 
           // Save the modified field back into the form.
           drupal_array_set_nested_value($form[$dependent], $parents, $form_dependent);
