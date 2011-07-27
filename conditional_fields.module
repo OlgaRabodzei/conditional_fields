@@ -1286,3 +1286,19 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
     ));
   }
 }
+
+
+/**
+ * Implements hook_features_api().
+ */
+function conditional_fields_features_api() {
+  return array(
+    'conditional_fields' => array(
+      'name' => t('Conditional Fields'),
+      'default_hook' => 'conditional_fields_default_fields',
+      'default_file' => FEATURES_DEFAULTS_INCLUDED,
+      'features_source' => TRUE,
+      'file' => drupal_get_path('module', 'conditional_fields') .'/includes/conditional_fields.features.inc',
+    ),
+  );
+}
