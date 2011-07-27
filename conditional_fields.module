@@ -77,29 +77,25 @@ function conditional_fields_permission() {
 function conditional_fields_menu() {
   $items = array();
 
+  // Ensure the following is not executed until field_bundles is working and
+  // tables are updated. Needed to avoid errors on initial installation.
+  if (defined('MAINTENANCE_MODE')) {
+    return $items;
+  }
+
   $items['admin/structure/dependencies'] = array(
-    'title' => 'Dependencies',
+    'title' => 'Field dependencies',
     'description' =>  'Administer field dependencies for the site.',
     'page callback' => 'conditional_fields_dependencies_overview_page',
     'access arguments' => array('administer dependencies'),
-    'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/conditional_fields.admin.inc',
   );
 
-  $bundles = field_info_bundles();
-
-  foreach ($bundles as $entity_type => $bundle) {
-    foreach ($bundle as $bundle_name => $bundle_info) {
-      $items["admin/structure/dependencies/add/$entity_type/$bundle_name"] = array(
-        'title' => 'Add dependency',
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array('conditional_fields_dependency_add_form', 4, 5),
-        'access arguments' => array('administer dependencies'),
-        'type' => MENU_CALLBACK,
-        'file' => 'includes/conditional_fields.admin.inc',
-      );
-    }
-  }
+  $items['admin/structure/dependencies/overview'] = array(
+    'title' => 'Overview',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
 
   $items['admin/structure/dependencies/edit/%'] = array(
     'title' => 'Edit dependency',
@@ -116,6 +112,44 @@ function conditional_fields_menu() {
     'access arguments' => array('administer dependencies'),
     'file' => 'includes/conditional_fields.admin.inc',
   );
+
+  // Some of the following code is copied from field_ui_menu().
+
+  // Create tabs for all possible bundles.
+  foreach (entity_get_info() as $entity_type => $entity_info) {
+    if ($entity_info['fieldable']) {
+      $items["admin/structure/dependencies/$entity_type"] = array(
+        'title' => $entity_info['label'],
+        'page arguments' => array(3),
+        'access arguments' => array('administer dependencies'),
+        'type' => MENU_LOCAL_TASK,
+        'weight' => 2,
+      );
+
+      foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
+        if (module_exists('field_ui') && isset($bundle_info['admin'])) {
+          // Extract path information from the bundle.
+          $path = $bundle_info['admin']['path'];
+
+          // Extract access information, providing defaults.
+          $access = array_intersect_key($bundle_info['admin'], drupal_map_assoc(array('access callback', 'access arguments')));
+          $access += array(
+            'access callback' => 'user_access',
+            'access arguments' => array('administer site configuration', 'administer dependencies'),
+          );
+
+          $items["$path/dependencies"] = array(
+            'title' => $entity_type == 'comment' ? 'Comment dependencies' : 'Manage dependencies',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array($entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form'),
+            'type' => MENU_LOCAL_TASK,
+            'weight' => $entity_type == 'comment' ? 4 : 2,
+            'file' => 'includes/conditional_fields.admin.inc',
+          ) + $access;
+        }
+      }
+    }
+  }
 
   return $items;
 }
@@ -905,21 +939,6 @@ function conditional_fields_element_info() {
     'conditional_fields_table' => array(
       '#theme' => 'conditional_fields_table',
     ),
-  );
-}
-
-/**
- * Entity types have no human readable names. We provide some for the entity
- * types in core.
- */
-function conditional_fields_entities_names() {
-  return array(
-    'comment'             => t('Comments'),
-    'node'                => t('Content types'),
-    'file'                => t('Files'),
-    'taxonomy_term'       => t('Terms'),
-    'taxonomy_vocabulary' => t('Vocabularies'),
-    'user'                => t('Users'),
   );
 }
 

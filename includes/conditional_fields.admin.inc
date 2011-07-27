@@ -7,52 +7,60 @@
 /**
  * Dependencies administration page.
  *
- * Builds a list of dependencies for each entity type, grouped by bundle.
+ * If the callback is called from the overview page, it builds a list of
+ * dependencies for each entity type, grouped by bundle. Otherwise, it builds
+ * a list of dependencies only for the selected entity type.
  */
-function conditional_fields_dependencies_overview_page() {
+function conditional_fields_dependencies_overview_page($entity_type = NULL) {
   // When displaying the page, make sure the list of fields is up-to-date.
   field_info_cache_clear();
 
-  // Gather bundles and entities names information.
-  $bundles = field_info_bundles();
-  $entities_names = conditional_fields_entities_names();
-
+  // Gather entities information.
+  $entities = $entity_type ? array($entity_type => entity_get_info($entity_type)) : entity_get_info();
+  
   // Unused here, but saves queries in conditional_fields_dependency_add_form().
   conditional_fields_load_dependencies();
 
   $build = array();
 
-  foreach ($bundles as $entity_type => $bundle) {
-    $entity_name = (isset($entities_names[$entity_type])) ? $entities_names[$entity_type] : $entity_type;
+  foreach ($entities as $entity_name => $entity_info) {
+    if (!$entity_info['fieldable']) {
+      continue;
+    }
 
     $items = array();
 
-    $build[$entity_type] = array(
-      '#type' => 'fieldset',
-      '#title' => $entity_name,
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#attached' => array(
-        'js' => array(
-          'misc/form.js',
-          'misc/collapse.js',
+    if ($entity_type) {
+      $build[$entity_name] = array();
+    }
+    else {
+      $build[$entity_name] = array(
+        '#type' => 'fieldset',
+        '#title' => $entity_info['label'],
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#attached' => array(
+          'js' => array(
+            'misc/form.js',
+            'misc/collapse.js',
+          ),
         ),
-      ),
-      '#attributes' => array(
-        'class' => array('collapsible collapsed'),
-      ),
-    );
+        '#attributes' => array(
+          'class' => array('collapsible collapsed'),
+        ),
+      );
+    }
 
-    foreach ($bundle as $bundle_name => $bundle_info) {
-      $build[$entity_type][$bundle_name]['title'] = array(
-        '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundles[$entity_type][$bundle_name]['label'] . '</h4>',
+    foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
+      $build[$entity_name][$bundle_name]['title'] = array(
+        '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundle_info['label'] . '</h4>',
       );
 
-      $build[$entity_type][$bundle_name] += drupal_get_form($entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form');
+      $build[$entity_name][$bundle_name] += drupal_get_form($entity_name . '_' . $bundle_name . '_conditional_fields_dependency_add_form');
 
-      if (!isset($build[$entity_type][$bundle_name]['no_fields'])) {
-        $build[$entity_type]['#collapsed'] = FALSE;
-        $build[$entity_type]['#attributes']['class'] = array('collapsible');
+      if (!$entity_type && !isset($build[$entity_name][$bundle_name]['no_fields'])) {
+        $build[$entity_name]['#collapsed'] = FALSE;
+        $build[$entity_name]['#attributes']['class'] = array('collapsible');
       }
     }
   }
@@ -101,6 +109,8 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
   $form['table']['#attached']['css'][] = drupal_get_path('module', 'conditional_fields') . '/conditional_fields.css';
 
   if ($dependencies) {
+    $destination = drupal_get_destination();
+
     foreach ($dependencies as $dependent_name => $field_dependencies) {
       if (!isset($field_dependencies['dependees'])) {
         continue;
@@ -121,13 +131,14 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
             '#type' => 'link',
             '#title' => t('edit'),
             '#href' => 'admin/structure/dependencies/edit/' . $options['id'],
-            '#options' => array('attributes' => array('title' => t('Edit dependency settings.'))),
+            '#options' => array('query' => $destination, 'attributes' => array('title' => t('Edit dependency settings.'))),
+            '#query' => drupal_get_destination(),
           ),
           'delete' => array(
             '#type' => 'link',
             '#title' => t('delete'),
             '#href' => 'admin/structure/dependencies/delete/' . $options['id'],
-            '#options' => array('attributes' => array('title' => t('Delete dependency.'))),
+            '#options' => array('query' => $destination, 'attributes' => array('title' => t('Delete dependency.'))),
           ),
         );
       }
@@ -227,12 +238,14 @@ function conditional_fields_dependency_add_form_submit($form, &$form_state) {
     'condition' => $form_state['values']['condition']
   );
 
+
   if (!$id = conditional_fields_dependency_insert($form_state['values']['dependee'], $form_state['values']['dependent'], $options)) {
     drupal_set_message(t('There was an error while trying to create the dependency.'), 'error');
     return;
   }
 
-  drupal_goto('admin/structure/dependencies/edit/' . $id);
+  $destination = drupal_get_destination();
+  drupal_goto("admin/structure/dependencies/edit/$id", array('query' => $destination));
 }
 
 /**
@@ -521,6 +534,12 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     ),
   );
 
+  // Redirect to bundle dependencies form if destination is set.
+  $destination = drupal_get_destination();
+  if ($destination['destination'] != 'admin/structure/dependencies') {
+    $form_state['redirect'] = $destination['destination'];
+  }
+
   return $form;
 }
 
@@ -571,7 +590,6 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
 
   conditional_fields_dependency_update($dependency);
   drupal_set_message(t('Saved dependency configuration.'));
-  drupal_goto('admin/structure/dependencies');
 }
 
 /**
@@ -582,6 +600,8 @@ function conditional_fields_dependency_delete_form($form, $form_state, $dependen
     drupal_access_denied();
   }
 
+  $destination = drupal_get_destination();
+
   return confirm_form(
     array(
     'dependency' => array(
@@ -590,7 +610,7 @@ function conditional_fields_dependency_delete_form($form, $form_state, $dependen
     ),
   ),
     t('Are you sure you want to delete this dependency?'),
-    'admin/structure/dependencies',
+    $destination['destination'],
     t('This action cannot be undone.'),
     t('Delete dependency'),
     t('Cancel')
@@ -602,5 +622,4 @@ function conditional_fields_dependency_delete_form($form, $form_state, $dependen
  */
 function conditional_fields_dependency_delete_form_submit($form, &$form_state) {
   conditional_fields_dependency_delete(array($form_state['values']['dependency']));
-  $form_state['redirect'] = 'admin/structure/dependencies';
 }
