@@ -317,7 +317,7 @@ states.Trigger.prototype = {
 
     if (typeof trigger == 'function') {
       // We have a custom trigger initialization function.
-      trigger.call(window, this.element);
+      trigger.call(window, this);
     }
     else {
       $.each(trigger, function (event, valueFn) {
@@ -396,6 +396,24 @@ states.Trigger.states = {
   collapsed: {
     'collapsed': function(e) {
       return (e !== undefined && 'value' in e) ? e.value : this.is('.collapsed');
+    }
+  },
+
+  focused: function(self) {
+    // Attach the event callbacks.
+    self.element.bind('focus', function () {
+      self.element.trigger({ type: 'state:' + self.state, value: true });
+    })
+    .bind('blur', function () {
+      self.element.trigger({ type: 'state:' + self.state, value: false });
+    })
+    // Initial state.
+    .trigger({ type: 'state:' + self.state, value: self.element.is(':focus') });
+  },
+
+  touched: {
+    'focus': function(e, f) {
+      return (e === undefined && this.is(':not(:focus)')) ? false : true;
     }
   }
 };
