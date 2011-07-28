@@ -1002,8 +1002,6 @@ function conditional_fields_effects() {
 function conditional_fields_conditions($checkboxes = TRUE) {
   // Supported by States API
   $conditions = array(
-    'visible'    => t('Visible'),
-    '!visible'   => t('Invisible'),
     '!empty'     => t('Filled'),
     'empty'      => t('Empty'),
   );
