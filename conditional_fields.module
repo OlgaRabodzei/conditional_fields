@@ -948,18 +948,18 @@ function conditional_fields_element_info() {
 function conditional_fields_states() {
   $states = array(
     // Supported by States API
-    '!disabled'  => t('Enabled'),
-    'disabled'   => t('Disabled'),
     'visible'    => t('Visible'),
     '!visible'   => t('Invisible'),
+    '!disabled'  => t('Enabled'),
+    'disabled'   => t('Disabled'),
     'checked'    => t('Checked'),
     '!checked'   => t('Unchecked'),
+    'required'   => t('Required'),
+    '!required'  => t('Optional'),
     '!collapsed' => t('Expanded'),
     'collapsed'  => t('Collapsed'),
     // TODO: Add support to these states:
     /*
-    'required'   => t('Required'),
-    '!required'  => t('Optional'),
     'relevant'   => t('Relevant'),
     '!relevant'  => t('Irrelevant'),
     'valid'      => t('Valid'),
