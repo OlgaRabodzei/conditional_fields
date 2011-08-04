@@ -160,15 +160,14 @@ function conditional_fields_menu() {
  * Maps all dependency add forms to the same callback.
  */
 function conditional_fields_forms() {
-  // Gather bundles information.
-  $bundles = field_info_bundles();
-
-  foreach ($bundles as $entity_type => $bundle) {
-    foreach ($bundle as $bundle_name => $bundle_info) {
-      $forms[$entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form'] = array(
-        'callback' => 'conditional_fields_dependency_add_form',
-        'callback arguments' => array($entity_type, $bundle_name),
-      );
+  foreach (entity_get_info() as $entity_type => $entity_info) {
+    if ($entity_info['fieldable']) {
+      foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
+        $forms[$entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form'] = array(
+          'callback' => 'conditional_fields_dependency_add_form',
+          'callback arguments' => array($entity_type, $bundle_name),
+        );
+      }
     }
   }
 
