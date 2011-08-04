@@ -131,13 +131,6 @@ function conditional_fields_menu() {
           // Extract path information from the bundle.
           $path = $bundle_info['admin']['path'];
 
-          // Extract access information, providing defaults.
-          $access = array_intersect_key($bundle_info['admin'], drupal_map_assoc(array('access callback', 'access arguments')));
-          $access += array(
-            'access callback' => 'user_access',
-            'access arguments' => array('administer site configuration', 'administer dependencies'),
-          );
-
           $items["$path/dependencies"] = array(
             'title' => $entity_type == 'comment' ? 'Comment dependencies' : 'Manage dependencies',
             'page callback' => 'drupal_get_form',
@@ -145,7 +138,8 @@ function conditional_fields_menu() {
             'type' => MENU_LOCAL_TASK,
             'weight' => $entity_type == 'comment' ? 4 : 2,
             'file' => 'includes/conditional_fields.admin.inc',
-          ) + $access;
+            'access arguments' => array('administer dependencies'),
+          );
         }
       }
     }
