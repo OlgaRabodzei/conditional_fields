@@ -8,10 +8,13 @@
  * Dependencies administration page.
  *
  * If the callback is called from the overview page, it builds a list of
- * dependencies for each entity type, grouped by bundle. Otherwise, it builds
- * a list of dependencies only for the selected entity type.
+ * dependencies for each entity type, grouped by bundle.
+ * If called from one of the local tasks, it builds a list of dependencies
+ * only for the selected entity type.
+ * If called from a task under a specific bundle administration page, it
+ * builds a list just for that entity type and bundle name pair.
  */
-function conditional_fields_dependencies_overview_page($entity_type = NULL) {
+function conditional_fields_dependencies_overview_page($bundle_name = NULL, $entity_type = NULL) {
   // When displaying the page, make sure the list of fields is up-to-date.
   field_info_cache_clear();
 
@@ -20,6 +23,16 @@ function conditional_fields_dependencies_overview_page($entity_type = NULL) {
   
   // Unused here, but saves queries in conditional_fields_dependency_add_form().
   conditional_fields_load_dependencies();
+
+  // Extract bundle name from path, if present.
+  if ($bundle_name) {
+    $bundle_name = strtr($bundle_name, array('-' => '_'));
+
+    // Hacky exception for hanlding comments.
+    if ($entity_type == 'comment') {
+      $bundle_name = 'comment_node_' . $bundle_name;
+    }
+  }
 
   $build = array();
 
@@ -51,14 +64,22 @@ function conditional_fields_dependencies_overview_page($entity_type = NULL) {
       );
     }
 
-    foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
-      $build[$entity_name][$bundle_name]['title'] = array(
-        '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundle_info['label'] . '</h4>',
-      );
+    foreach ($entity_info['bundles'] as $bundle_info_name => $bundle_info) {
+      if ($bundle_name && $bundle_name != $bundle_info_name) {
+        continue;
+      }
 
-      $build[$entity_name][$bundle_name] += drupal_get_form($entity_name . '_' . $bundle_name . '_conditional_fields_dependency_add_form');
+      $build[$entity_name][$bundle_info_name] = array();
 
-      if (!$entity_type && !isset($build[$entity_name][$bundle_name]['no_fields'])) {
+      if (!$bundle_name && count($entity_info['bundles']) > 1) {
+        $build[$entity_name][$bundle_info_name]['title'] = array(
+          '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundle_info['label'] . '</h4>',
+        );
+      }
+
+      $build[$entity_name][$bundle_info_name] += drupal_get_form('conditional_fields_dependency_add_form', $entity_name, $bundle_info_name);
+
+      if (!$entity_type && !isset($build[$entity_name][$bundle_info_name]['no_fields'])) {
         $build[$entity_name]['#collapsed'] = FALSE;
         $build[$entity_name]['#attributes']['class'] = array('collapsible');
       }
@@ -237,7 +258,6 @@ function conditional_fields_dependency_add_form_submit($form, &$form_state) {
     'state' => $form_state['values']['state'],
     'condition' => $form_state['values']['condition']
   );
-
 
   if (!$id = conditional_fields_dependency_insert($form_state['values']['dependee'], $form_state['values']['dependent'], $options)) {
     drupal_set_message(t('There was an error while trying to create the dependency.'), 'error');

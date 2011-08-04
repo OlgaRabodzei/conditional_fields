@@ -120,7 +120,7 @@ function conditional_fields_menu() {
     if ($entity_info['fieldable']) {
       $items["admin/structure/dependencies/$entity_type"] = array(
         'title' => $entity_info['label'],
-        'page arguments' => array(3),
+        'page arguments' => array(NULL, 3),
         'access arguments' => array('administer dependencies'),
         'type' => MENU_LOCAL_TASK,
         'weight' => 2,
@@ -128,13 +128,21 @@ function conditional_fields_menu() {
 
       foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
         if (module_exists('field_ui') && isset($bundle_info['admin'])) {
-          // Extract path information from the bundle.
-          $path = $bundle_info['admin']['path'];
+          // Extract path information from the bundle and replace any "magic"
+          // wildcard with a normal one.
+          $path = preg_replace('/(%[a-z0-9_]*)/', '%', $bundle_info['admin']['path']);
+
+          if (isset($bundle_info['admin']['bundle argument'])) {
+            $bundle_pos = $bundle_info['admin']['bundle argument'];
+          }
+          else {
+            $bundle_pos = $bundle_name;
+          }
 
           $items["$path/dependencies"] = array(
             'title' => $entity_type == 'comment' ? 'Comment dependencies' : 'Manage dependencies',
-            'page callback' => 'drupal_get_form',
-            'page arguments' => array($entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form'),
+            'page callback' => 'conditional_fields_dependencies_overview_page',
+            'page arguments' => array($bundle_pos, $entity_type),
             'type' => MENU_LOCAL_TASK,
             'weight' => $entity_type == 'comment' ? 4 : 2,
             'file' => 'includes/conditional_fields.admin.inc',
@@ -146,26 +154,6 @@ function conditional_fields_menu() {
   }
 
   return $items;
-}
-
-/**
- * Implements hook_forms().
- *
- * Maps all dependency add forms to the same callback.
- */
-function conditional_fields_forms() {
-  foreach (entity_get_info() as $entity_type => $entity_info) {
-    if ($entity_info['fieldable']) {
-      foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
-        $forms[$entity_type . '_' . $bundle_name . '_conditional_fields_dependency_add_form'] = array(
-          'callback' => 'conditional_fields_dependency_add_form',
-          'callback arguments' => array($entity_type, $bundle_name),
-        );
-      }
-    }
-  }
-
-  return $forms;
 }
 
 /**
