@@ -478,7 +478,10 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 function conditional_fields_evaluate_dependency($options, $form_values) {
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
     if (is_string($form_values)) {
-      return count($options['value'] == 1) && $options['value'][0]['value'] === $form_values;
+      // Options elements consider "_none" value same as empty.
+      $form_values = $form_values == '_none' ? '' : $form_values;
+
+      return count($options['value']) == 1 && $options['value'][0]['value'] == $form_values;
     }
 
     // Filter out unwanted items.
@@ -491,7 +494,7 @@ function conditional_fields_evaluate_dependency($options, $form_values) {
   // Flatten array of values.
   $values = array();
   foreach ((array) $form_values as $value) {
-    $values[] = array_shift($value);
+    $values[] = is_array($value) ? array_shift($value) : $value;
   }
 
   switch ($options['values_set']) {
