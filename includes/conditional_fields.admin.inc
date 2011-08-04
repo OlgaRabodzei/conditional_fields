@@ -313,6 +313,7 @@ function theme_conditional_fields_table($variables) {
 /**
  * Dependency edit form.
  *
+ * @see conditional_fields_dependency_edit_form_validate()
  * @see conditional_fields_dependency_edit_form_submit()
  * @ingroup forms
  */
@@ -446,6 +447,9 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
         ),
         ':input[name="condition"]' => array('value' => 'value'),
       ),
+      'required' => array(
+        ':input[name="condition"]' => array('value' => 'value'),
+      ),
     ),
   );
 
@@ -561,6 +565,17 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   }
 
   return $form;
+}
+
+/**
+ * Dependency edit form validate.
+ *
+ * @see conditional_fields_dependency_edit_form()
+ */
+function conditional_fields_dependency_edit_form_validate($form, &$form_state) {
+  if ($form_state['values']['condition'] == 'value' && $form_state['values']['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE && drupal_strlen(trim($form_state['values']['values'])) == 0) {
+    form_set_error('values', t('!name field is required.', array('!name' => t('Set of values'))));
+  }
 }
 
 /**
