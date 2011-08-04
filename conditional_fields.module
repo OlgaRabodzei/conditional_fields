@@ -60,7 +60,7 @@ define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT', 3);
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE', 4);
 
 /**
- * Implements hook_perm().
+ * Implements hook_permission().
  */
 function conditional_fields_permission() {
   return array(
