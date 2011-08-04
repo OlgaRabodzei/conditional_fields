@@ -988,6 +988,10 @@ function conditional_fields_conditions($checkboxes = TRUE) {
   $conditions = array(
     '!empty'     => t('Filled'),
     'empty'      => t('Empty'),
+    'touched'    => t('Touched'),
+    '!touched'   => t('Untouched'),
+    'focused'    => t('Focused'),
+    '!focused'   => t('Unfocused'),
   );
 
   if ($checkboxes) {
@@ -1008,8 +1012,6 @@ function conditional_fields_conditions($checkboxes = TRUE) {
   '!relevant'  => t('Irrelevant'),
   'valid'      => t('Valid'),
   '!valid'     => t('Invalid'),
-  'touched'    => t('Touched'),
-  '!touched'   => t('Untouched'),
   '!readonly'  => t('Read/Write'),
   'readonly'   => t('Read Only'),
   '!collapsed' => t('Expanded'),
