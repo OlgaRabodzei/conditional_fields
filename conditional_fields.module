@@ -538,6 +538,8 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'date_text':
     case 'link_field':
     case 'cck_select_other':
+    case 'field_collection_embed':
+    case 'field_collection_hidden':
       // Fields composed of multiple widgets.
       $structure = array();
       break;
