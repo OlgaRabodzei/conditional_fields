@@ -528,6 +528,8 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'text_textfield':
     case 'text_textarea':
     case 'number':
+    case 'autocomplete_widgets_allowvals':
+    case 'autocomplete_widgets_flddata':
       // Text fields and text areas.
       $structure = array('language' => $langcode, 0, 'value');
       break;
@@ -590,6 +592,8 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'text_textfield':
     case 'text_textarea':
     case 'number':
+    case 'autocomplete_widgets_allowvals':
+    case 'autocomplete_widgets_flddata':
       // Text field and Text area.
       $structure = array('language' => $langcode, 0, 'value');
       break;
