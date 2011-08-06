@@ -538,6 +538,7 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'image_image':
     case 'date_select':
     case 'date_text':
+    case 'date_popup':
     case 'link_field':
     case 'cck_select_other':
     case 'field_collection_embed':
@@ -601,8 +602,9 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
     case 'file_generic':
     case 'image_image':
     case 'date_select':
-    case 'link_field':
     case 'date_text':
+    case 'date_popup':
+    case 'link_field':
       // Fields composed of multiple widgets.
       $structure = array('language' => $langcode, 0);
       break;
@@ -650,7 +652,8 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
         break;
 
       case 'date_select':
-        // Date select combos.
+      case 'date_popup':
+        // Date select combos and date popups.
         $structure[] = 'value';
         $structure['key'] = '%key';
         break;
@@ -1175,15 +1178,29 @@ function conditional_fields_states_handler_date_combo($field, $field_info, $opti
     return;
   }
 
-  // Date select.
+  // Add a condition for each date part.
   $date_selectors = array();
 
-  // Add a condition for each date part.
-  foreach ($field_info['field']['settings']['granularity'] as $date_part) {
-    if ($date_part) {
-      $date_selectors[str_replace('%key', $date_part, $options['selector'])] = array(
-        'value' => $options['value_form'][0]['value'][$date_part],
+  // Date popup.
+  if ($field_info['instance']['widget']['type'] == 'date_popup') {
+    $date_selectors[str_replace('%key', 'date', $options['selector'])] = array(
+      'value' => $options['value_form'][0]['value']['date'],
+    );
+
+    if ($field_info['field']['settings']['granularity']['hour'] || $field_info['field']['settings']['granularity']['minute'] || $field_info['field']['settings']['granularity']['second']) {
+      $date_selectors[str_replace('%key', 'time', $options['selector'])] = array(
+        'value' => $options['value_form'][0]['value']['time'],
       );
+    }
+  }
+  // Date select.
+  else {
+    foreach ($field_info['field']['settings']['granularity'] as $date_part) {
+      if ($date_part) {
+        $date_selectors[str_replace('%key', $date_part, $options['selector'])] = array(
+          'value' => $options['value_form'][0]['value'][$date_part],
+        );
+      }
     }
   }
 
