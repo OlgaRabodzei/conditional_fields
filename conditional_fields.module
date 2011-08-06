@@ -263,8 +263,11 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         $handlers = conditional_fields_states_handlers();
       }
 
-      if (isset($handlers[$dependee_form_field['#type']])) {
-        $handlers[$dependee_form_field['#type']]($dependee_form_field, $form_state_fields[$dependee][$langcode], $options, $state);
+      foreach (array_keys($handlers) as $property) {
+        if (isset($dependee_form_field[$property]) && isset($handlers[$property][$dependee_form_field[$property]])) {
+          $handlers[$property][$dependee_form_field[$property]]($dependee_form_field, $form_state_fields[$dependee][$langcode], $options, $state);
+          break;
+        }
       }
 
       // Manage required dependent fields.
@@ -546,6 +549,7 @@ function conditional_fields_dependent_structure($widget_type, $field) {
     case 'cck_select_other':
     case 'field_collection_embed':
     case 'field_collection_hidden':
+    case 'addressfield_standard':
       // Fields composed of multiple widgets.
       $structure = array();
       break;
@@ -629,6 +633,11 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
       $structure = array('language' => $langcode, 0, 'uid');
       break;
 
+    case 'addressfield_standard':
+      // Address field.
+      $structure = array('language' => $langcode, 0);
+      break;
+
     default:
       // Any other field.
       $other_widget = TRUE;
@@ -669,6 +678,11 @@ function conditional_fields_dependee_structure($widget_type, $field, $selector =
       case 'date_text':
         $structure[] = 'value';
         $structure[] = 'date';
+        break;
+
+      case 'addressfield_standard':
+        // Address field.
+        $structure['key'] = '%key';
         break;
 
       default:
@@ -1043,7 +1057,8 @@ function conditional_fields_conditions($checkboxes = TRUE) {
 
 /**
  * Builds a list of special fields handlers to be executed when building the
- * #states array.
+ * #states array. The list is a nested array of porperty values that should be
+ * present in the field form, keyed by property names.
  *
  * The handlers themselves must accept the parameters $field, $field_info,
  * $options and $state.
@@ -1053,13 +1068,18 @@ function conditional_fields_conditions($checkboxes = TRUE) {
  */
 function conditional_fields_states_handlers() {
   $handlers = array(
-    'select'     => 'conditional_fields_states_handler_select',
-    'checkbox'   => 'conditional_fields_states_handler_checkbox',
-    'checkboxes' => 'conditional_fields_states_handler_checkboxes',
-    'textfield'  => 'conditional_fields_states_handler_text',
-    'textarea'   => 'conditional_fields_states_handler_text',
-    'date_combo' => 'conditional_fields_states_handler_date_combo',
-    'link_field' => 'conditional_fields_states_handler_link_field',
+    '#type' => array(
+      'select'     => 'conditional_fields_states_handler_select',
+      'checkbox'   => 'conditional_fields_states_handler_checkbox',
+      'checkboxes' => 'conditional_fields_states_handler_checkboxes',
+      'textfield'  => 'conditional_fields_states_handler_text',
+      'textarea'   => 'conditional_fields_states_handler_text',
+      'date_combo' => 'conditional_fields_states_handler_date_combo',
+      'link_field' => 'conditional_fields_states_handler_link_field',
+    ),
+    '#addressfield' => array(
+      1 => 'conditional_fields_states_handler_link_addressfield',
+    ),
   );
 
   // Allow other modules to modify the handlers
@@ -1228,6 +1248,40 @@ function conditional_fields_states_handler_link_field($field, $field_info, $opti
   $link_selectors[str_replace('%key', 'url', $options['selector'])] = array('value' => $options['value_form'][0]['url']);
 
   $state = array($options['state'] => $link_selectors);
+}
+
+/**
+ * States handler for links provided by the Addressfield module.
+ */
+function conditional_fields_states_handler_link_addressfield($field, $field_info, $options, &$state) {
+  if ($options['condition'] != 'value' || $options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+    return;
+  }
+
+  $keys = array();
+
+  if ($field['#handlers']['address']) {
+    $keys += array('country', 'thoroughfare', 'premise', 'postal_code', 'locality', 'administrative_area');
+  }
+
+  if ($field['#handlers']['organisation']) {
+    $keys += array('organisation_name');
+  }
+
+  if ($field['#handlers']['name-oneline']) {
+    $keys += array('name_line');
+  }
+  elseif ($field['#handlers']['name-full']) {
+    $keys += array('first_name', 'last_name');
+  }
+
+  $addressfield_selectors = array();
+
+  foreach ($keys as $key) {
+    $addressfield_selectors[str_replace('%key', $key, $options['selector'])] = array('value' => $options['value'][0][$key]);      
+  }
+
+  $state = array($options['state'] => $addressfield_selectors);
 }
 
 /**
