@@ -188,20 +188,23 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
     $langcode = LANGUAGE_NONE;
   }
 
+  // Compatibility with Profile2 module.
+  $form_state_fields = $form['#entity_type'] != 'profile2' ? $form_state['field'] : $form_state['field']['#parents']['profile_' . $form['#bundle']]['#fields'];
+
   foreach ($dependencies as $dependent => $dependency) {
-    if (!isset($dependency['dependees']) || !isset($form[$dependent]) || !isset($form_state['field'][$dependent])) {
+    if (!isset($dependency['dependees']) || !isset($form[$dependent]) || !isset($form_state_fields[$dependent])) {
       continue;
     }
 
     // The position in the form tree where the #states property should be added
     // varies depending on the widget type of the field.
-    $widget_type = $form_state['field'][$dependent][$langcode]['instance']['widget']['type'];
+    $widget_type = $form_state_fields[$dependent][$langcode]['instance']['widget']['type'];
     $parents = conditional_fields_dependent_structure($widget_type, $form[$dependent]);
 
     $states = array();
 
     foreach ($dependency['dependees'] as $dependee => $data) {
-      if (!isset($form_state['field'][$dependee])) {
+      if (!isset($form_state_fields[$dependee])) {
         continue;
       }
 
@@ -209,7 +212,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
       // Build the jQuery selector of the dependee if it was not overridden by
       // a custom selector.
-      $dependee_widget_type = $form_state['field'][$dependee][$langcode]['instance']['widget']['type'];
+      $dependee_widget_type = $form_state_fields[$dependee][$langcode]['instance']['widget']['type'];
       if (!$options['selector_custom']) {
         $options['selector'] = conditional_fields_field_selector($dependee, $dependee_widget_type, $form[$dependee]);
       }
@@ -261,7 +264,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       }
 
       if (isset($handlers[$dependee_form_field['#type']])) {
-        $handlers[$dependee_form_field['#type']]($dependee_form_field, $form_state['field'][$dependee][$langcode], $options, $state);
+        $handlers[$dependee_form_field['#type']]($dependee_form_field, $form_state_fields[$dependee][$langcode], $options, $state);
       }
 
       // Manage required dependent fields.
@@ -698,6 +701,11 @@ function conditional_fields_field_selector($field_name, $widget_type, $field) {
   // Ensure that a placeholder is used instead of the current language.
   if (isset($structure['language'])) {
     $structure['language'] = '%lang';
+  }
+
+  // Compatibility with Profile2 module.
+  if (isset($field[$field['#language']]['#entity_type']) && $field[$field['#language']]['#entity_type'] == 'profile2') {
+    $field_name = 'profile_' . $field[$field['#language']]['#bundle'] . '[' . $field_name . ']';
   }
 
   return '[name="' . $field_name . '[' . implode('][', $structure) . ']"]';
