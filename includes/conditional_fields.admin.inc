@@ -77,7 +77,7 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
         );
       }
 
-      $build[$entity_name][$bundle_info_name] += drupal_get_form('conditional_fields_dependency_add_form', $entity_name, $bundle_info_name);
+      $build[$entity_name][$bundle_info_name] += drupal_get_form('conditional_fields_dependency_add_form_' . $entity_name . '_' . $bundle_info_name);
 
       if (!$entity_type && !isset($build[$entity_name][$bundle_info_name]['no_fields'])) {
         $build[$entity_name]['#collapsed'] = FALSE;

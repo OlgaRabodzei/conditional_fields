@@ -157,6 +157,26 @@ function conditional_fields_menu() {
 }
 
 /**
+ * Implements hook_forms().
+ *
+ * Maps all dependency add forms to the same callback.
+ */
+function conditional_fields_forms() {
+  foreach (entity_get_info() as $entity_type => $entity_info) {
+    if ($entity_info['fieldable']) {
+      foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
+        $forms['conditional_fields_dependency_add_form_' . $entity_type . '_' . $bundle_name] = array(
+          'callback' => 'conditional_fields_dependency_add_form',
+          'callback arguments' => array($entity_type, $bundle_name),
+        );
+      }
+    }
+  }
+
+  return $forms;
+}
+
+/**
  * Implements hook_js_alter().
  *
  * Overrides core states API with an updated version that allows multiple
