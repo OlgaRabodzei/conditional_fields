@@ -60,6 +60,12 @@ define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT', 3);
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE', 4);
 
 /**
+ * Dependent is shown only if the dependee is shown as well and the dependency
+ * evaluates to TRUE.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED', 5);
+
+/**
  * Implements hook_permission().
  */
 function conditional_fields_permission() {
@@ -461,6 +467,13 @@ function conditional_fields_entity_view_alter(&$build, $type) {
           case CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN:
             // Hide the dependent if the dependee is not viewable.
             if (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE) {
+              $build[$dependent]['#access'] = FALSE;
+            }
+            break;
+
+          case CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED:
+            // Hide the dependent if the dependee is not viewable and the dependency is not triggered.
+            if (!$is_triggered && (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE)) {
               $build[$dependent]['#access'] = FALSE;
             }
             break;
