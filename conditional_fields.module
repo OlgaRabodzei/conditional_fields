@@ -326,7 +326,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         $dependent_name = str_replace('%lang', $langcode, $dependent . '[' . implode('][', $parents) . ']');
 
         drupal_add_js(drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.effect.js');
-        drupal_add_js(array('conditionalFields' => array('effect' => array($dependent_name => $options['effect']))), 'setting');
+        drupal_add_js(array('conditionalFields' => array('effects' => array($dependent_name => array('effect' => $options['effect'], 'options' => $options['effect_options'])))), 'setting');
       }
 
       // Merge this dependency with the states array.
@@ -764,6 +764,7 @@ function conditional_fields_dependency_default_options() {
     // TODO 'grouping'      => CONDITIONAL_FIELDS_GROUPING_AND,
     // See conditional_fields_effects() for available effects
     'effect'                => 'show',
+    'effect_options'        => NULL,
     'element_view'          => array(
       CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE,
       CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
@@ -1018,16 +1019,42 @@ function conditional_fields_states() {
 
 /**
  * Builds a list of supported effects that may be applied to a dependent field
- * when it changes from visible to invisible and viceversa.
+ * when it changes from visible to invisible and viceversa. The effects may
+ * have options that will be passed as Javascript settings and used by
+ * conditional_fields.effect.js.
+ *
+ * @return
+ *   An associative array of effects. Each key is an unique name for the effect.
+ *   The value can be either a string for the effect label or an associative
+ *   array:
+ *   - label: The human readable name of the effect.
+ *   - options: An associative array of effect options names, descriptions and
+ *     default values.
  */
 function conditional_fields_effects() {
   $effects = array(
-    'show'   => t('Show/Hide'),
-    'fade'   => t('Fade in/Fade out'),
-    'slide'  => t('Slide down/Slide up'),
+    'show' => t('Show/Hide'),
+    'fade' => array(
+      'label' => t('Fade in/Fade out'),
+      'options' => array(
+        'speed' => array(
+          'description' => t('The speed at which the animation is performed, in milliseconds.'),
+          'default_value' => 400,
+        ),
+      ),
+    ),
+    'slide' => array(
+      'label' => t('Slide down/Slide up'),
+      'options' => array(
+        'speed' => array(
+          'description' => t('The speed at which the animation is performed, in milliseconds.'),
+          'default_value' => 400,
+        ),
+      ),
+    ),
   );
 
-  // Allow other modules to modify the effects
+  // Allow other modules to modify the effects.
   drupal_alter('conditional_fields_effects', $effects);
 
   return $effects;

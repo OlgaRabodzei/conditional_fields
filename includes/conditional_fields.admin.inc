@@ -468,11 +468,21 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#required' => TRUE,
   );
 
+  foreach (conditional_fields_effects() as $effect_name => $effect) {
+    if (is_array($effect)) {
+      $effects[$effect_name] = $effect['label'];
+      $effects_options[$effect_name] = $effect['options'];
+    }
+    else {
+      $effects[$effect_name] = $effect;      
+    }
+  }
+
   $form['dependent_fieldset']['effect'] = array(
     '#type' => 'select',
     '#title' => t('Effect'),
     '#description' => t('The effect that should be applied when the element visibility is toggled.'),
-    '#options' => conditional_fields_effects(),
+    '#options' => $effects,
     '#default_value' => $dependency['options']['effect'],
     '#states' => array(
       'visible' => array(
@@ -483,6 +493,31 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
       ),
     ),
   );
+
+  $form['dependent_fieldset']['effect_options'] = array('#tree' => TRUE);
+
+  foreach ($effects_options as $effect_name => $effect_options) {
+    foreach ($effect_options as $effect_option_name => $effect_option) {
+      $form['dependent_fieldset']['effect_options'][$effect_name][$effect_option_name] = array(
+        '#type' => 'textfield',
+        '#title' => t('@effect effect option: @effect_option', array('@effect' => $effects[$effect_name], '@effect_option' => $effect_option_name)),
+        '#description' => $effect_option['description'],
+        '#default_value' => $dependency['options']['effect'] == $effect_name ? $dependency['options']['effect_options'][$effect_option_name] : $effect_option['default_value'],
+        '#size' => 20,
+        '#states' => array(
+          'visible' => array(
+            ':input[name="state"]' => array(
+              array('value' => 'visible'),
+              array('value' => '!visible'),
+            ),
+            ':input[name="effect"]' => array(
+              array('value' => $effect_name),
+            ),
+          ),
+        ),
+      );
+    }
+  }
 
   $element_view_options = array(
     CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE    => t('Hide the dependent field if the dependency is not activated'),
@@ -617,6 +652,7 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
       'values'                => $values,
 //      'grouping'              => $form_state['values']['grouping'],
       'effect'                => $form_state['values']['effect'],
+      'effect_options'        => isset($form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : NULL,
       'element_view'          => $form_state['values']['element_view'],
       'element_view_per_role' => $form_state['values']['element_view_per_role'],
       'element_view_roles'    => $form_state['values']['element_view_roles'],

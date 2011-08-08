@@ -5,20 +5,20 @@
  */
 {
   $(document).ready(function() {
-    $.each(Drupal.settings.conditionalFields.effect, function(dependent, dependee) {
+    $.each(Drupal.settings.conditionalFields.effects, function(dependent) {
       $('[name="'+dependent+'"]').unbind('state:visible').bind('state:visible', function(e) {
         if (e.trigger) {
-          var effect = Drupal.settings.conditionalFields.effect[$(e.target).attr('name')];
-          switch (effect) {
+          var effect = Drupal.settings.conditionalFields.effects[$(e.target).attr('name')];
+          switch (effect.effect) {
             case 'fade':
-              $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'fadeIn' : 'fadeOut']();
+              $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'fadeIn' : 'fadeOut'](parseInt(effect.options.speed));
               break;
             case 'slide':
-              $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'slideDown' : 'slideUp']();
+              $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'slideDown' : 'slideUp'](parseInt(effect.options.speed));
               break;
             default:
               // The "effect" variable is treated as a jQuery plugin.
-              $(e.target)[effect](e);
+              $(e.target)[effect.effect](e);
           }
         }
         // Prevent bubbling of the event to document.
