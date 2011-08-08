@@ -170,10 +170,6 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
   $fields = array();
 
   foreach ($instances as $field) {
-    if ($field['deleted']) {
-      continue;
-    }
-
     $fields[$field['id']] = check_plain($field['label']);
   }
 
