@@ -766,8 +766,11 @@ function conditional_fields_dependency_default_options() {
     'effect'                => 'show',
     'effect_options'        => NULL,
     'element_view'          => array(
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE,
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
+      CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE => CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE,
+      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
+      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED => 0,
+      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT => 0,
+      CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE => 0,
     ),
     'element_view_per_role' => 0,
     'element_view_roles'    => array(),
