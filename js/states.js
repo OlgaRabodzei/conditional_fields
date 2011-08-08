@@ -535,6 +535,8 @@ states.State.prototype = {
       }
     }
   });
+
+  $(document).bind('state:unchanged', function() {});
 }
 
 /**

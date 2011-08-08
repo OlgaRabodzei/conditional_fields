@@ -994,6 +994,7 @@ function conditional_fields_states() {
     '!required'  => t('Optional'),
     '!collapsed' => t('Expanded'),
     'collapsed'  => t('Collapsed'),
+    'unchanged'  => t('Unchanged (no state)'),
     // TODO: Add support to these states:
     /*
     'relevant'   => t('Relevant'),
