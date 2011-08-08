@@ -769,6 +769,7 @@ function conditional_fields_dependency_default_options() {
       CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
     ),
     'element_view_per_role' => 0,
+    'element_view_roles'    => array(),
   );
 }
 
