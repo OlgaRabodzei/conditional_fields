@@ -40,30 +40,48 @@ define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR', 4);
 define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT', 5);
 
 /**
- * Dependent is shown only if the dependency is triggered.
+ * Field view setting. Dependent is shown only if the dependency is triggered.
  */
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE', 1);
 
 /**
- * Dependent is shown only if the dependee is shown as well.
+ * Field view setting. Dependent is shown only if the dependee is shown as well.
  */
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN', 2);
 
 /**
- * Dependent is highlighted if the dependency is not triggered.
+ * Field view setting. Dependent is highlighted if the dependency is not
+ * triggered.
  */
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT', 3);
 
 /**
- * Dependent has a textual description of the dependency.
+ * Field view setting. Dependent has a textual description of the dependency.
  */
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE', 4);
 
 /**
- * Dependent is shown only if the dependee is shown as well and the dependency
- * evaluates to TRUE.
+ * Field view setting. Dependent is shown only if the dependee is shown as well
+ * and the dependency evaluates to TRUE.
  */
 define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED', 5);
+
+/**
+ * Field edit setting. Dependent is shown only if the dependee is shown as well.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN', 1);
+
+/**
+ * Field edit setting. Dependent is shown only if the dependee is shown as well
+ * and the dependency evaluates to TRUE.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED', 2);
+
+/**
+ * Field edit setting. Dependent is reset to its default values if the
+ * dependency was not triggered when the form is submitted.
+ */
+define('CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED', 3);
 
 /**
  * Implements hook_permission().
@@ -72,7 +90,7 @@ function conditional_fields_permission() {
   return array(
     'administer dependencies' => array(
       'title' => t('Administer dependencies'),
-      'description' => t('View, edit and delete dependencies.'),
+      'description' => t('View, edit and delete field dependencies.'),
     ),
   );
 }
@@ -230,11 +248,23 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
     $states = array();
 
     foreach ($dependency['dependees'] as $dependee => $data) {
+      $is_orphan = FALSE;
+
       if (!isset($form_state_fields[$dependee])) {
+        $is_orphan = TRUE;
         continue;
       }
 
       $options = $data['options'];
+
+      // Determine field edit behaviors.
+      // If this dependent has multiple dependencies, only the logic of the
+      // first dependency will be taken into account.
+      if (!isset($behaviors)) {
+        $behaviors = conditional_fields_field_behaviors('edit', $options);
+      }
+
+      $state = array();
 
       // Build the jQuery selector of the dependee if it was not overridden by
       // a custom selector.
@@ -289,7 +319,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         $handlers = conditional_fields_states_handlers();
       }
 
-      foreach (array_keys($handlers) as $property) {
+      foreach ($handlers as $property => $property_values) {
         if (isset($dependee_form_field[$property]) && isset($handlers[$property][$dependee_form_field[$property]])) {
           $handlers[$property][$dependee_form_field[$property]]($dependee_form_field, $form_state_fields[$dependee][$langcode], $options, $state);
           break;
@@ -337,6 +367,32 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
       // Merge this dependency with the states array.
       $states = array_merge_recursive($states, $state);
+    }
+
+    // Apply field edit behaviors.
+    foreach ($behaviors as $behavior) {
+      switch ($behavior) {
+        case CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN:
+          if ($is_orphan) {
+            $form[$dependent]['#access'] = FALSE;
+          }
+          break;
+        case CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED:
+          // TODO
+          $is_triggered = TRUE;
+
+          if ($is_orphan && !$is_triggered) {
+            $form[$dependent]['#access'] = FALSE;
+          }
+          break;
+        case CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED:
+          // TODO
+          break;
+        default:
+          // Custom behaviors are callbacks.
+          $$behavior('edit', $form, $form_state, $dependent, $dependencies, $is_triggered);
+          break;
+      }
     }
 
     // Add the #states property to the dependent field.
@@ -405,10 +461,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
   $evaluated_dependents = array();
 
   foreach ($dependencies as $dependent => $dependency) {
-    $is_dependent = isset($dependency['dependees']);
-    $in_build = isset($build[$dependent]);
-
-    if (!($is_dependent && $in_build && $build[$dependent]['#access'])) {
+    if (!(isset($dependency['dependees']) && isset($build[$dependent]) && $build[$dependent]['#access'])) {
       continue;
     }
 
@@ -420,29 +473,11 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         continue;
       }
 
-      // Determine field view logic
-      // If this dependent has multiple dependencies, only the logic of the
-      // first dependency will be taken into account.
-      if (!isset($logic)) {
-        if ($options['element_view_per_role']) {
-          foreach ($options['element_view_roles'] as $rid => $role_logic) {
-            if (isset($user->roles[$rid])) {
-              $logic = $role_logic;
-              break;
-            }
-          }
-        }
-        else {
-          $logic = $options['element_view'];
-        }
-
-        $logic = array_filter($logic);
-      }
-
+      // Evaluate dependency.
       // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
       // only if all its dependencies evaluate to TRUE,
 
-      // This case is handled by the CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN logic.
+      // This case is handled by the CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN behavior.
       if (!isset($build[$dependee])) {
         $evaluated_dependents[$dependent]['AND'][] = TRUE;
       }
@@ -450,13 +485,20 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         $items = $build[$dependee]['#items'];
         $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options, $items);
       }
+
+      // Determine field view behaviors.
+      // If this dependent has multiple dependencies, only the logic of the
+      // first dependency will be taken into account.
+      if (!isset($behaviors)) {
+        $behaviors = conditional_fields_field_behaviors('view', $options);
+      }
     }
 
     if (isset($evaluated_dependents[$dependent])) {
       $is_triggered = in_array(FALSE, $evaluated_dependents[$dependent]['AND']) ? FALSE : TRUE;
 
-      foreach ($logic as $behaviour) {
-        switch ($behaviour) {
+      foreach ($behaviors as $behavior) {
+        switch ($behavior) {
           case CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE:
             // Hide the dependent if it is not triggered.
             if (!$is_triggered) {
@@ -500,14 +542,14 @@ function conditional_fields_entity_view_alter(&$build, $type) {
             break;
 
           default:
-            // Execute callback for custom handling of the behaviour.
-            $$behaviour('view', $dependee, $dependent, $is_triggered, $dependencies, $build, $type);
+            // Custom behaviors are callbacks.
+            $$behavior('view', $dependee, $dependent, $is_triggered, $dependencies, $build, $type);
             break;
         }
       }
     }
 
-    unset($logic);
+    unset($behaviors);
   }
 }
 
@@ -553,6 +595,40 @@ function conditional_fields_evaluate_dependency($options, $form_values) {
       $intersect = array_intersect($options['values'], $values);
       return empty($intersect);
   }
+}
+
+/**
+ * Determine which dependency behaviors should be used in forms and content
+ * display, depending on dependency options and user roles.
+ *
+ * @param $op
+ *   'view' or 'edit'.
+ * @param $options
+ *    Dependency options.
+ *
+ * @return
+ *   An array of behaviors.
+ *
+ */
+function conditional_fields_field_behaviors($op, $options) {
+  global $user;
+
+  if ($options['element_' . $op . '_per_role']) {
+    foreach ($options['element_' . $op . '_roles'] as $rid => $role_behaviors) {
+      if (isset($user->roles[$rid])) {
+        $behaviors = $role_behaviors;
+        break;
+      }
+    }
+  }
+  else {
+    $behaviors = $options['element_' . $op];
+  }
+
+  // Filter out inactive behaviors.
+  $behaviors = array_filter($behaviors);
+
+  return $behaviors;
 }
 
 /**
@@ -787,6 +863,13 @@ function conditional_fields_dependency_default_options() {
     ),
     'element_view_per_role' => 0,
     'element_view_roles'    => array(),
+    'element_edit'          => array(
+      CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN,
+      CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED => 0,
+      CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED => 0,
+    ),
+    'element_edit_per_role' => 0,
+    'element_edit_roles'    => array(),
   );
 }
 
@@ -807,6 +890,8 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
   }
 
   if (!isset($dependencies[$entity_type][$bundle])) {
+    $default_options = conditional_fields_dependency_default_options();
+
     $select = db_select('conditional_fields', 'cf');
     $select->join('field_config_instance', 'fci_dependee', 'cf.dependee = fci_dependee.id');
     $select->join('field_config_instance', 'fci_dependent', 'cf.dependent = fci_dependent.id');
@@ -838,9 +923,12 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
       $entity_type ? $result_entity_type = $entity_type : $result_entity_type = $dependency->entity_type;
       $bundle ? $result_bundle = $bundle : $result_bundle = $dependency->bundle;
 
+      $options = unserialize($dependency->options);
+      $options += $default_options;
+
       $dependencies[$result_entity_type][$result_bundle][$dependency->dependee]['dependents'][$dependency->dependent] = $dependencies[$result_entity_type][$result_bundle][$dependency->dependent]['dependees'][$dependency->dependee] = array(
         'id' => $dependency->id,
-        'options' => unserialize($dependency->options),
+        'options' => $options,
       );
     }
   }
@@ -891,7 +979,9 @@ function conditional_fields_dependency_load($dependee_id, $dependent_id, $entity
   $result = $select->execute()->fetchAssoc();
 
   if (isset($result['options'])) {
-    $result['options'] = unserialize($result['options']);
+    $options = unserialize($result['options']);
+    $options += conditional_fields_dependency_default_options();
+    $result['options'] = $options;
   }
 
   return $result;
@@ -908,7 +998,9 @@ function conditional_fields_dependency_load_by_id($id) {
     ->fetchAssoc();
 
   if (isset($result['options'])) {
-    $result['options'] = unserialize($result['options']);
+    $options = unserialize($result['options']);
+    $options += conditional_fields_dependency_default_options();
+    $result['options'] = $options;
   }
 
   return $result;
@@ -1121,9 +1213,44 @@ function conditional_fields_conditions($checkboxes = TRUE) {
 }
 
 /**
+ * List of settings that can be applied when editing forms with dependencies.
+ */
+function conditional_fields_field_edit_settings() {
+  $settings = array(
+    CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN => t('Hide the dependent if the dependee is not in the form'),
+    // TODO: Implement. Settings are imported from D6 though, they just do nothing for now.
+    CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED => t('Hide the dependent if the dependee is not in the form and the dependency is not triggered. (Note: not implemented)'),
+    CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED => t('Reset the dependent to its default values if the dependency is not triggered. (Note: not implemented)'),
+  );
+
+  // Allow other modules to modify the options.
+  drupal_alter('conditional_fields_field_edit_settings', $settings);
+
+  return $settings;
+}
+
+/**
+ * List of settings that can be applied when viewing content with dependencies.
+ */
+function conditional_fields_field_view_settings() {
+  $settings = array(
+    CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE    => t('Hide the dependent if the dependency is not triggered'),
+    CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN => t('Hide the dependent if the dependee is not viewable by the user'),
+    CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED => t('Hide the dependent if the dependee is not viewable by the user and the dependency is not triggered'),
+    CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT   => t('Theme the dependent like an error message if the dependency is not triggered'),
+    CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE    => t('Show a textual description of the dependency under the dependent'),
+  );
+
+  // Allow other modules to modify the options.
+  drupal_alter('conditional_fields_field_view_settings', $settings);
+
+  return $settings;
+}
+
+/**
  * Builds a list of special fields handlers to be executed when building the
- * #states array. The list is a nested array of porperty values that should be
- * present in the field form, keyed by property names.
+ * #states array. The keys represent form properties and the values of those
+ * properties associated with a handler.
  *
  * The handlers themselves must accept the parameters $field, $field_info,
  * $options and $state.
