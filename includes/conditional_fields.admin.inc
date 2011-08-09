@@ -585,7 +585,6 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $selector_description = t('You need to change this only if the automatically generated selector does not work or for advanced selection. You can use the following placeholders:');
   $selector_description .= "<ul>\n";
   $selector_description .= '<li>' . t('%lang: current language of the field.') . "</li>\n";
-  $selector_description .= '<li>' . t('%delta: value identifier for multiple value fields, starting from 0.') . "</li>\n";
   $selector_description .= '<li>' . t('%key: part identifier for fields composed of multiple form elements, like checkboxes.') . "</li>\n";
   $selector_description .= '</ul>';
   $selector_description .= t('Leave the field empty to reset the selector to its default value.');
