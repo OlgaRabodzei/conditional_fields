@@ -36,6 +36,16 @@ Installation:
 - Assign the "Administer conditional fields" permission to the desired user roles.
 
 
+Upgrading from Drupal 6 to Drupal 7
+--------------------
+Read carefully these instructions since taking the wrong steps could lead to loss of dependencies data!
+
+- Before upgrading, ensure that you have the latest stable version of Conditional Fields for Drupal 6 installed and working.
+- Follow the instructions on the D6 to D7 upgrade process here: http://drupal.org/node/570162.
+- Most importantly, you have to migrate your old CCK fields to the new format BEFORE updating Conditional Fields, so do not omit step 14: "Upgrade fields"! Failing to do so will give an error when trying to run the subsequent update on step 15: "Update contrib modules and themes" and could lead to loss of dependencies data.
+- After step 14, leave the Content Migrate module activated. You can safely disable it after step 15.
+
+
 Usage:
 --------------------
 Users with the “administer dependencies” permission can administer dependencies at admin/structure/dependencies.
