@@ -259,5 +259,5 @@ function conditional_fields_update_7000($node) {
 
   cache_clear_all('variables', 'cache_bootstrap');
 
-  return 'Conditional Fields successfully upated dependencies to Drupal 7.'
+  return 'Conditional Fields successfully upated dependencies to Drupal 7.';
 }
