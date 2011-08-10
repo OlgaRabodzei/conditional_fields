@@ -82,6 +82,20 @@ function conditional_fields_last_removed() {
  * Upgrade from Drupal 6 to Drupal 7.
  */
 function conditional_fields_update_7000($node) {
+  // Parachute for users who installed version 7.x-3.x-dev before 2011-Aug-10.
+  try {
+    $old_dependencies = db_select('conditional_fields', 'cf')->fields('cf', array('control_field_name', 'field_name', 'type', 'trigger_values'))->execute();
+  }
+  catch (Exception $e) {
+    // If the columns are not found, table doesn't need updating.
+    if ($e->errorInfo[0] == '42S22') {
+      return 'Conditional Fields schema was already up to date.';
+    }
+    else {
+      throw $e;
+    }
+  }
+
   // We can only migrate dependencies after fields definitions have been
   // migrated to Drupal 7 using the Content Migrate module.
   if (!module_exists('content_migrate')) {
@@ -127,15 +141,8 @@ function conditional_fields_update_7000($node) {
     'element_edit_roles'    => array(),
   );
 
-  $old_dependencies = db_select('conditional_fields', 'cf')->fields('cf')->execute();
-
   // Convert old dependencies to new format.
   foreach ($old_dependencies as $old_dependency) {
-    // Parachute for users who installed version 7.x-3.x-dev before 2011-Aug-10.
-    if (isset($old_dependency->options)) {
-      return 'Conditional Fields schema was already up to date.';
-    }
-
     $options = array();
 
     if (!isset($node_types[$old_dependency->type])) {
