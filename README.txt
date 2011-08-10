@@ -44,6 +44,7 @@ Read carefully these instructions since taking the wrong steps could lead to los
 - Follow the instructions on the D6 to D7 upgrade process here: http://drupal.org/node/570162.
 - Most importantly, you have to migrate your old CCK fields to the new format BEFORE updating Conditional Fields, so do not omit step 14: "Upgrade fields"! Failing to do so will give an error when trying to run the subsequent update on step 15: "Update contrib modules and themes" and could lead to loss of dependencies data.
 - After step 14, leave the Content Migrate module activated. You can safely disable it after step 15.
+- Note that Content Migrate in certain cases changes the allowed values of fields: you will have to manually edit the dependencies to match the new allowed values if this happens.
 
 
 Usage:
