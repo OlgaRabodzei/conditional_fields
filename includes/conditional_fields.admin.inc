@@ -320,6 +320,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   }
 
   $form['#attached']['js'] = array(drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.admin.js');
+  $form['#attached']['css'][] = drupal_get_path('module', 'conditional_fields') . '/conditional_fields.css';
 
   // Retrieve needed information from the dependee instance.
   // Since we only have the instance id here (id column of the
@@ -425,56 +426,80 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#options' => conditional_fields_states(),
     '#default_value' => $dependency['options']['state'],
     '#required' => TRUE,
+    '#ajax' => array(
+      'callback' => 'conditional_fields_ajax_admin_state_callback',
+      'wrapper' => 'effects-wrapper',
+     ),
   );
 
+  $effects = $effects_options = array();
+  $selected_state = isset($form_state['values']['state']) ? $form_state['values']['state'] : $dependency['options']['state'];
   foreach (conditional_fields_effects() as $effect_name => $effect) {
-    if (is_array($effect)) {
+    if (in_array($selected_state, $effect['states'])) {
       $effects[$effect_name] = $effect['label'];
-      $effects_options[$effect_name] = $effect['options'];
-    }
-    else {
-      $effects[$effect_name] = $effect;      
+      if (isset($effect['options'])) {
+        $effects_options[$effect_name] = $effect['options'];
+      }
     }
   }
 
-  $form['effect'] = array(
-    '#type' => 'select',
-    '#title' => t('Effect'),
-    '#description' => t('The effect that is applied when the dependent field becomes Visible/Invisible.'),
-    '#options' => $effects,
-    '#default_value' => $dependency['options']['effect'],
-    '#states' => array(
-      'visible' => array(
-        ':input[name="state"]' => array(
-          array('value' => 'visible'),
-          array('value' => '!visible'),
-        ),
-      ),
+  $form['effects_wrapper'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'id' => 'effects-wrapper',
     ),
   );
 
-  $form['effect_options'] = array('#tree' => TRUE);
+  $effect = isset($form_state['values']['effect']) ? $form_state['values']['effect'] : $dependency['options']['effect'];
+
+  if (count($effects) == 1) {
+    $form['effects_wrapper']['effect'] = array(
+      '#type' => 'hidden',
+      '#value' => array_shift(array_keys($effects)),
+      '#default_value' => array_shift(array_keys($effects)),
+    );    
+  }
+  elseif (count($effects) > 1) {
+    $form['effects_wrapper']['effect'] = array(
+      '#type' => 'select',
+      '#title' => t('Effect'),
+      '#description' => t('The effect that is applied to the dependent when its state is changed.'),
+      '#options' => $effects,
+      '#default_value' => $effect,
+      '#states' => array(
+        'visible' => array(
+          ':input[name="state"]' => array(
+            array('value' => 'visible'),
+            array('value' => '!visible'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  $form['effects_wrapper']['effect_options'] = array('#tree' => TRUE);
 
   foreach ($effects_options as $effect_name => $effect_options) {
     foreach ($effect_options as $effect_option_name => $effect_option) {
-      $form['effect_options'][$effect_name][$effect_option_name] = array(
-        '#type' => 'textfield',
+      $effect_option += array(
         '#title' => t('@effect effect option: @effect_option', array('@effect' => $effects[$effect_name], '@effect_option' => $effect_option_name)),
-        '#description' => $effect_option['description'],
-        '#default_value' => $dependency['options']['effect'] == $effect_name ? $dependency['options']['effect_options'][$effect_option_name] : $effect_option['default_value'],
-        '#size' => 20,
         '#states' => array(
           'visible' => array(
-            ':input[name="state"]' => array(
-              array('value' => 'visible'),
-              array('value' => '!visible'),
-            ),
             ':input[name="effect"]' => array(
               array('value' => $effect_name),
             ),
           ),
         ),
       );
+
+      if (isset($form_state['values']['effect_options'][$effect_name][$effect_option_name])) {
+        $effect_option['#default_value'] = $form_state['values']['effect_options'][$effect_name][$effect_option_name];        
+      }
+      else if ($dependency['options']['effect'] == $effect_name) {
+        $effect_option['#default_value'] = $dependency['options']['effect_options'][$effect_option_name];
+      }
+
+      $form['effects_wrapper']['effect_options'][$effect_name][$effect_option_name] = $effect_option;      
     }
   }
 
@@ -678,8 +703,8 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
       'value_form'            => $form_state['input']['value']['field'][$dependee][LANGUAGE_NONE],
       'values'                => $values,
 //      'grouping'              => $form_state['values']['grouping'],
-      'effect'                => $form_state['values']['effect'],
-      'effect_options'        => isset($form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : NULL,
+      'effect'                => isset($form_state['values']['effect']) ? $form_state['values']['effect'] : FALSE,
+      'effect_options'        => isset($form_state['values']['effect']) && isset($form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : array(),
       'element_view'          => $form_state['values']['element_view'],
       'element_view_per_role' => $form_state['values']['element_view_per_role'],
       'element_view_roles'    => $form_state['values']['element_view_roles'],
@@ -691,6 +716,13 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
 
   conditional_fields_dependency_update($dependency);
   drupal_set_message(t('Saved dependency configuration.'));
+}
+
+/**
+ * Ajax callback for effects list.
+ */
+function conditional_fields_ajax_admin_state_callback($form, &$form_state) {
+  return $form['effects_wrapper'];
 }
 
 /**

@@ -356,8 +356,8 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         }
       }
 
-      // Add effect handler for visible/invisible state.
-      if (in_array($options['state'], array('visible', '!visible')) && $options['effect'] != 'show') {
+      // Add effect handler for effects with options.
+      if ($options['effect'] && $options['effect'] != 'show') {
         // TODO: $parents here might be wrong, must rebuild with updated conditional_fields_dependent_structure()
         $dependent_name = str_replace('%lang', $langcode, $dependent . '[' . implode('][', $parents) . ']');
 
@@ -853,7 +853,7 @@ function conditional_fields_dependency_default_options() {
     // TODO 'grouping'      => CONDITIONAL_FIELDS_GROUPING_AND,
     // See conditional_fields_effects() for available effects
     'effect'                => 'show',
-    'effect_options'        => NULL,
+    'effect_options'        => array(),
     'element_view'          => array(
       CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE => CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE,
       CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
@@ -1095,6 +1095,8 @@ function conditional_fields_states() {
     // Supported by States API
     'visible'    => t('Visible'),
     '!visible'   => t('Invisible'),
+    '!empty'     => t('Filled with a value'),
+    'empty'      => t('Emptied'),
     '!disabled'  => t('Enabled'),
     'disabled'   => t('Disabled'),
     'checked'    => t('Checked'),
@@ -1103,6 +1105,7 @@ function conditional_fields_states() {
     '!required'  => t('Optional'),
     '!collapsed' => t('Expanded'),
     'collapsed'  => t('Collapsed'),
+    // Supported by Conditional Fields
     'unchanged'  => t('Unchanged (no state)'),
     // TODO: Add support to these states:
     /*
@@ -1112,8 +1115,6 @@ function conditional_fields_states() {
     '!valid'     => t('Invalid'),
     'touched'    => t('Touched'),
     '!touched'   => t('Untouched'),
-    '!empty'     => t('Filled'),
-    'empty'      => t('Empty'),
     '!readonly'  => t('Read/Write'),
     'readonly'   => t('Read Only'),
     */
@@ -1133,30 +1134,70 @@ function conditional_fields_states() {
  *
  * @return
  *   An associative array of effects. Each key is an unique name for the effect.
- *   The value can be either a string for the effect label or an associative
- *   array:
+ *   The value is an associative array:
  *   - label: The human readable name of the effect.
- *   - options: An associative array of effect options names, descriptions and
- *     default values.
+ *   - states: The states that can be associated with this effect.
+ *   - options: An associative array of effect options names, field types,
+ *     descriptions and default values.
  */
 function conditional_fields_effects() {
   $effects = array(
-    'show' => t('Show/Hide'),
+    'show' => array(
+      'label' => t('Show/Hide'),
+      'states' => array('visible', '!visible'),
+    ),
     'fade' => array(
       'label' => t('Fade in/Fade out'),
+      'states' => array('visible', '!visible'),
       'options' => array(
         'speed' => array(
-          'description' => t('The speed at which the animation is performed, in milliseconds.'),
-          'default_value' => 400,
+          '#type' => 'textfield',
+          '#description' => t('The speed at which the animation is performed, in milliseconds.'),
+          '#default_value' => 400,
         ),
       ),
     ),
     'slide' => array(
       'label' => t('Slide down/Slide up'),
+      'states' => array('visible', '!visible'),
       'options' => array(
         'speed' => array(
-          'description' => t('The speed at which the animation is performed, in milliseconds.'),
-          'default_value' => 400,
+          '#type' => 'textfield',
+          '#description' => t('The speed at which the animation is performed, in milliseconds.'),
+          '#default_value' => 400,
+        ),
+      ),
+    ),
+    'fill' => array(
+      'label' => t('Fill field with a value'),
+      'states' => array('!empty'),
+      'options' => array(
+        'value' => array(
+          '#type' => 'textfield',
+          '#description' => t('The value that should be given to the field when automatically filled.'),
+          '#default_value' => '',
+        ),
+        'reset' => array(
+          '#type' => 'checkbox',
+          '#title' => t('Restore previous value when untriggered'),
+          '#default_value' => 1,
+        ),
+      ),
+    ),
+    'empty' => array(
+      'label' => t('Empty field'),
+      'states' => array('empty'),
+      'options' => array(
+        'value' => array(
+          '#type' => 'hidden',
+          '#description' => t('The value that should be given to the field when automatically emptied.'),
+          '#value' => '',
+          '#default_value' => '',
+        ),
+        'reset' => array(
+          '#type' => 'checkbox',
+          '#title' => t('Restore previous value when untriggered'),
+          '#default_value' => 1,
         ),
       ),
     ),

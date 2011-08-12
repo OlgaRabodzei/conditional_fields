@@ -12,3 +12,13 @@ table.conditional-fields-overview .form-submit {
 table.conditional-fields-overview .description-select .form-type-select {
   display: inline;
 }
+
+/* Dependency edit */
+
+#conditional-fields-dependency-edit-form .form-item-state .description {
+  clear: both;
+}
+
+#conditional-fields-dependency-edit-form .form-item-state .ajax-progress {
+  width: 120px;
+}
