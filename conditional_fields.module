@@ -242,7 +242,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
     // The position in the form tree where the #states property should be added
     // varies depending on the widget type of the field.
-    $widget_type = $form_state_fields[$dependent][$langcode]['instance']['widget']['type'];
+    $widget_type = $form_state_fields[$dependent][isset($form_state_fields[$dependent][$langcode]) ? $langcode : LANGUAGE_NONE]['instance']['widget']['type'];
     $parents = conditional_fields_dependent_structure($widget_type, $form[$dependent]);
 
     $states = array();
@@ -268,7 +268,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
 
       // Build the jQuery selector of the dependee if it was not overridden by
       // a custom selector.
-      $dependee_widget_type = $form_state_fields[$dependee][$langcode]['instance']['widget']['type'];
+      $dependee_widget_type = $form_state_fields[$dependee][isset($form_state_fields[$dependee][$langcode]) ? $langcode : LANGUAGE_NONE]['instance']['widget']['type'];
       if (!$options['selector_custom']) {
         $options['selector'] = conditional_fields_field_selector($dependee, $dependee_widget_type, $form[$dependee]);
       }
@@ -359,7 +359,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       // Add effect handler for effects with options.
       if ($options['effect'] && $options['effect'] != 'show') {
         // TODO: $parents here might be wrong, must rebuild with updated conditional_fields_dependent_structure()
-        $dependent_name = str_replace('%lang', $langcode, $dependent . '[' . implode('][', $parents) . ']');
+        $dependent_name = str_replace('%lang', isset($form_state_fields[$dependee][$langcode]) ? $langcode : LANGUAGE_NONE, $dependent . '[' . implode('][', $parents) . ']');
 
         drupal_add_js(drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.effect.js');
         drupal_add_js(array('conditionalFields' => array('effects' => array($dependent_name => array('effect' => $options['effect'], 'options' => $options['effect_options'])))), 'setting');
