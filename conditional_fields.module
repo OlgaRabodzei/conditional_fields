@@ -1343,8 +1343,6 @@ function conditional_fields_states_handler_select($field, $field_info, $options,
 
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
-      $select_states = array();
-
       foreach ($options['values'] as $value) {
         $select_states[$options['state']][] = array(
           $options['selector'] => array(
@@ -1353,6 +1351,9 @@ function conditional_fields_states_handler_select($field, $field_info, $options,
         );
       }
       break;
+
+    default:
+      return;
   }
 
   $state = $select_states;
