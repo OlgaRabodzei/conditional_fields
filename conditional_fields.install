@@ -81,7 +81,7 @@ function conditional_fields_last_removed() {
 /**
  * Upgrade from Drupal 6 to Drupal 7.
  */
-function conditional_fields_update_7000($node) {
+function conditional_fields_update_7000() {
   // Parachute for users who installed version 7.x-3.x-dev before 2011-Aug-10.
   try {
     $old_dependencies = db_select('conditional_fields', 'cf')->fields('cf', array('control_field_name', 'field_name', 'type', 'trigger_values'))->execute();
