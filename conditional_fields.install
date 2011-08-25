@@ -268,3 +268,28 @@ function conditional_fields_update_7000() {
 
   return 'Conditional Fields successfully upated dependencies to Drupal 7.';
 }
+
+/**
+ * Set 'selector' option to empty string if 'selector_custom' was unchecked and
+ * remove 'selector_custom' option.
+ */
+function conditional_fields_update_7001() {
+  $dependencies = db_select('conditional_fields', 'cf')->fields('cf', array('id', 'options'))->execute();
+
+  foreach ($dependencies as $dependency) {
+    $options = unserialize($dependency->options);
+
+    if ($options['selector_custom'] == 0) {
+      $options['selector'] = '';
+    }
+
+    unset($options['selector_custom']);
+
+    db_update('conditional_fields')
+      ->fields(array(
+        'options' => serialize($options),
+      ))
+      ->condition('id', $dependency->id)
+      ->execute();
+  }
+}

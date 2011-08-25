@@ -269,7 +269,7 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
       // Build the jQuery selector of the dependee if it was not overridden by
       // a custom selector.
       $dependee_widget_type = $form_state_fields[$dependee][isset($form_state_fields[$dependee][$langcode]) ? $langcode : LANGUAGE_NONE]['instance']['widget']['type'];
-      if (!$options['selector_custom']) {
+      if (!$options['selector']) {
         $options['selector'] = conditional_fields_field_selector($dependee, $dependee_widget_type, $form[$dependee]);
       }
 
@@ -841,7 +841,6 @@ function conditional_fields_dependency_default_options() {
   return array(
     // A default selector is built later using conditional_fields_field_selector()
     'selector'              => '',
-    'selector_custom'       => 0,
     // See conditional_fields_states() for available states
     'state'                 => 'visible',
     // See conditional_fields_conditions() for available conditions

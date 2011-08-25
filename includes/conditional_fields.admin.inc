@@ -319,7 +319,6 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     drupal_exit();
   }
 
-  $form['#attached']['js'] = array(drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.admin.js');
   $form['#attached']['css'][] = drupal_get_path('module', 'conditional_fields') . '/conditional_fields.css';
 
   // Retrieve needed information from the dependee instance.
@@ -604,26 +603,18 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#title' => t('Advanced dependency settings'),
   );
 
-  // Build the default jQuery selector.
-  $form['#default_selector'] = conditional_fields_field_selector($dependee['field_name'], $dependee_instance['widget']['type'], $dummy_field[$dependee['field_name']]);
-
-  $selector_description = t('You need to change this only if the automatically generated selector does not work or for advanced selection. You can use the following placeholders:');
+  $selector_description = t('Only use if you know what you are doing, otherwise leave the field empty to let the dependency use an automatically generated selector.');
+  $selector_description .= '<br />' . t(' You can use the following placeholders:');
   $selector_description .= "<ul>\n";
   $selector_description .= '<li>' . t('%lang: current language of the field.') . "</li>\n";
   $selector_description .= '<li>' . t('%key: part identifier for fields composed of multiple form elements, like checkboxes.') . "</li>\n";
   $selector_description .= '</ul>';
-  $selector_description .= t('Leave the field empty to reset the selector to its default value.');
 
   $form['dependency_advanced']['selector'] = array(
     '#type' => 'textfield',
-    '#title' => t('Dependee jQuery selector'),
+    '#title' => t('Custom jQuery selector for dependee'),
     '#description' => $selector_description,
-    '#default_value' => $dependency['options']['selector_custom'] ? $dependency['options']['selector'] : $form['#default_selector'],
-  );
-
-  $form['dependency_advanced']['selector_custom'] = array(
-    '#type' => 'hidden',
-    '#default_value' => $dependency['options']['selector_custom'],
+    '#default_value' => $dependency['options']['selector'],
   );
 
   /* TODO: Add OR and XOR to multiple dependencies on same dependent field
@@ -690,8 +681,7 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
     'dependent' => $form['#dependency']['dependent'],
     'options'   => array(
       // If the selector was left empty, switch back to the default selector.
-      'selector'              => empty($form_state['values']['selector']) ? $form['#default_selector'] : $form_state['values']['selector'],
-      'selector_custom'       => empty($form_state['values']['selector']) || $form_state['values']['selector'] == $form['#default_selector'] ? 0 : $form_state['values']['selector_custom'],
+      'selector'              => $form_state['values']['selector'],
       'state'                 => $form_state['values']['state'],
       'condition'             => $form_state['values']['condition'],
       'values_set'            => $form_state['values']['values_set'],
