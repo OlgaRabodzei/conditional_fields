@@ -17,27 +17,27 @@ define('CONDITIONAL_FIELDS_GROUPING_XOR', 2);
 /**
  * Dependency is triggered if the dependee has a certain value.
  */
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE', 1);
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET', 1);
 
 /**
  * Dependency is triggered if the dependee has all values.
  */
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND', 2);
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND', 2);
 
 /**
  * Dependency is triggered if the dependee has any of the values.
  */
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR', 3);
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR', 3);
 
 /**
  * Dependency is triggered if the dependee has only one of the values.
  */
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR', 4);
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR', 4);
 
 /**
  * Dependency is triggered if the dependee does not have any of the values.
  */
-define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT', 5);
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT', 5);
 
 /**
  * Field view setting. Dependent is shown only if the dependency is triggered.
@@ -284,18 +284,18 @@ function conditional_fields_field_attach_form($entity_type, $entity, &$form, &$f
         $values[$options['condition']] = TRUE;
       }
       else {
-        if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+        if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
           $values[$options['condition']] = $options['value_form'];
         }
-        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND) {
+        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
           $values[$options['condition']] = count($options['values']) == 1 ? $options['values'][0] : $options['values'];
         }
         else {
-          if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR) {
+          if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR) {
             // XOR behaves like OR with added 'xor' element.
             $values[] = 'xor';
           }
-          elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT) {
+          elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT) {
             // NOT behaves like OR with switched state.
             $options['state'] = strpos($options['state'], '!') === 0 ? drupal_substr($options['state'], 1) : '!' . $options['state'];
           }
@@ -556,7 +556,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
  * Evaluate if a dependency meets the requirements to be triggered.
  */
 function conditional_fields_evaluate_dependency($options, $form_values) {
-  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
     if (is_string($form_values)) {
       // Options elements consider "_none" value same as empty.
       $form_values = $form_values == '_none' ? '' : $form_values;
@@ -578,19 +578,19 @@ function conditional_fields_evaluate_dependency($options, $form_values) {
   }
 
   switch ($options['values_set']) {
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       $diff = array_diff($options['values'], $values);
       return empty($diff);
 
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
       $intersect = array_intersect($options['values'], $values);
       return !empty($intersect);
 
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
       $intersect = array_intersect($options['values'], $values);
       return count($intersect) == 1;
 
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
       $intersect = array_intersect($options['values'], $values);
       return empty($intersect);
   }
@@ -844,7 +844,7 @@ function conditional_fields_dependency_default_options() {
     'state'                 => 'visible',
     // See conditional_fields_conditions() for available conditions
     'condition'             => 'value',
-    'values_set'            => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE,
+    'values_set'            => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
     'value'                 => array(),
     'value_form'            => array(),
     'values'                => array(),
@@ -1333,15 +1333,15 @@ function conditional_fields_states_handler_select($field, $field_info, $options,
   }
 
   switch ($options['values_set']) {
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       return;
 
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
       $select_states[$options['state']][] = 'xor';
 
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
       foreach ($options['values'] as $value) {
         $select_states[$options['state']][] = array(
           $options['selector'] => array(
@@ -1363,16 +1363,16 @@ function conditional_fields_states_handler_select($field, $field_info, $options,
  */
 function conditional_fields_states_handler_checkbox($field, $field_info, $options, &$state) {
   switch ($options['values_set']) {
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
       $checked = $options['value'][0]['value'] == $field['#on_value'] ? TRUE : FALSE;
       break;
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       // ANDing values of a single checkbox doesn't make sense: just use the first value.
       $checked = $options['values'][0] == $field['#on_value'] ? TRUE : FALSE;
       break;
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
       $checked = in_array($field['#on_value'], $options['values']) ? TRUE : FALSE;
       break;
   }
@@ -1389,20 +1389,20 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
   $checkboxes_selectors = array();
 
   switch ($options['values_set']) {
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
       foreach ($options['value'] as $value) {
         $checkboxes_selectors[str_replace('%key', $value['value'], $options['selector'])] = array('checked' => TRUE);
       }
       break;
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       foreach ($options['values'] as $value) {
         $checkboxes_selectors[str_replace('%key', $value, $options['selector'])] = array('checked' => TRUE);
       }
       break;
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
       $checkboxes_selectors[] = 'xor';
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
-    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
       foreach ($options['values'] as $value) {
         $checkboxes_selectors[] = array(str_replace('%key', $value, $options['selector']) => array('checked' => TRUE));
       }
@@ -1418,7 +1418,7 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
 function conditional_fields_states_handler_text($field, $field_info, $options, &$state) {
   // Text fields values are keyed by cardinality, so we have to flatten them.
   // TODO: support multiple values.
-  if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+  if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
     // Cast as array to handle the exception of autocomplete text fields.
     $value = (array) $state[$options['state']][$options['selector']]['value'][0];
     $state[$options['state']][$options['selector']]['value'] = array_shift($value);
@@ -1432,7 +1432,7 @@ function conditional_fields_states_handler_date_combo($field, $field_info, $opti
 
   // Date text.
   if ($field_info['instance']['widget']['type'] == 'date_text') {
-    if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+    if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
       $state[$options['state']][$options['selector']]['value'] = $state[$options['state']][$options['selector']]['value'][0]['value']['date'];
     }
     return;
@@ -1486,7 +1486,7 @@ function conditional_fields_states_handler_link_field($field, $field_info, $opti
  * States handler for links provided by the Addressfield module.
  */
 function conditional_fields_states_handler_link_addressfield($field, $field_info, $options, &$state) {
-  if ($options['condition'] != 'value' || $options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE) {
+  if ($options['condition'] != 'value' || $options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
     return;
   }
 
@@ -1526,7 +1526,7 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
     $values = implode(', ', $options['values']);
 
     switch ($options['values_set']) {
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         if (count($options['value']) == 1) {
           return t('%dependent_name is !state when %dependee_name has value "@value".', array(
             '%dependent_name' => $dependent_name,
@@ -1542,7 +1542,7 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           $value_array[] = current($value);
         }
         $values = implode(', ', $value_array);
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         return t('%dependent_name is !state when %dependee_name has all the values: @values.', array(
           '%dependent_name' => $dependent_name,
           '!state' => drupal_strtolower($states[$options['state']]),
@@ -1550,7 +1550,7 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           '@values' => $values,
         ));
         break;
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
         return t('%dependent_name is !state when %dependee_name has at least one of the values: @values.', array(
           '%dependent_name' => $dependent_name,
           '!state' => drupal_strtolower($states[$options['state']]),
@@ -1558,7 +1558,7 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           '@values' => $values,
         ));
         break;
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
         return t('%dependent_name is !state when %dependee_name has only one of the values: @values.', array(
           '%dependent_name' => $dependent_name,
           '!state' => drupal_strtolower($states[$options['state']]),
@@ -1566,7 +1566,7 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           '@values' => $values,
         ));
         break;
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
         return t('%dependent_name is !state when %dependee_name has none of the values: @values.', array(
           '%dependent_name' => $dependent_name,
           '!state' => drupal_strtolower($states[$options['state']]),

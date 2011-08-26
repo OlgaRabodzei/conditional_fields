@@ -363,12 +363,12 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#title' => t('Values'),
     '#description' => t('The values of the dependee %field that trigger the dependency.', array('%field' => $dependee_instance['label'])),
     '#options' => array(
-      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE => t('Insert value from widget...'),
+      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET => t('Insert value from widget...'),
       t('Set of values') => array(
-        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND    => t('All these values...'),
-        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR     => t('Any of these values...'),
-        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR    => t('Only one of these values...'),
-        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT    => t('None of these values...'),
+        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND => t('All these values...'),
+        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR  => t('Any of these values...'),
+        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR => t('Only one of these values...'),
+        CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT => t('None of these values...'),
         // TODO: PHP evaluation
       ),
     ),
@@ -388,7 +388,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#states' => array(
       'visible' => array(
         ':input[name="values_set"]' => array(
-          'value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE,
+          'value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
         ),
         ':input[name="condition"]' => array('value' => 'value'),
       ),
@@ -405,10 +405,10 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#states' => array(
       'visible' => array(
         ':input[name="values_set"]' => array(
-          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_AND),
-          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_OR),
-          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_XOR),
-          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_NOT),
+          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND),
+          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR),
+          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR),
+          array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT),
         ),
         ':input[name="condition"]' => array('value' => 'value'),
       ),
@@ -651,7 +651,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
  * @see conditional_fields_dependency_edit_form()
  */
 function conditional_fields_dependency_edit_form_validate($form, &$form_state) {
-  if ($form_state['values']['condition'] == 'value' && $form_state['values']['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_SET_SINGLE && drupal_strlen(trim($form_state['values']['values'])) == 0) {
+  if ($form_state['values']['condition'] == 'value' && $form_state['values']['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET && drupal_strlen(trim($form_state['values']['values'])) == 0) {
     form_set_error('values', t('!name field is required.', array('!name' => t('Set of values'))));
   }
 }
