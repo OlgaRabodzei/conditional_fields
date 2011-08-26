@@ -1,8 +1,7 @@
 <?php
-
 /**
- * @file conditional_fields.features.inc
- * Features integration hooks
+ * @file
+ * Features integration hooks.
  */
 
 /**
@@ -16,7 +15,7 @@ function conditional_fields_features_export_options() {
     foreach ($data as $dependency => $info) {
       $option = $type . ':' . $dependency;
       if (!isset($options[$dependency])) {
-        $options[$option] = $entity_info[$type]['bundles'][$dependency]['label'] .' ('. $type .')';
+        $options[$option] = $entity_info[$type]['bundles'][$dependency]['label'] . ' (' . $type . ')';
       }
     }
   }
@@ -49,19 +48,19 @@ function conditional_fields_features_export_render($module_name = '', $data) {
 
     if (isset($dependencies[$entity]) && isset($dependencies[$entity][$bundle])) {
       $info = $dependencies[$entity][$bundle];
-      foreach($info as $k => $v) {
+      foreach ($info as $k => $v) {
         if (isset($v['dependees'])) {
           $code[] = '  $items[] = array(';
-          $code[] = "    'entity' => '". $entity ."',";
-          $code[] = "    'bundle' => '". $bundle ."',";
-          $code[] = "    'dependent' => '". $k ."',";
+          $code[] = "    'entity' => '" . $entity . "',";
+          $code[] = "    'bundle' => '" . $bundle . "',";
+          $code[] = "    'dependent' => '" . $k . "',";
           $dependee = array_keys($v['dependees']);
-          $code[] = "    'dependee' => '". $dependee[0] ."',";
+          $code[] = "    'dependee' => '" . $dependee[0] . "',";
           $code[] = "    'options' => ";
           $vals = explode("\n", var_export($v['dependees'][$dependee[0]]['options'], TRUE));
           // $code += $vals would work just as well here, but this formats the output nicer.
           foreach ($vals as $val) {
-            $code[] = '      '. $val;
+            $code[] = '      ' . $val;
           }
           $code[] = '  );';
         }
@@ -93,7 +92,7 @@ function conditional_fields_features_rebuild($module) {
 
   if (!empty($defaults)) {
     $node_types = array();
-    foreach($defaults as $field) {
+    foreach ($defaults as $field) {
       if (isset($dependencies[$field['entity']][$field['bundle']])) {
         foreach ($dependencies[$field['entity']][$field['bundle']] as $k => $v) {
           if (isset($v['dependees'])) {
@@ -114,7 +113,7 @@ function conditional_fields_features_rebuild($module) {
 }
 
 /**
- * Implementation of hook_features_revert().
+ * Implements hook_features_revert().
  */
 function conditional_fields_features_revert($module) {
   return conditional_fields_features_rebuild($module);

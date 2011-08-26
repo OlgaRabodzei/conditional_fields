@@ -20,7 +20,7 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
 
   // Gather entities information.
   $entities = $entity_type ? array($entity_type => entity_get_info($entity_type)) : entity_get_info();
-  
+
   // Unused here, but saves queries in conditional_fields_dependency_add_form().
   conditional_fields_load_dependencies();
 
@@ -428,7 +428,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#ajax' => array(
       'callback' => 'conditional_fields_ajax_admin_state_callback',
       'wrapper' => 'effects-wrapper',
-     ),
+    ),
   );
 
   $effects = $effects_options = array();
@@ -456,7 +456,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
       '#type' => 'hidden',
       '#value' => array_shift(array_keys($effects)),
       '#default_value' => array_shift(array_keys($effects)),
-    );    
+    );
   }
   elseif (count($effects) > 1) {
     $form['effects_wrapper']['effect'] = array(
@@ -492,13 +492,13 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
       );
 
       if (isset($form_state['values']['effect_options'][$effect_name][$effect_option_name])) {
-        $effect_option['#default_value'] = $form_state['values']['effect_options'][$effect_name][$effect_option_name];        
+        $effect_option['#default_value'] = $form_state['values']['effect_options'][$effect_name][$effect_option_name];
       }
-      else if ($dependency['options']['effect'] == $effect_name) {
+      elseif ($dependency['options']['effect'] == $effect_name) {
         $effect_option['#default_value'] = $dependency['options']['effect_options'][$effect_option_name];
       }
 
-      $form['effects_wrapper']['effect_options'][$effect_name][$effect_option_name] = $effect_option;      
+      $form['effects_wrapper']['effect_options'][$effect_name][$effect_option_name] = $effect_option;
     }
   }
 
@@ -604,7 +604,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   );
 
   $selector_description = t('Only use if you know what you are doing, otherwise leave the field empty to let the dependency use an automatically generated selector.');
-  $selector_description .= '<br />' . t(' You can use the following placeholders:');
+  $selector_description .= '<br />' . t('You can use the following placeholders:');
   $selector_description .= "<ul>\n";
   $selector_description .= '<li>' . t('%lang: current language of the field.') . "</li>\n";
   $selector_description .= '<li>' . t('%key: part identifier for fields composed of multiple form elements, like checkboxes.') . "</li>\n";

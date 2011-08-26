@@ -72,7 +72,7 @@ function conditional_fields_schema_7000() {
 }
 
 /**
- * Implements hook_last_removed.
+ * Implements hook_last_removed().
  */
 function conditional_fields_last_removed() {
   return 6002;
