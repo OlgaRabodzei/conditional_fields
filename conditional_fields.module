@@ -457,7 +457,6 @@ function conditional_fields_entity_view_alter(&$build, $type) {
     return;
   }
 
-  global $user;
   $evaluated_dependents = array();
 
   foreach ($dependencies as $dependent => $dependency) {
