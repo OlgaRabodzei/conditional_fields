@@ -173,6 +173,8 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
     $fields[$field['id']] = check_plain($field['label']);
   }
 
+  asort($fields);
+
   // Build list of states.
   $states = array_map('drupal_strtolower', conditional_fields_states());
 
