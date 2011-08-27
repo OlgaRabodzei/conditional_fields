@@ -11,7 +11,7 @@
         var effect = settings.conditionalFields.effects[dependent];
         switch (effect.effect) {
           case 'fade':
-            $('[name="'+dependent+'"]', context).unbind('state:visible').bind('state:visible', function(e) {
+            $(dependent, context).unbind('state:visible').bind('state:visible', function(e) {
               if (e.trigger) {
                 $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'fadeIn' : 'fadeOut'](parseInt(effect.options.speed));
               }
@@ -21,7 +21,7 @@
             break;
 
           case 'slide':
-            $('[name="'+dependent+'"]', context).unbind('state:visible').bind('state:visible', function(e) {
+            $(dependent, context).unbind('state:visible').bind('state:visible', function(e) {
               if (e.trigger) {
                 $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'slideDown' : 'slideUp'](parseInt(effect.options.speed));
               }
@@ -31,17 +31,18 @@
 
           case 'fill':
           case 'empty':
-            $('[name="'+dependent+'"]', context).bind('state:empty', function(e) {
+            $(dependent, context).bind('state:empty', function(e) {
               if (e.trigger) {
+                var field = $(e.target).find('input, select, textarea');
                 if (effect.options.reset) {
-                  if (typeof oldValue == 'undefined' || $(e.target).val() != effect.options.value) {
-                    oldValue = $(e.target).val();
+                  if (typeof oldValue == 'undefined' || field.val() != effect.options.value) {
+                    oldValue = field.val();
                   }
-                  $(e.target).val((effect.effect == 'fill' ? e.value : !e.value) ? oldValue : effect.options.value);
+                  field.val((effect.effect == 'fill' ? e.value : !e.value) ? oldValue : effect.options.value);
                 }
                 else {
                   if (effect.effect == 'fill' && !e.value || effect.effect == 'empty' && e.value) {
-                    $(e.target).val(effect.options.value);
+                    field.val(effect.options.value);
                   }
                 }
               }
