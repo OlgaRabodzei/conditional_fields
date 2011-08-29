@@ -495,10 +495,9 @@ states.State.prototype = {
     // Only act when this change was triggered by a dependency and not by the
     // element monitoring itself.
     if (e.trigger) {
-      $(e.target)
-        .attr('disabled', e.value)
-        .filter('.form-element')
-          .closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'addClass' : 'removeClass']('form-disabled');
+      $(e.target).closest('.form-item, .form-submit, .form-wrapper')[e.value ? 'addClass' : 'removeClass']('form-disabled')
+      .find('input, select, textarea, button')
+        .attr('disabled', e.value);
 
       // Note: WebKit nightlies don't reflect that change correctly.
       // See https://bugs.webkit.org/show_bug.cgi?id=23789
@@ -507,12 +506,11 @@ states.State.prototype = {
 
   $(document).bind('state:required', function(e) {
     if (e.trigger) {
-      var label = 'label' + $(e.target).attr('id') ? '[for=' + $(e.target).attr('id') + ']' : '';
       if (e.value) {
-        $(e.target).closest('.form-item, .form-wrapper').find(label).append('<abbr class="form-required" title="' + Drupal.t('This field is required.') + '">*</abbr>');
+        $(e.target).closest('.form-item, .form-wrapper').find('label:first').append('<abbr class="form-required" title="' + Drupal.t('This field is required.') + '">*</abbr>');
       }
       else {
-        $(e.target).closest('.form-item, .form-wrapper').find(label + ' .form-required').remove();
+        $(e.target).closest('.form-item, .form-wrapper').find('label:first .form-required').remove();
       }
     }
   });
@@ -525,7 +523,9 @@ states.State.prototype = {
 
   $(document).bind('state:checked', function(e) {
     if (e.trigger) {
-      $(e.target).attr('checked', e.value);
+      $(e.target).closest('.form-item, .form-wrapper')
+      .find('input:checkbox')
+      .attr('checked', e.value);
     }
   });
 
