@@ -423,16 +423,16 @@ function conditional_fields_form_after_build($form, $form_state) {
 
     $dependent_form_field = drupal_array_get_nested_value($form, $dependent_info['parents']);
 
-    // Compatibility with modules that provide nested entities.
-    switch ($dependent_form_field['#entity_type']) {
-      case 'profile2':
-        $form_state_fields = $form_state['field']['#parents']['profile_' . $dependent_form_field['#bundle']]['#fields'];
-        break;
-      case 'field_collection_item':
-        $form_state_fields = $form_state['field']['#parents'][$dependent_form_field['#bundle']][$dependent_form_field['#language']][0]['#fields'];
-        break;
-      default:
-        $form_state_fields = $form_state['field'];
+    // Locate field information in $form_state['field'] for compatibility with
+    // modules that provide nested entities. The $entity_parents array is also
+    // used later to determine the depth of the #states array in the form.
+    $entity_parents = isset($dependent_form_field['#field_parents']) ? $dependent_form_field['#field_parents'] : array();
+
+    if (empty($entity_parents)) {
+      $form_state_fields = $form_state['field'];
+    }
+    else {
+      $form_state_fields = drupal_array_get_nested_value($form_state['field']['#parents'], array_merge($entity_parents, array('#fields')));
     }
 
     foreach ($dependent_info['dependees'] as $dependee => $dependency) {
@@ -575,7 +575,8 @@ function conditional_fields_form_after_build($form, $form_state) {
     unset($behaviors);
 
     // Add the #states property to the dependent field's outermost container.
-    drupal_array_set_nested_value($form, array($dependent_info['parents'][0], '#states'), $states);
+    $dependent_container = array_slice($dependent_info['parents'], 0, count($entity_parents) + 1);
+    drupal_array_set_nested_value($form, array_merge($dependent_container, array('#states')), $states);
   }
 
   return $form;
