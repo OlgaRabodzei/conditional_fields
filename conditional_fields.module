@@ -300,11 +300,13 @@ function conditional_fields_element_after_build($element, &$form_state) {
  * @param $form
  *   The form where the dependency is attached.
  * @param $dependee
- *   The dependee field form element. Actually used properties are #field_name
- *   and #parents.
+ *   The dependee field form element. Either a string identifying the element
+ *   key in the form, or a fully built field array. Actually used properties of
+ *   the array are #field_name and #parents.
  * @param $dependent
- *   The dependent field form element. Actually used properties are #field_name
- *   and #parents.
+ *   The dependent field form element. Either a string identifying the element
+ *   key in the form, or a fully built field array. Actually used properties of
+ *   the array are #field_name and #parents.
  * @param $options
  *   An array of dependency options with the following key/value pairs:
  *   - state: The state applied to the dependent when the dependency is
@@ -377,16 +379,27 @@ function conditional_fields_element_after_build($element, &$form_state) {
 function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $options) {
   $options += conditional_fields_dependency_default_options();
 
-  // Attach dependee.
-  if (isset($dependee['#parents'])) {
-    $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#parents'];
-    $form['#conditional_fields'][$dependee['#field_name']]['dependents'][$dependent['#field_name']]['options'] = $options;
-  }
+  // String values are accepted to simplify usage of this function with custom
+  // forms.
+  if (is_string($dependee) && is_string($dependent)) {
+    $form['#conditional_fields'][$dependee]['parents'] = array($dependee);
+    $form['#conditional_fields'][$dependee]['dependents'][$dependent]['options'] = $options;
 
-  // Attach dependent.
-  if (isset($dependent['#parents'])) {
-    $form['#conditional_fields'][$dependent['#field_name']]['parents'] = $dependent['#parents'];
-    $form['#conditional_fields'][$dependent['#field_name']]['dependees'][$dependee['#field_name']]['options'] = $options;
+    $form['#conditional_fields'][$dependent]['parents'] = array($dependent);
+    $form['#conditional_fields'][$dependent]['dependees'][$dependee]['options'] = $options;
+  }
+  else {
+    // Attach dependee.
+    if (isset($dependee['#parents'])) {
+      $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#parents'];
+      $form['#conditional_fields'][$dependee['#field_name']]['dependents'][$dependent['#field_name']]['options'] = $options;
+    }
+
+    // Attach dependent.
+    if (isset($dependent['#parents'])) {
+      $form['#conditional_fields'][$dependent['#field_name']]['parents'] = $dependent['#parents'];
+      $form['#conditional_fields'][$dependent['#field_name']]['dependees'][$dependee['#field_name']]['options'] = $options;
+    }
   }
 
   // Actual processing is done in conditional_fields_form_after_build().
@@ -428,11 +441,13 @@ function conditional_fields_form_after_build($form, $form_state) {
     // used later to determine the depth of the #states array in the form.
     $entity_parents = isset($dependent_form_field['#field_parents']) ? $dependent_form_field['#field_parents'] : array();
 
-    if (empty($entity_parents)) {
-      $form_state_fields = $form_state['field'];
-    }
-    else {
-      $form_state_fields = drupal_array_get_nested_value($form_state['field']['#parents'], array_merge($entity_parents, array('#fields')));
+    if (isset($form_state['field'])) {
+      if (empty($entity_parents)) {
+        $form_state_fields = $form_state['field'];
+      }
+      else {
+        $form_state_fields = drupal_array_get_nested_value($form_state['field']['#parents'], array_merge($entity_parents, array('#fields')));
+      }
     }
 
     foreach ($dependent_info['dependees'] as $dependee => $dependency) {
@@ -445,15 +460,15 @@ function conditional_fields_form_after_build($form, $form_state) {
         $behaviors = conditional_fields_field_behaviors('edit', $options);
       }
 
+      $dependee_info = $form['#conditional_fields'][$dependee];
+      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
+
       // Determine if the dependee is in the form.
       $is_orphan = FALSE;
-      if (!isset($form_state_fields[$dependee])) {
+      if (!$dependee_form_field) {
         $is_orphan = TRUE;
         continue;
       }
-
-      $dependee_info = $form['#conditional_fields'][$dependee];
-      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
 
       // Build a jQuery selector if it was not overridden by a custom value.
       if (!$options['selector']) {
@@ -501,11 +516,11 @@ function conditional_fields_form_after_build($form, $form_state) {
       // The handler has no return value. Modify the $state parameter by
       // reference if needed.
       if ($options['condition'] == 'value') {
-        $dependee_instance_info = $form_state_fields[$dependee][$dependee_form_field['#language']];
-        foreach ($state_handlers as $property => $property_values) {
-          if (isset($dependee_form_field[$property]) && isset($state_handlers[$property][$dependee_form_field[$property]])) {
-            $state_handlers[$property][$dependee_form_field[$property]]($dependee_form_field, $dependee_instance_info, $options, $state);
-            break;
+        $dependee_instance_info = isset($form_state_fields) ? $form_state_fields[$dependee][$dependee_form_field['#language']] : NULL;
+
+        foreach ($state_handlers as $handler => $handler_conditions) {
+          if (array_intersect_assoc($handler_conditions, $dependee_form_field) == $handler_conditions) {
+            $handler($dependee_form_field, $dependee_instance_info, $options, $state);
           }
         }
       }
@@ -1290,28 +1305,41 @@ function conditional_fields_field_view_settings() {
 
 /**
  * Builds a list of special fields handlers to be executed when building the
- * #states array. The keys represent form properties and the values of those
- * properties associated with a handler.
+ * #states array. The keys are handler function names and the key/value pairs
+ * are field properties and their values that trigger the execution of the handler.
  *
  * The handlers themselves must accept the parameters $field, $field_info,
  * $options and $state.
  *
  * @see conditional_fields_field_attach_form()
- * @see conditional_fields_states_handler_checkboxes()
+ * @see conditional_fields_states_handler_select()
  */
 function conditional_fields_states_handlers() {
   $handlers = array(
-    '#type' => array(
-      'select'     => 'conditional_fields_states_handler_select',
-      'checkbox'   => 'conditional_fields_states_handler_checkbox',
-      'checkboxes' => 'conditional_fields_states_handler_checkboxes',
-      'textfield'  => 'conditional_fields_states_handler_text',
-      'textarea'   => 'conditional_fields_states_handler_text',
-      'date_combo' => 'conditional_fields_states_handler_date_combo',
-      'link_field' => 'conditional_fields_states_handler_link_field',
+    'conditional_fields_states_handler_select' => array(
+      '#type' => 'select',
+      '#multiple' => FALSE,
     ),
-    '#addressfield' => array(
-      1 => 'conditional_fields_states_handler_link_addressfield',
+    'conditional_fields_states_handler_checkbox' => array(
+      '#type' => 'checkbox',
+    ),
+    'conditional_fields_states_handler_select' => array(
+      '#type' => 'checkboxes',
+    ),
+    'conditional_fields_states_handler_text' => array(
+      '#type' => 'textfield',
+    ),
+    'conditional_fields_states_handler_textarea' => array(
+      '#type' => 'textarea',
+    ),
+    'conditional_fields_states_handler_date_combo' => array(
+      '#type' => 'date_combo',
+    ),
+    'conditional_fields_states_handler_link_field' => array(
+      '#type' => 'link_field',
+    ),
+    'conditional_fields_states_handler_link_addressfield' => array(
+      '#addressfield' => 1,
     ),
   );
 
@@ -1330,10 +1358,6 @@ function conditional_fields_states_handlers() {
  * added for each value of a set for OR, XOR and NOT evaluations.
  */
 function conditional_fields_states_handler_select($field, $field_info, $options, &$state) {
-  if ($field_info['field']['cardinality'] == 1) {
-    return;
-  }
-
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
@@ -1415,7 +1439,7 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
 }
 
 /**
- * States handler for text fields and text areas.
+ * States handler for text fields.
  */
 function conditional_fields_states_handler_text($field, $field_info, $options, &$state) {
   // Text fields values are keyed by cardinality, so we have to flatten them.
@@ -1425,6 +1449,13 @@ function conditional_fields_states_handler_text($field, $field_info, $options, &
     $value = (array) $state[$options['state']][$options['selector']]['value'][0];
     $state[$options['state']][$options['selector']]['value'] = array_shift($value);
   }
+}
+
+/**
+ * States handler for text areas.
+ */
+function conditional_fields_states_handler_textarea($field, $field_info, $options, &$state) {
+  conditional_fields_states_handler_text($field, $field_info, $options, $state);
 }
 
 /**
