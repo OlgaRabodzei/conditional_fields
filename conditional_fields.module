@@ -1323,6 +1323,9 @@ function conditional_fields_states_handlers() {
     'conditional_fields_states_handler_checkbox' => array(
       '#type' => 'checkbox',
     ),
+    'conditional_fields_states_handler_checkboxes' => array(
+      '#type' => 'checkboxes',
+    ),
     'conditional_fields_states_handler_select' => array(
       '#type' => 'checkboxes',
     ),
