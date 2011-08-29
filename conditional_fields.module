@@ -500,11 +500,13 @@ function conditional_fields_form_after_build($form, $form_state) {
       // Execute special handler for fields that need further processing.
       // The handler has no return value. Modify the $state parameter by
       // reference if needed.
-      $dependee_instance_info = $form_state_fields[$dependee][$dependee_form_field['#language']];
-      foreach ($state_handlers as $property => $property_values) {
-        if (isset($dependee_form_field[$property]) && isset($state_handlers[$property][$dependee_form_field[$property]])) {
-          $state_handlers[$property][$dependee_form_field[$property]]($dependee_form_field, $dependee_instance_info, $options, $state);
-          break;
+      if ($options['condition'] == 'value') {
+        $dependee_instance_info = $form_state_fields[$dependee][$dependee_form_field['#language']];
+        foreach ($state_handlers as $property => $property_values) {
+          if (isset($dependee_form_field[$property]) && isset($state_handlers[$property][$dependee_form_field[$property]])) {
+            $state_handlers[$property][$dependee_form_field[$property]]($dependee_form_field, $dependee_instance_info, $options, $state);
+            break;
+          }
         }
       }
 
@@ -1417,7 +1419,7 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
 function conditional_fields_states_handler_text($field, $field_info, $options, &$state) {
   // Text fields values are keyed by cardinality, so we have to flatten them.
   // TODO: support multiple values.
-  if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
     // Cast as array to handle the exception of autocomplete text fields.
     $value = (array) $state[$options['state']][$options['selector']]['value'][0];
     $state[$options['state']][$options['selector']]['value'] = array_shift($value);
@@ -1430,7 +1432,7 @@ function conditional_fields_states_handler_text($field, $field_info, $options, &
 function conditional_fields_states_handler_date_combo($field, $field_info, $options, &$state) {
   // Date text.
   if ($field_info['instance']['widget']['type'] == 'date_text') {
-    if ($options['condition'] == 'value' && $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+    if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
       $state[$options['state']][$options['selector']]['value'] = $state[$options['state']][$options['selector']]['value'][0]['value']['date'];
     }
     return;
@@ -1484,7 +1486,7 @@ function conditional_fields_states_handler_link_field($field, $field_info, $opti
  * States handler for links provided by the Addressfield module.
  */
 function conditional_fields_states_handler_link_addressfield($field, $field_info, $options, &$state) {
-  if ($options['condition'] != 'value' || $options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+  if ($options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
     return;
   }
 
