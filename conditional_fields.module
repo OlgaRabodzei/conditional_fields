@@ -591,10 +591,17 @@ function conditional_fields_form_after_build($form, $form_state) {
  * pre-existing value for that property.
  */
 function _conditional_fields_element_add_property(&$element, $property, $value) {
-  // Avoid overriding default element properties that might not yet be set.
-  $property_default = isset($element['#type']) ? element_info_property($element['#type'], $property, array()) : array();
-
-  $element[$property] = array_merge((array) $value, $property_default, isset($element[$property]) ? $element[$property] : array());
+  if (isset($element[$property])) {
+    if (in_array($value, $element[$property])) {
+      return;      
+    }
+    $element[$property] = array_merge((array) $value, $element[$property]);
+  }
+  else {
+    // Avoid overriding default element properties that might not yet be set.
+    $property_default = isset($element['#type']) ? element_info_property($element['#type'], $property, array()) : array();
+    $element[$property] = array_merge((array) $value, $property_default);
+  }
 }
 
 /**
