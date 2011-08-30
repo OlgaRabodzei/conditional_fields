@@ -403,14 +403,7 @@ function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $op
   }
 
   // Actual processing is done in conditional_fields_form_after_build().
-  if (isset($form['#after_build'])) {
-    if (!in_array('conditional_fields_form_after_build', $form['#after_build'])) {
-      $form['#after_build'][] = 'conditional_fields_form_after_build';
-    }
-  }
-  else {
-    $form['#after_build'] = array('conditional_fields_form_after_build');
-  }
+  _conditional_fields_element_add_property($form, '#after_build', 'conditional_fields_form_after_build');
 }
 
 /**
@@ -537,27 +530,22 @@ function conditional_fields_form_after_build($form, $form_state) {
       }
 
       // Manage required dependent fields.
-      if ($options['condition'] == 'value') {
-        // Validation of required fields is hard coded in _form_validate(), so we
-        // must mark these fields as not required if we want to do a conditional
-        // validation. When the form is submitted, we will check if the dependency
-        // was triggered and only then revalidate the field with the #required
-        // property restored.
-        if (isset($dependent_form_field['#required']) && $dependent_form_field['#required'] == TRUE) {
-          $dependent_form_field['#required'] = FALSE;
+      // Validation of required fields is hard coded in _form_validate(), so we
+      // must mark these fields as not required if we want to do a conditional
+      // validation. When the form is submitted, we will check if the dependency
+      // was triggered and only then revalidate the field with the #required
+      // property restored.
+      if ($options['condition'] == 'value' && isset($dependent_form_field['#required']) && $dependent_form_field['#required'] == TRUE) {
+        $dependent_form_field['#required'] = FALSE;
 
-          // Add validation function to element.
-          $dependent_form_field['#element_validate'] = array_merge(array('conditional_fields_required_dependent_validate'), isset($dependent_form_field['#element_validate']) ? $dependent_form_field['#element_validate'] : array());
+        // Add validation callback to element.
+        _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_required_dependent_validate');
 
-          // Add pre render function to element.
-          if (isset($dependent_form_field['#type'])) {
-            $pre_render_default = element_info_property($dependent_form_field['#type'], '#pre_render', array());
-          }
-          $dependent_form_field['#pre_render'] = array_merge(array('conditional_fields_required_dependent_pre_render'), isset($dependent_form_field['#pre_render']) ? $dependent_form_field['#pre_render'] : $pre_render_default);
+        // Add pre render callback to element.
+        _conditional_fields_element_add_property($dependent_form_field, '#pre_render', 'conditional_fields_required_dependent_pre_render');
 
-          // Save the modified field back into the form.
-          drupal_array_set_nested_value($form, $dependent_info['parents'], $dependent_form_field);
-        }
+        // Save the modified field back into the form.
+        drupal_array_set_nested_value($form, $dependent_info['parents'], $dependent_form_field);
       }
     }
 
@@ -598,6 +586,18 @@ function conditional_fields_form_after_build($form, $form_state) {
 }
 
 /**
+ * Helper function to add a property/value pair to a form element safely.
+ * The property is assumed to be an array and the value will be prepended to any
+ * pre-existing value for that property.
+ */
+function _conditional_fields_element_add_property(&$element, $property, $value) {
+  // Avoid overriding default element properties that might not yet be set.
+  $property_default = isset($element['#type']) ? element_info_property($element['#type'], $property, array()) : array();
+
+  $element[$property] = array_merge((array) $value, $property_default, isset($element[$property]) ? $element[$property] : array());
+}
+
+/**
  * Validate conditionally required dependent fields.
  */
 function conditional_fields_required_dependent_validate($elements, $form_state, $form) {
@@ -611,17 +611,7 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
   }
 
   // Check if the dependency was triggered.
-  $dependees = $form['#conditional_fields'][$elements['#field_name']]['dependees'];
-  $evaluated_dependees = array();
-
-  foreach ($dependees as $dependee => $options) {
-    $values = drupal_array_get_nested_value($form_state['values'], $form['#conditional_fields'][$dependee]['parents']);
-
-    // TODO: OR/XOR grouping of dependencies.
-    $evaluated_dependees[$elements['#field_name']]['AND'][] = conditional_fields_evaluate_dependency($options['options'], $values);
-  }
-
-  $is_triggered = in_array(FALSE, $evaluated_dependees[$elements['#field_name']]['AND']) ? FALSE : TRUE;
+  $is_triggered = conditional_fields_evaluate_dependencies($elements, $form, $form_state);
 
   if ($is_triggered) {
     if (isset($elements['#title'])) {
@@ -747,6 +737,23 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 
     unset($behaviors);
   }
+}
+
+/**
+ * Evaluate a set of dependencies for a dependent field.
+ */
+function conditional_fields_evaluate_dependencies($dependent, $form, $form_state) {
+  $dependees = $form['#conditional_fields'][$dependent]['dependees'];
+  $evaluated_dependees = array();
+
+  foreach ($dependees as $dependee => $options) {
+    $values = drupal_array_get_nested_value($form_state['values'], $form['#conditional_fields'][$dependee]['parents']);
+
+    // TODO: OR/XOR grouping of dependencies.
+    $evaluated_dependees[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options['options'], $values);
+  }
+
+  return in_array(FALSE, $evaluated_dependees[$dependent]['AND']) ? FALSE : TRUE;
 }
 
 /**
@@ -1619,7 +1626,6 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
     ));
   }
 }
-
 
 /**
  * Implements hook_features_api().
