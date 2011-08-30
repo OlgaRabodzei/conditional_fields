@@ -504,6 +504,8 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     }
   }
 
+  $entity = entity_get_info($dependee_instance['entity_type']);
+
   $form['settings'] = array(
     '#type' => 'vertical_tabs',
   );
@@ -511,12 +513,12 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['edit_settings'] = array(
     '#type' => 'fieldset',
     '#group' => 'settings',
-    '#title' => t('Field edit settings'),
+    '#title' => t('@entity edit settings', array('@entity' => $entity['label'])),
   );
 
   $form['edit_settings']['element_edit_per_role'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Activate per user role field edit settings'),
+    '#title' => t('Activate per user role @entity edit settings', array('@entity' => strtolower($entity['label']))),
     '#description' => t('If the user has more than one role, the first matching role will be used.'),
     '#default_value' => $dependency['options']['element_edit_per_role'],
   );
@@ -525,8 +527,8 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
 
   $form['edit_settings']['element_edit'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Field edit settings for all roles'),
-    '#description' => t('Behaviors of fields when edited in forms. Only apply if the condition is Value.'),
+    '#title' => t('@entity edit settings for all roles', array('@entity' => $entity['label'])),
+    '#description' => t('Behaviors of fields when edited in @entity forms. Only apply if the condition is Value.', array('@entity' => strtolower($entity['label']))),
     '#options' => $field_edit_options,
     '#default_value' => $dependency['options']['element_edit'],
     '#states' => array(
@@ -541,7 +543,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   foreach ($roles as $rid => $role) {
     $element_edit_roles['element_edit_roles'][$rid] = array(
       '#type' => 'checkboxes',
-      '#title' => t('Field edit settings for %role', array('%role' => $role)),
+      '#title' => t('@entity edit settings for %role', array('@entity' => $entity['label'], '%role' => $role)),
       '#options' => $field_edit_options,
       '#default_value' => isset($dependency['options']['element_edit_roles'][$rid]) ? $dependency['options']['element_edit_roles'][$rid] : $dependency['options']['element_edit'],
       '#states' => array(
@@ -557,12 +559,12 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['view_settings'] = array(
     '#type' => 'fieldset',
     '#group' => 'settings',
-    '#title' => t('Field view settings'),
+    '#title' => t('@entity view settings', array('@entity' => $entity['label'])),
   );
 
   $form['view_settings']['element_view_per_role'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Activate per user role field view settings'),
+    '#title' => t('Activate per user role @entity view settings', array('@entity' => strtolower($entity['label']))),
     '#description' => t('If the user has more than one role, the first matching role will be used.'),
     '#default_value' => $dependency['options']['element_view_per_role'],
   );
@@ -571,8 +573,8 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
 
   $form['view_settings']['element_view'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Field view settings for all roles'),
-    '#description' => t('Behaviors of fields when shown in content. Only apply if the Condition is Value.'),
+    '#title' => t('@entity view settings for all roles', array('@entity' => $entity['label'])),
+    '#description' => t('Behaviors of fields when shown in content. Only apply if the condition is Value.'),
     '#options' => $field_view_options,
     '#default_value' => $dependency['options']['element_view'],
     '#states' => array(
@@ -586,7 +588,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   foreach ($roles as $rid => $role) {
     $element_view_roles['element_view_roles'][$rid] = array(
       '#type' => 'checkboxes',
-      '#title' => t('Field view settings for %role', array('%role' => $role)),
+      '#title' => t('@entity view settings for %role', array('@entity' => $entity['label'], '%role' => $role)),
       '#options' => $field_view_options,
       '#default_value' => isset($dependency['options']['element_view_roles'][$rid]) ? $dependency['options']['element_view_roles'][$rid] : $dependency['options']['element_view'],
       '#states' => array(
