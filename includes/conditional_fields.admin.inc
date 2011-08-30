@@ -667,13 +667,6 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
   $dependee = $form_state['values']['dependee'];
   $widget_type = $form_state['field'][$dependee][LANGUAGE_NONE]['instance']['widget']['type'];
 
-  $value = array();
-  field_default_extract_form_values(NULL, NULL, array('field_name' => $dependee), NULL, LANGUAGE_NONE, $value, $form['value']['field'], $form_state);
-
-  $values = explode("\n", $form_state['values']['values']);
-  $values = array_map('trim', $values);
-  $values = array_filter($values, 'strlen');
-
   // TODO: validate values against allowed values.
   // TODO: unify 'value' and 'values' fields.
 
@@ -682,29 +675,42 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
     'dependee'  => $form['#dependency']['dependee'],
     'dependent' => $form['#dependency']['dependent'],
     'options'   => array(
-      // If the selector was left empty, switch back to the default selector.
-      'selector'              => $form_state['values']['selector'],
       'state'                 => $form_state['values']['state'],
       'condition'             => $form_state['values']['condition'],
-      'values_set'            => $form_state['values']['values_set'],
-      // Single value is saved both as it is submitted by the form
-      // and as it is saved in the database.
-      // The latter is needed for fields that do not store directly
-      // the user input but a processed value (such as date_combo).
-      'value'                 => $value,
-      'value_form'            => $form_state['input']['value']['field'][$dependee][LANGUAGE_NONE],
-      'values'                => $values,
-//      'grouping'              => $form_state['values']['grouping'],
       'effect'                => isset($form_state['values']['effect']) ? $form_state['values']['effect'] : FALSE,
-      'effect_options'        => isset($form_state['values']['effect']) && isset($form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : array(),
+      'effect_options'        => isset($form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : array(),
       'element_view'          => $form_state['values']['element_view'],
       'element_view_per_role' => $form_state['values']['element_view_per_role'],
       'element_view_roles'    => $form_state['values']['element_view_roles'],
       'element_edit'          => $form_state['values']['element_edit'],
       'element_edit_per_role' => $form_state['values']['element_edit_per_role'],
       'element_edit_roles'    => $form_state['values']['element_edit_roles'],
+      'selector'              => $form_state['values']['selector'],
     ),
   );
+
+  // Store values only if the condition requires them.
+  if ($form_state['values']['condition'] == 'value') {
+
+    $dependency['options'] += array(
+      'values_set' => $form_state['values']['values_set'],
+      // Raw user input is needed to build actual value conditions in the
+      // #states array, so we store it in 'value_form'.
+      'value_form' => $form_state['input']['value']['field'][$dependee][LANGUAGE_NONE],
+    );
+
+    if ($dependency['options']['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+      $value = array();
+      field_default_extract_form_values(NULL, NULL, array('field_name' => $dependee), NULL, LANGUAGE_NONE, $value, $form['value']['field'], $form_state);
+      $dependency['options']['value'] = $value;
+    }
+    else {
+      $values = explode("\n", $form_state['values']['values']);
+      $values = array_map('trim', $values);
+      $values = array_filter($values, 'strlen');
+      $dependency['options']['values'] = $values;
+    }
+  }
 
   conditional_fields_dependency_update($dependency);
   drupal_set_message(t('Saved dependency configuration.'));
