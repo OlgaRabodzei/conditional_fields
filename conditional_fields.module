@@ -618,7 +618,7 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
   }
 
   // Check if the dependency was triggered.
-  $is_triggered = conditional_fields_evaluate_dependencies($elements, $form, $form_state);
+  $is_triggered = conditional_fields_evaluate_dependencies($elements['#field_name'], $form, $form_state);
 
   if ($is_triggered) {
     if (isset($elements['#title'])) {
