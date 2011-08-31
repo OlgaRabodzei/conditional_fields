@@ -1430,7 +1430,7 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
       foreach ($options['value'] as $value) {
-        $checkboxes_selectors[conditional_fields_field_selector($field[$value['value']])] = array('checked' => TRUE);
+        $checkboxes_selectors[conditional_fields_field_selector($field[current($value)])] = array('checked' => TRUE);
       }
       break;
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
