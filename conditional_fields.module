@@ -36,46 +36,46 @@ define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT', 5);
 /**
  * Field view setting. Dependent is shown only if the dependency is triggered.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE', 1);
+define('CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE', 1);
 
 /**
  * Field view setting. Dependent is shown only if the dependee is shown as well.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN', 2);
+define('CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN', 2);
 
 /**
  * Field view setting. Dependent is highlighted if the dependency is not
  * triggered.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT', 3);
+define('CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT', 3);
 
 /**
  * Field view setting. Dependent has a textual description of the dependency.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE', 4);
+define('CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE', 4);
 
 /**
  * Field view setting. Dependent is shown only if the dependee is shown as well
  * and the dependency evaluates to TRUE.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED', 5);
+define('CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN', 5);
 
 /**
  * Field edit setting. Dependent is shown only if the dependee is shown as well.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN', 1);
+define('CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN', 1);
 
 /**
  * Field edit setting. Dependent is shown only if the dependee is shown as well
  * and the dependency evaluates to TRUE.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED', 2);
+define('CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN', 2);
 
 /**
  * Field edit setting. Dependent is reset to its default values if the
  * dependency was not triggered when the form is submitted.
  */
-define('CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED', 3);
+define('CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED', 3);
 
 /* TODO: Grouping
 define('CONDITIONAL_FIELDS_GROUPING_AND', 0);
@@ -318,8 +318,8 @@ function conditional_fields_element_after_build($element, &$form_state) {
  *       triggered if the dependee has a certain value defined in 'value'.
  *     - CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND: Dependency is triggered if
  *       the dependee has all the values defined in 'values'.
- *     - CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR: Dependency is triggered if
- *       the dependee has any of the values defined in 'values'.
+ *     - CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR: Dependency is triggered if the
+ *       dependee has any of the values defined in 'values'.
  *     - CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR: Dependency is triggered if
  *       the dependee has only one of the values defined in 'values'.
  *     - CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT: Dependency is triggered if
@@ -337,36 +337,18 @@ function conditional_fields_element_after_build($element, &$form_state) {
  *   - effect: The jQuery effect associated to the state change. See
  *     conditional_fields_effects() for available effects and options.
  *   - effect_options: The options for the active effect.
- *   - element_view: An associative array of field view settings with the
- *     following constants as keys and the same constants as values for enabled
- *     settings and 0 for disabled settings:
- *     - CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE: Dependent is shown only if
- *       the dependency is triggered.
- *     - CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN: Dependent is shown only if
- *       the dependee is shown as well.
- *     - CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN: Dependent is shown only if
- *       the dependee is shown as well.
- *     - CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED: Dependent
- *       is shown only if the dependee is shown as well and the dependency
- *       evaluates to TRUE.
- *     - CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT: Dependent is highlighted if
- *       the dependency is not triggered.
- *     - CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE: Dependent has a textual
- *       description of the dependency.
+ *   - element_view: An associative array of field view behaviors with 
+ *     CONDITIONAL_FIELDS_FIELD_VIEW_* constants as keys and the same constants
+ *     as values for enabled behaviors and 0 for disabled behaviors.
+ *     See conditional_fields_behaviors() for descriptions.
  *   - element_view_per_role: Set to 1 to activate field view settings per role.
  *   - element_view_roles: An associative array of field view settings per role
  *     where the keys are role ids and the values are arrays with the same
  *     structure of 'element_view'.
- *   - element_edit: An associative array of field edit settings with the
- *     following constants as keys and the same constants as values for enabled
- *     settings and 0 for disabled settings:
- *     - CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN:
- *     - CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED: Dependent
- *       is shown only if the dependee is shown as well and the dependency
- *       evaluates to TRUE.
- *     - CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED:
- *       Dependent is reset to its default values if the dependency was not
- *       triggered when the form is submitted.
+ *   - element_edit: An associative array of field edit behaviors with 
+ *     CONDITIONAL_FIELDS_FIELD_EDIT_* constants as keys and the same constants
+ *     as values for enabled behaviors and 0 for disabled behaviors.
+ *     See conditional_fields_behaviors() for descriptions.
  *   - element_edit_per_role: Set to 1 to activate field edit settings per role.
  *   - element_edit_roles: An associative array of field edit settings per role
  *     where the keys are role ids and the values are arrays with the same
@@ -429,39 +411,39 @@ function conditional_fields_form_after_build($form, $form_state) {
 
     $dependent_form_field = drupal_array_get_nested_value($form, $dependent_info['parents']);
 
-    // Locate field information in $form_state['field'] for compatibility with
-    // modules that provide nested entities. The $entity_parents array is also
-    // used later to determine the depth of the #states array in the form.
-    $entity_parents = isset($dependent_form_field['#field_parents']) ? $dependent_form_field['#field_parents'] : array();
-
-    if (isset($form_state['field'])) {
-      if (empty($entity_parents)) {
-        $form_state_fields = $form_state['field'];
-      }
-      else {
-        $form_state_fields = drupal_array_get_nested_value($form_state['field']['#parents'], array_merge($entity_parents, array('#fields')));
-      }
-    }
-
     foreach ($dependent_info['dependees'] as $dependee => $dependency) {
+      $dependee_info = $form['#conditional_fields'][$dependee];
+      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
-      // Determine field edit behaviors.
+      // Load field edit behaviors.
       // If this dependent has multiple dependees, only the logic of the first
       // dependency will be taken into account.
       if (!isset($behaviors)) {
         $behaviors = conditional_fields_field_behaviors('edit', $options);
       }
 
-      $dependee_info = $form['#conditional_fields'][$dependee];
-      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
-
       // Determine if the dependee is in the form.
-      $is_orphan = FALSE;
       if (!$dependee_form_field) {
-        $is_orphan = TRUE;
+        // Apply orphan dependent behaviors.
+        if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
+          // TODO
+          /*
+          $is_triggered = TRUE;
+
+          if ($is_orphan && !$is_triggered) {
+            $form[$dependent]['#access'] = FALSE;
+          }
+          */
+        }
+        if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN, $behaviors)) {
+          $dependent_form_field['#access'] = FALSE;
+        }
         continue;
       }
+
+      unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN]);
+      unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN]);
 
       // Build a jQuery selector if it was not overridden by a custom value.
       if (!$options['selector']) {
@@ -472,14 +454,14 @@ function conditional_fields_form_after_build($form, $form_state) {
         $options['selector'] = str_replace('%lang', $dependee_form_field['#language'], $options['selector']);
       }
 
-      // Build the values that trigger the dependency.
-      $values = array();
-
       if ($options['condition'] != 'value') {
         // Conditions different than "value" are always evaluated against TRUE.
-        $values[$options['condition']] = TRUE;
+        $state = array($options['state'] => array($options['selector'] => array($options['condition'] => TRUE)));
       }
       else {
+        // Build the values that trigger the dependency.
+        $values = array();
+
         if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
           $values[$options['condition']] = $options['value_form'];
         }
@@ -501,20 +483,42 @@ function conditional_fields_form_after_build($form, $form_state) {
             $values[] = array($options['condition'] => $value);
           }
         }
-      }
 
-      $state = array($options['state'] => array($options['selector'] => $values));
+        $state = array($options['state'] => array($options['selector'] => $values));
 
-      // Execute special handler for fields that need further processing.
-      // The handler has no return value. Modify the $state parameter by
-      // reference if needed.
-      if ($options['condition'] == 'value') {
-        $dependee_instance_info = isset($form_state_fields) ? $form_state_fields[$dependee][$dependee_form_field['#language']] : NULL;
+        $dependee_form_state = isset($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $dependee_form_field['#language']) ? field_form_get_state($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $dependee_form_field['#language'], $form_state) : NULL;
 
+        // Execute special handler for fields that need further processing.
+        // The handler has no return value. Modify the $state parameter by
+        // reference if needed.
         foreach ($state_handlers as $handler => $handler_conditions) {
           if (array_intersect_assoc($handler_conditions, $dependee_form_field) == $handler_conditions) {
-            $handler($dependee_form_field, $dependee_instance_info, $options, $state);
+            $handler($dependee_form_field, $dependee_form_state, $options, $state);
           }
+        }
+
+        // Manage required dependent fields.
+        // Validation of required fields is hard coded in _form_validate(), so we
+        // must mark these fields as not required if we want to do a conditional
+        // validation. When the form is submitted, we will check if the dependency
+        // was triggered and only then revalidate the field with the #required
+        // property restored.
+        if (isset($dependent_form_field['#required']) && $dependent_form_field['#required'] == TRUE) {
+          $dependent_form_field['#required'] = FALSE;
+
+          // Add validation callback to element.
+          _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_required_dependent_validate');
+
+          // Add pre render callback to element.
+          _conditional_fields_element_add_property($dependent_form_field, '#pre_render', 'conditional_fields_required_dependent_pre_render');
+        }
+
+        // Apply reset dependent to default if untriggered behavior.
+        if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED, $behaviors)) {
+          // Add validation callback to element.
+          _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_behaviors_reset_default_validate');
+
+          unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED]);
         }
       }
 
@@ -528,57 +532,24 @@ function conditional_fields_form_after_build($form, $form_state) {
         $selector = conditional_fields_field_selector(drupal_array_get_nested_value($form, array($dependent_info['parents'][0])));
         drupal_add_js(array('conditionalFields' => array('effects' => array($selector => array('effect' => $options['effect'], 'options' => $options['effect_options'])))), 'setting');
       }
-
-      // Manage required dependent fields.
-      // Validation of required fields is hard coded in _form_validate(), so we
-      // must mark these fields as not required if we want to do a conditional
-      // validation. When the form is submitted, we will check if the dependency
-      // was triggered and only then revalidate the field with the #required
-      // property restored.
-      if ($options['condition'] == 'value' && isset($dependent_form_field['#required']) && $dependent_form_field['#required'] == TRUE) {
-        $dependent_form_field['#required'] = FALSE;
-
-        // Add validation callback to element.
-        _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_required_dependent_validate');
-
-        // Add pre render callback to element.
-        _conditional_fields_element_add_property($dependent_form_field, '#pre_render', 'conditional_fields_required_dependent_pre_render');
-
-        // Save the modified field back into the form.
-        drupal_array_set_nested_value($form, $dependent_info['parents'], $dependent_form_field);
-      }
     }
 
-    // Apply field edit behaviors.
-    foreach ($behaviors as $behavior) {
-      switch ($behavior) {
-        case CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN:
-          if ($is_orphan) {
-            $form[$dependent]['#access'] = FALSE;
-          }
-          break;
-        case CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED:
-          // TODO
-          $is_triggered = TRUE;
-
-          if ($is_orphan && !$is_triggered) {
-            $form[$dependent]['#access'] = FALSE;
-          }
-          break;
-        case CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED:
-          // TODO
-          break;
-        default:
-          // Custom behaviors are callbacks.
-          $$behavior('edit', $form, $form_state, $dependent, $dependencies, $is_triggered);
-          break;
+    // Execute custom behaviors.
+    if (!empty($behaviors)) {
+      foreach ($behaviors as $behavior) {
+        // Custom behaviors are callbacks.
+        $$behavior('edit', $form, $form_state, $dependent, $dependencies);
       }
     }
 
     unset($behaviors);
 
+    // Save the modified field back into the form.
+    drupal_array_set_nested_value($form, $dependent_info['parents'], $dependent_form_field);
+
     // Add the #states property to the dependent field's outermost container.
-    $dependent_container = array_slice($dependent_info['parents'], 0, count($entity_parents) + 1);
+    $dependent_parents = isset($dependent_form_field['#field_parents']) ? $dependent_form_field['#field_parents'] : array();
+    $dependent_container = array_slice($dependent_info['parents'], 0, count($dependent_parents) + 1);
     drupal_array_set_nested_value($form, array_merge($dependent_container, array('#states')), $states);
   }
 
@@ -631,6 +602,38 @@ function conditional_fields_required_dependent_validate($elements, $form_state, 
 }
 
 /**
+ * Validate dependent fields that should be reset to their default values if the
+ * dependency was not triggered.
+ *
+ * Works only with Lists and Text, since there is no API to convert a field's
+ * data from form to storage format.
+ */
+function conditional_fields_behaviors_reset_default_validate(&$elements, &$form_state, $form) {
+  $modules = array('text', 'number', 'options');
+  $instance = field_widget_instance($elements, $form_state);
+  if (!in_array($instance['widget']['module'], $modules)) {
+    return;
+  }
+
+  // Check if the dependency was triggered.
+  $is_triggered = conditional_fields_evaluate_dependencies($elements['#field_name'], $form, $form_state);
+
+  if (!$is_triggered) {
+    $default_value = field_get_default_value($instance['entity_type'], NULL, $elements, $instance, $elements['#language']);
+
+    switch ($instance['widget']['module']) {
+      case 'text':
+      case 'number':
+        $form_state['values'][$instance['field_name']][$elements['#language']] = $default_value;
+        break;
+      case 'options':
+        $elements['#value'] = $form_state['values'][$instance['field_name']][$elements['#language']] = $default_value[0]['value'];
+        break;
+    }
+  }
+}
+
+/**
  * Marks conditionally required dependents as required for themeing.
  */
 function conditional_fields_required_dependent_pre_render($elements) {
@@ -670,7 +673,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
       // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
       // only if all its dependencies evaluate to TRUE,
 
-      // This case is handled by the CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN behavior.
+      // This case is handled by the CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN behavior.
       if (!isset($build[$dependee])) {
         $evaluated_dependents[$dependent]['AND'][] = TRUE;
       }
@@ -692,28 +695,28 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 
       foreach ($behaviors as $behavior) {
         switch ($behavior) {
-          case CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE:
+          case CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE:
             // Hide the dependent if it is not triggered.
             if (!$is_triggered) {
               $build[$dependent]['#access'] = FALSE;
             }
             break;
 
-          case CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN:
+          case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN:
             // Hide the dependent if the dependee is not viewable.
             if (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE) {
               $build[$dependent]['#access'] = FALSE;
             }
             break;
 
-          case CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED:
+          case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN:
             // Hide the dependent if the dependee is not viewable and the dependency is not triggered.
             if (!$is_triggered && (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE)) {
               $build[$dependent]['#access'] = FALSE;
             }
             break;
 
-          case CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT:
+          case CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT:
             // Show the dependent themed like an error message if it is not triggered.
             if (!$is_triggered) {
               $build[$dependent]['#prefix'] = isset($build[$dependent]['#prefix']) ? '<div class="messages error">' . $build[$dependent]['#prefix'] : '<div class="messages error">';
@@ -721,7 +724,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
             }
             break;
 
-          case CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE:
+          case CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE:
             // Show a textual description of the dependency under the dependent field.
             if ($build[$dependent]['#access']) {
               $dependee_title = isset($build[$dependee]['#title']) ? $build[$dependee]['#title'] : $dependee;
@@ -883,18 +886,18 @@ function conditional_fields_dependency_default_options() {
     'effect'                => 'show',
     'effect_options'        => array(),
     'element_view'          => array(
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE => CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE,
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN,
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED => 0,
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT => 0,
-      CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE => 0,
+      CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE,
+      CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN,
+      CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => 0,
+      CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => 0,
+      CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => 0,
     ),
     'element_view_per_role' => 0,
     'element_view_roles'    => array(),
     'element_edit'          => array(
-      CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN,
-      CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED => 0,
-      CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED => 0,
+      CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN,
+      CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => 0,
+      CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => 0,
     ),
     'element_edit_per_role' => 0,
     'element_edit_roles'    => array(),
@@ -1283,38 +1286,34 @@ function conditional_fields_conditions($checkboxes = TRUE) {
 }
 
 /**
- * List of settings that can be applied when editing forms with dependencies.
+ * List of behaviors that can be applied when editing forms and viewing content
+ * with dependencies.
  */
-function conditional_fields_field_edit_settings() {
-  $settings = array(
-    CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN => t('Hide the dependent if the dependee is not in the form'),
-    // TODO: Implement. Settings are imported from D6 though, they just do nothing for now.
-    CONDITIONAL_FIELDS_ELEMENT_EDIT_HIDE_ORPHAN_IF_UNTRIGGERED => t('Hide the dependent if the dependee is not in the form and the dependency is not triggered. (Note: not implemented)'),
-    CONDITIONAL_FIELDS_ELEMENT_EDIT_RESET_DEFAULTS_IF_UNTRIGGERED => t('Reset the dependent to its default values if the dependency is not triggered. (Note: not implemented)'),
+function conditional_fields_behaviors($op = NULL) {
+  $behaviors = array(
+    'edit' => array(
+      CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => t('Hide the dependent if the dependee is not in the form'),
+      CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => t('Reset the dependent to its default values if the dependency is not triggered.') . '<br /><em>' . t('Note: works only with Text and Options widgets. Enabling this options with other types of widgets could lead to unexpected results.') . '</em>',
+      // TODO: Implement. Settings are imported from D6 though, they just do nothing for now.
+      CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => t('Hide the dependent if the dependee is not in the form and the dependency is not triggered. (Note: not implemented)'),
+    ),
+    'view' => array(
+      CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => t('Hide the dependent if the dependency is not triggered'),
+      CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => t('Hide the dependent if the dependee is not viewable by the user'),
+      CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => t('Hide the dependent if the dependee is not viewable by the user and the dependency is not triggered'),
+      CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => t('Theme the dependent like an error message if the dependency is not triggered'),
+      CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => t('Show a textual description of the dependency under the dependent'),
+    ),
   );
 
   // Allow other modules to modify the options.
-  drupal_alter('conditional_fields_field_edit_settings', $settings);
+  drupal_alter('conditional_fields_behaviors', $op, $behaviors);
 
-  return $settings;
-}
+  if (isset($behaviors[$op])) {
+    return $behaviors[$op];
+  }
 
-/**
- * List of settings that can be applied when viewing content with dependencies.
- */
-function conditional_fields_field_view_settings() {
-  $settings = array(
-    CONDITIONAL_FIELDS_ELEMENT_VIEW_EVALUATE    => t('Hide the dependent if the dependency is not triggered'),
-    CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN => t('Hide the dependent if the dependee is not viewable by the user'),
-    CONDITIONAL_FIELDS_ELEMENT_VIEW_HIDE_ORPHAN_IF_UNTRIGGERED => t('Hide the dependent if the dependee is not viewable by the user and the dependency is not triggered'),
-    CONDITIONAL_FIELDS_ELEMENT_VIEW_HIGHLIGHT   => t('Theme the dependent like an error message if the dependency is not triggered'),
-    CONDITIONAL_FIELDS_ELEMENT_VIEW_DESCRIBE    => t('Show a textual description of the dependency under the dependent'),
-  );
-
-  // Allow other modules to modify the options.
-  drupal_alter('conditional_fields_field_view_settings', $settings);
-
-  return $settings;
+  return $behaviors;
 }
 
 /**

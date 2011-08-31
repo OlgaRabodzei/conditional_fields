@@ -334,8 +334,8 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $dependee_instance = array_shift($instances);
   $dependee = field_info_field($dependee_instance['field_name']);
 
-  // Build a dummy field widget to extract the jQuery selector and to use as
-  // form field in single value selection option.
+  // Build a dummy field widget to use as form field in single value selection
+  // option.
   $dummy_form = array('#parents' => array());
   $dependee_instance['default_value'] = $dependency['options']['value'];
   $dependee_instance['default_value_function'] = '';
@@ -523,13 +523,13 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#default_value' => $dependency['options']['element_edit_per_role'],
   );
 
-  $field_edit_options = conditional_fields_field_edit_settings();
+  $behaviors = conditional_fields_behaviors();
 
   $form['edit_settings']['element_edit'] = array(
     '#type' => 'checkboxes',
     '#title' => t('@entity edit settings for all roles', array('@entity' => $entity['label'])),
     '#description' => t('Behaviors of fields when edited in @entity forms. Only apply if the condition is Value.', array('@entity' => strtolower($entity['label']))),
-    '#options' => $field_edit_options,
+    '#options' => $behaviors['edit'],
     '#default_value' => $dependency['options']['element_edit'],
     '#states' => array(
       'visible' => array(
@@ -544,7 +544,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     $element_edit_roles['element_edit_roles'][$rid] = array(
       '#type' => 'checkboxes',
       '#title' => t('@entity edit settings for %role', array('@entity' => $entity['label'], '%role' => $role)),
-      '#options' => $field_edit_options,
+      '#options' => $behaviors['edit'],
       '#default_value' => isset($dependency['options']['element_edit_roles'][$rid]) ? $dependency['options']['element_edit_roles'][$rid] : $dependency['options']['element_edit'],
       '#states' => array(
         'visible' => array(
@@ -569,13 +569,11 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     '#default_value' => $dependency['options']['element_view_per_role'],
   );
 
-  $field_view_options = conditional_fields_field_view_settings();
-
   $form['view_settings']['element_view'] = array(
     '#type' => 'checkboxes',
     '#title' => t('@entity view settings for all roles', array('@entity' => $entity['label'])),
     '#description' => t('Behaviors of fields when shown in content. Only apply if the condition is Value.'),
-    '#options' => $field_view_options,
+    '#options' => $behaviors['view'],
     '#default_value' => $dependency['options']['element_view'],
     '#states' => array(
       'visible' => array(
@@ -589,7 +587,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
     $element_view_roles['element_view_roles'][$rid] = array(
       '#type' => 'checkboxes',
       '#title' => t('@entity view settings for %role', array('@entity' => $entity['label'], '%role' => $role)),
-      '#options' => $field_view_options,
+      '#options' => $behaviors['view'],
       '#default_value' => isset($dependency['options']['element_view_roles'][$rid]) ? $dependency['options']['element_view_roles'][$rid] : $dependency['options']['element_view'],
       '#states' => array(
         'visible' => array(
