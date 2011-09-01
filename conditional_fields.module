@@ -980,46 +980,6 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
 }
 
 /**
- * Loads a dependency by id of the fields, entity type and bundle name.
- */
-function conditional_fields_dependency_load($dependee_id, $dependent_id, $entity_type, $bundle) {
-  $select = db_select('conditional_fields', 'cf');
-
-  $select->fields('cf', array('id', 'dependee', 'dependent', 'options'));
-
-  $select->join('field_config_instance', 'fci_dependee', 'cf.dependee = fci_dependee.id');
-  $select->join('field_config_instance', 'fci_dependent', 'cf.dependent = fci_dependent.id');
-
-  $select->condition(
-    db_and()
-      ->condition('fci_dependee.bundle', $bundle)
-      ->condition('fci_dependent.bundle', $bundle)
-  );
-
-  $select->condition(
-    db_and()
-      ->condition('fci_dependee.entity_type', $entity_type)
-      ->condition('fci_dependent.entity_type', $entity_type)
-  );
-
-  $select->condition(
-    db_and()
-      ->condition('fci_dependee.id', $dependee_id)
-      ->condition('fci_dependent.id', $dependent_id)
-  );
-
-  $result = $select->execute()->fetchAssoc();
-
-  if (isset($result['options'])) {
-    $options = unserialize($result['options']);
-    $options += conditional_fields_dependency_default_options();
-    $result['options'] = $options;
-  }
-
-  return $result;
-}
-
-/**
  * Loads a dependency from the database by id.
  */
 function conditional_fields_dependency_load_by_id($id) {
