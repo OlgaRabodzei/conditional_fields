@@ -924,14 +924,14 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
   if (!isset($dependencies[$entity_type][$bundle])) {
     $default_options = conditional_fields_dependency_default_options();
 
-    $select = db_select('conditional_fields', 'cf');
-    $select->join('field_config_instance', 'fci_dependee', 'cf.dependee = fci_dependee.id');
-    $select->join('field_config_instance', 'fci_dependent', 'cf.dependent = fci_dependent.id');
-    $select->fields('cf', array('id', 'options'));
-    $select->addField('fci_dependee', 'field_name', 'dependee');
-    $select->addField('fci_dependent', 'field_name', 'dependent');
-    $select->addField('fci_dependee', 'entity_type');
-    $select->addField('fci_dependee', 'bundle');
+    $select = db_select('conditional_fields', 'cf')
+      ->fields('cf', array('id', 'options'));
+    $fci_depende = $select->join('field_config_instance', 'fci_dependee', 'cf.dependee = fci_dependee.id');
+    $fci_dependent = $select->join('field_config_instance', 'fci_dependent', 'cf.dependent = fci_dependent.id');
+    $select->addField($fci_depende, 'field_name', 'dependee');
+    $select->addField($fci_dependent, 'field_name', 'dependent');
+    $select->addField($fci_depende, 'entity_type');
+    $select->addField($fci_depende, 'bundle');
 
     if ($entity_type) {
       $select->condition(
