@@ -21,9 +21,6 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
   // Gather entities information.
   $entities = $entity_type ? array($entity_type => entity_get_info($entity_type)) : entity_get_info();
 
-  // Unused here, but saves queries in conditional_fields_dependency_add_form().
-  conditional_fields_load_dependencies();
-
   // Extract bundle name from path, if present.
   if ($bundle_name) {
     $bundle_name = strtr($bundle_name, array('-' => '_'));
@@ -32,6 +29,11 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
     if ($entity_type == 'comment') {
       $bundle_name = 'comment_node_' . $bundle_name;
     }
+  }
+
+  // Unused here, but saves queries in conditional_fields_dependency_add_form().
+  if (!$bundle_name) {
+    conditional_fields_load_dependencies($entity_type, $bundle_name);
   }
 
   $build = array();
@@ -97,9 +99,8 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
  * @ingroup forms
  */
 function conditional_fields_dependency_add_form($form, &$form_state, $entity_type, $bundle_name) {
-  $instances = field_info_instances($entity_type, $bundle_name);
-
   $form = array();
+  $instances = field_info_instances($entity_type, $bundle_name);
 
   if (count($instances) < 2) {
     $form['no_fields'] = array(
@@ -117,7 +118,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
     '#bundle_name' => $bundle_name,
     '#header' => array(
       t('Dependent'),
-      t('Dependee'),
+      t('Dependees'),
       t('Description'),
       array('data' => t('Operations'), 'colspan' => 2),
     ),
@@ -132,33 +133,41 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
   if ($dependencies) {
     $destination = drupal_get_destination();
 
-    foreach ($dependencies as $dependent_name => $field_dependencies) {
-      if (!isset($field_dependencies['dependees'])) {
-        continue;
-      }
+    foreach ($dependencies['dependents'] as $dependent => $dependees) {
+      $first_row = TRUE;
 
-      foreach ($field_dependencies['dependees'] as $dependee_name => $options) {
-        $form['table']['dependencies'][$options['id']] = array(
-          'dependent' => array(
-            '#markup' => $dependent_name,
-          ),
+      foreach ($dependees as $id => $dependency) {
+        $form['table']['dependencies'][$id] = array();
+
+        // Dependencies come ordered by dependent, so by adding it only to the
+        // first row they will appear grouped.
+        if ($first_row == TRUE) {
+          $form['table']['dependencies'][$id]['dependent'] = array(
+            '#markup' => $dependent,
+            '#rowspan' => count($dependees),
+          );
+
+          $first_row = FALSE;
+        }
+
+        $form['table']['dependencies'][$id] += array(
           'dependee' => array(
-            '#markup' => $dependee_name,
+            '#markup' => $dependency['dependee'],
           ),
           'description' => array(
-            '#markup' => conditional_fields_dependency_description($dependee_name, $dependent_name, $options['options']),
+            '#markup' => conditional_fields_dependency_description($dependency['dependee'], $dependent, $dependency['options']),
           ),
           'edit' => array(
             '#type' => 'link',
             '#title' => t('edit'),
-            '#href' => 'admin/structure/dependencies/edit/' . $options['id'],
+            '#href' => 'admin/structure/dependencies/edit/' . $id,
             '#options' => array('query' => $destination, 'attributes' => array('title' => t('Edit dependency settings.'))),
             '#query' => drupal_get_destination(),
           ),
           'delete' => array(
             '#type' => 'link',
             '#title' => t('delete'),
-            '#href' => 'admin/structure/dependencies/delete/' . $options['id'],
+            '#href' => 'admin/structure/dependencies/delete/' . $id,
             '#options' => array('query' => $destination, 'attributes' => array('title' => t('Delete dependency.'))),
           ),
         );
@@ -290,7 +299,20 @@ function theme_conditional_fields_table($variables) {
   // Dependencies rows.
   foreach (element_children($elements['dependencies']) as $dependency) {
     foreach (element_children($elements['dependencies'][$dependency]) as $cell_key) {
-      $table['rows'][$dependency][] = drupal_render($elements['dependencies'][$dependency][$cell_key]);
+      if ($cell_key == 'dependent') {
+        if ($elements['dependencies'][$dependency][$cell_key]['#rowspan'] == 1) {
+          $table['rows'][$dependency][] = drupal_render($elements['dependencies'][$dependency][$cell_key]);
+        }
+        else {
+          $table['rows'][$dependency][] = array(
+            'data' => drupal_render($elements['dependencies'][$dependency][$cell_key]),
+            'rowspan' => $elements['dependencies'][$dependency][$cell_key]['#rowspan'],
+          );
+        }
+      }
+      else {
+        $table['rows'][$dependency][] = drupal_render($elements['dependencies'][$dependency][$cell_key]);
+      }
     }
   }
 

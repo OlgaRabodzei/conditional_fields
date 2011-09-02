@@ -232,10 +232,8 @@ function conditional_fields_element_info_alter(&$types) {
  * - Field dependencies data.
  */
 function conditional_fields_element_after_build($element, &$form_state) {
-  $form = &$form_state['complete form'];
-
   // Ensure that the form being built is an entity.
-  if (!isset($form['#entity_type'], $form['#bundle'])) {
+  if (!isset($form_state['complete form']['#entity_type'], $form_state['complete form']['#bundle'])) {
     return $element;
   }
 
@@ -256,8 +254,8 @@ function conditional_fields_element_after_build($element, &$form_state) {
   // since in case of fields in entities within entities they won't correspond,
   // and their dependencies will not be loaded.
   if (!isset($field['#entity_type'], $field['#bundle'])) {
-    $entity_type = $form['#entity_type'];
-    $bundle = $form['#bundle'];
+    $entity_type = $form_state['complete form']['#entity_type'];
+    $bundle = $form_state['complete form']['#bundle'];
   }
   else {
     $entity_type = $field['#entity_type'];
@@ -271,19 +269,19 @@ function conditional_fields_element_after_build($element, &$form_state) {
   }
 
   // Attach dependent.
-  if (isset($dependencies[$field['#field_name']]['dependees'])) {
-    foreach ($dependencies[$field['#field_name']]['dependees'] as $dependee_name => $dependency) {
-      if (!isset($form['#conditional_fields'][$field['#field_name']]['dependees'][$dependee_name])) {
-        conditional_fields_attach_dependency($form, array('#field_name' => $dependee_name), $field, $dependency['options']);
+  if (isset($dependencies['dependents'][$field['#field_name']])) {
+    foreach ($dependencies['dependents'][$field['#field_name']] as $id => $dependency) {
+      if (!isset($form_state['complete form']['#conditional_fields'][$field['#field_name']]['dependees'][$id])) {
+        conditional_fields_attach_dependency($form_state['complete form'], array('#field_name' => $dependency['dependee']), $field, $dependency['options'], $id);
       }
     }
   }
 
   // Attach dependee.
-  if (isset($dependencies[$field['#field_name']]['dependents'])) {
-    foreach ($dependencies[$field['#field_name']]['dependents'] as $dependent_name => $dependency) {
-      if (!isset($form['#conditional_fields'][$field['#field_name']]['dependents'][$dependent_name])) {
-        conditional_fields_attach_dependency($form, $field, array('#field_name' => $dependent_name), $dependency['options']);
+  if (isset($dependencies['dependees'][$field['#field_name']])) {
+    foreach ($dependencies['dependees'][$field['#field_name']] as $id => $dependency) {
+      if (!isset($form_state['complete form']['#conditional_fields'][$field['#field_name']]['dependents'][$id])) {
+        conditional_fields_attach_dependency($form_state['complete form'], $field, array('#field_name' => $dependency['dependent']), $dependency['options'], $id);
       }
     }
   }
@@ -354,34 +352,56 @@ function conditional_fields_element_after_build($element, &$form_state) {
  *     where the keys are role ids and the values are arrays with the same
  *     structure of 'element_edit'.
  *   - selector: (optional) Custom jQuery selector for the dependee.
+ * @param $id
+ *   (internal use) The identifier for the dependency. Omit this parameter when
+ *   attaching a custom dependency.
  *
  *   Note that you don't need to manually set all these options, since default
  *   settings are always provided.
  */
-function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $options) {
+function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $options, $id = 0) {
   $options += conditional_fields_dependency_default_options();
 
-  // String values are accepted to simplify usage of this function with custom
-  // forms.
-  if (is_string($dependee) && is_string($dependent)) {
-    $form['#conditional_fields'][$dependee]['parents'] = array($dependee);
-    $form['#conditional_fields'][$dependee]['dependents'][$dependent]['options'] = $options;
+  // The absence of the $id parameter identifies a custom dependency.
+  if (!$id) {
+    // String values are accepted to simplify usage of this function with custom
+    // forms.
+    if (is_string($dependee) && is_string($dependent)) {
+      $dependee = array(
+        '#field_name' => $dependee,
+        '#parents'    => array($dependee),
+      );
+      $dependent = array(
+        '#field_name' => $dependent,
+        '#parents'    => array($dependent),
+      );
 
-    $form['#conditional_fields'][$dependent]['parents'] = array($dependent);
-    $form['#conditional_fields'][$dependent]['dependees'][$dependee]['options'] = $options;
+      // Custom dependencies have automatically assigned a progressive id.
+      static $current_id;
+      if (!$current_id) {
+        $current_id = 1;
+      }
+      $id = $current_id;
+      $current_id++;
+    }
   }
-  else {
-    // Attach dependee.
-    if (isset($dependee['#parents'])) {
-      $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#parents'];
-      $form['#conditional_fields'][$dependee['#field_name']]['dependents'][$dependent['#field_name']]['options'] = $options;
-    }
 
-    // Attach dependent.
-    if (isset($dependent['#parents'])) {
-      $form['#conditional_fields'][$dependent['#field_name']]['parents'] = $dependent['#parents'];
-      $form['#conditional_fields'][$dependent['#field_name']]['dependees'][$dependee['#field_name']]['options'] = $options;
-    }
+  // Attach dependee.
+  if (isset($dependee['#parents'])) {
+    $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#parents'];
+    $form['#conditional_fields'][$dependee['#field_name']]['dependents'][$id] = array(
+      'dependent' => $dependent['#field_name'],
+      'options'   => $options,
+    );
+  }
+
+  // Attach dependent.
+  if (isset($dependent['#parents'])) {
+    $form['#conditional_fields'][$dependent['#field_name']]['parents'] = $dependent['#parents'];
+    $form['#conditional_fields'][$dependent['#field_name']]['dependees'][$id] = array(
+      'dependee' => $dependee['#field_name'],
+      'options'  => $options,
+    );
   }
 
   // Actual processing is done in conditional_fields_form_after_build().
@@ -411,7 +431,8 @@ function conditional_fields_form_after_build($form, $form_state) {
 
     $dependent_form_field = drupal_array_get_nested_value($form, $dependent_info['parents']);
 
-    foreach ($dependent_info['dependees'] as $dependee => $dependency) {
+    foreach ($dependent_info['dependees'] as $dependency) {
+      $dependee = $dependency['dependee'];
       $dependee_info = $form['#conditional_fields'][$dependee];
       $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
       $options = $dependency['options'];
@@ -656,12 +677,13 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 
   $evaluated_dependents = array();
 
-  foreach ($dependencies as $dependent => $dependency) {
-    if (!(isset($dependency['dependees']) && isset($build[$dependent]) && $build[$dependent]['#access'])) {
+  foreach ($dependencies['dependents'] as $dependent => $dependency) {
+    if (!(isset($build[$dependent]) && $build[$dependent]['#access'])) {
       continue;
     }
 
-    foreach ($dependency['dependees'] as $dependee => $dependency_options) {
+    foreach ($dependency as $dependency_options) {
+      $dependee = $dependency_options['dependee'];
       $options = $dependency_options['options'];
 
       // We can interface with the States API only through the Value condition.
@@ -753,14 +775,14 @@ function conditional_fields_entity_view_alter(&$build, $type) {
  * Evaluate a set of dependencies for a dependent field.
  */
 function conditional_fields_evaluate_dependencies($dependent, $form, $form_state) {
-  $dependees = $form['#conditional_fields'][$dependent]['dependees'];
+  $dependencies = $form['#conditional_fields'][$dependent]['dependees'];
   $evaluated_dependees = array();
 
-  foreach ($dependees as $dependee => $options) {
-    $values = drupal_array_get_nested_value($form_state['values'], $form['#conditional_fields'][$dependee]['parents']);
+  foreach ($dependencies as $dependency) {
+    $values = drupal_array_get_nested_value($form_state['values'], $form['#conditional_fields'][$dependency['dependee']]['parents']);
 
     // TODO: OR/XOR grouping of dependencies.
-    $evaluated_dependees[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options['options'], $values);
+    $evaluated_dependees[$dependent]['AND'][] = conditional_fields_evaluate_dependency($dependency['options'], $values);
   }
 
   return in_array(FALSE, $evaluated_dependees[$dependent]['AND']) ? FALSE : TRUE;
@@ -910,7 +932,7 @@ function conditional_fields_dependency_default_options() {
  *
  * The result can be filtered by providing an entity type and a bundle name.
  */
-function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
+function conditional_fields_load_dependencies($entity_type = NULL, $bundle = NULL) {
   // Use the advanced drupal_static() pattern.
   static $dependencies;
   if (!isset($dependencies)) {
@@ -922,10 +944,12 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
   }
 
   if (!isset($dependencies[$entity_type][$bundle])) {
+    $dependencies[$entity_type][$bundle] = array();
     $default_options = conditional_fields_dependency_default_options();
 
     $select = db_select('conditional_fields', 'cf')
-      ->fields('cf', array('id', 'options'));
+      ->fields('cf', array('id', 'options'))
+      ->orderBy('cf.dependent');
     $fci_depende = $select->join('field_config_instance', 'fci_dependee', 'cf.dependee = fci_dependee.id');
     $fci_dependent = $select->join('field_config_instance', 'fci_dependent', 'cf.dependent = fci_dependent.id');
     $select->addField($fci_depende, 'field_name', 'dependee');
@@ -952,28 +976,34 @@ function conditional_fields_load_dependencies($entity_type = '', $bundle = '') {
     $result = $select->execute();
 
     foreach ($result as $dependency) {
-      $entity_type ? $result_entity_type = $entity_type : $result_entity_type = $dependency->entity_type;
-      $bundle ? $result_bundle = $bundle : $result_bundle = $dependency->bundle;
+      $result_entity_type = $entity_type ? $entity_type : $dependency->entity_type;
+      $result_bundle = $bundle ? $bundle : $dependency->bundle;
 
       $options = unserialize($dependency->options);
       $options += $default_options;
 
-      $dependencies[$result_entity_type][$result_bundle][$dependency->dependee]['dependents'][$dependency->dependent] = $dependencies[$result_entity_type][$result_bundle][$dependency->dependent]['dependees'][$dependency->dependee] = array(
-        'id' => $dependency->id,
-        'options' => $options,
+      $dependencies[$result_entity_type][$result_bundle]['dependents'][$dependency->dependent][$dependency->id] = array(
+        'dependee' => $dependency->dependee,
+        'options'  => $options,
+      );
+
+      $dependencies[$result_entity_type][$result_bundle]['dependees'][$dependency->dependee][$dependency->id] = array(
+        'dependent' => $dependency->dependent,
+        'options'  => $options,
       );
     }
   }
 
-  if ($entity_type && $bundle) {
-    if (isset($dependencies[$entity_type][$bundle])) {
+  if ($entity_type && isset($dependencies[$entity_type])) {
+    if ($bundle && isset($dependencies[$entity_type][$bundle])) {
       return $dependencies[$entity_type][$bundle];
     }
+
+    return $dependencies[$entity_type];
   }
-  else {
-    if (!empty($dependencies)) {
-      return $dependencies;
-    }
+
+  if (!empty($dependencies)) {
+    return $dependencies;
   }
 
   return FALSE;
