@@ -9,6 +9,7 @@
  */
 function conditional_fields_schema() {
   $schema['conditional_fields'] = array(
+    'description' => 'Stores dependencies between fields.',
     'fields' => array(
       'id' => array(
         'type' => 'serial',
