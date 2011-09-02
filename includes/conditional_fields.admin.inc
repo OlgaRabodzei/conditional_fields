@@ -678,7 +678,7 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
       'state'                 => $form_state['values']['state'],
       'condition'             => $form_state['values']['condition'],
       'effect'                => isset($form_state['values']['effect']) ? $form_state['values']['effect'] : FALSE,
-      'effect_options'        => isset($form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : array(),
+      'effect_options'        => isset($form_state['values']['effect'], $form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : array(),
       'element_view'          => $form_state['values']['element_view'],
       'element_view_per_role' => $form_state['values']['element_view_per_role'],
       'element_view_roles'    => $form_state['values']['element_view_roles'],
