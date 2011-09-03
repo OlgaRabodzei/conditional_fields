@@ -701,7 +701,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
       }
       else {
         $items = $build[$dependee]['#items'];
-        $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency($options, $items);
+        $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency('view', $items, $options);
       }
 
       // Determine field view behaviors.
@@ -782,7 +782,7 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
     $values = drupal_array_get_nested_value($form_state['values'], $form['#conditional_fields'][$dependency['dependee']]['parents']);
 
     // TODO: OR/XOR grouping of dependencies.
-    $evaluated_dependees[$dependent]['AND'][] = conditional_fields_evaluate_dependency($dependency['options'], $values);
+    $evaluated_dependees[$dependent]['AND'][] = conditional_fields_evaluate_dependency('edit', $values, $dependency['options']);
   }
 
   return in_array(FALSE, $evaluated_dependees[$dependent]['AND']) ? FALSE : TRUE;
@@ -790,44 +790,101 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
 
 /**
  * Evaluate if a dependency meets the requirements to be triggered.
+ *
+ * @param $context
+ *   'edit' if $values are extracted from $form_state or 'view' if
+ *   $values are extracted from an entity.
  */
-function conditional_fields_evaluate_dependency($options, $form_values) {
+function conditional_fields_evaluate_dependency($context, $values, $options) {
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
-    if (is_string($form_values)) {
-      // Options elements consider "_none" value same as empty.
-      $form_values = $form_values == '_none' ? '' : $form_values;
+    $dependency_values = $context == 'view' ? $options['value'] : $options['value_form'];
 
-      return count($options['value']) == 1 && $options['value'][0]['value'] == $form_values;
+    // Simple case: both values are strings or integers. Should never happen in
+    // view context, but does no harm to check anyway.
+    if (!is_array($values)) {
+      // Options elements consider "_none" value same as empty.
+      $values = $values === '_none' ? '' : $values;
+
+      if (!is_array($dependency_values)) {
+        // Some widgets store integers, but values saved in $dependency_values
+        // are always strings. Convert them to integers because we want to do a
+        // strict equality check to differentiate empty strings from '0'.
+        if (is_int($values) && is_numeric($dependency_values)) {
+          $dependency_values = (int) $dependency_values;
+        }
+
+        return $dependency_values === $values;
+      }
+
+      // If $values is a string and $dependency_values an array, convert $values
+      // to the standard field array form format. This covers cases like single
+      // value textfields.
+      $values = array(array('value' => $values));
     }
 
-    // Filter out unwanted items.
-    $compare_values = array(array_intersect_key($form_values[0], $options['value'][0]));
+    // If we are in form context, we are done here.
+    if ($context == 'edit') {
+      // Compare arrays recursively ignoring keys, since multiple select widgets
+      // values have numeric keys in form format and string keys in storage
+      // format.
+      return array_values($dependency_values) == array_values($values);
+    }
 
-    // PHP 5 compares arrays recursively.
-    return $options['value'] == $compare_values;
+    // $values, when viewing fields, may contain all sort of additional
+    // information, so filter out from $values the keys that are not present in
+    // $dependency_values.
+    // Values here are alway keyed by delta (regardless of multiple value
+    // settings).
+    foreach ($values as $delta => &$value) {
+      if (isset($dependency_values[$delta])) {
+        $value = array_intersect_key($value, $dependency_values[$delta]);
+
+        foreach ($value as $key => &$element_value) {
+          if (isset($dependency_values[$delta][$key]) && is_int($dependency_values[$delta][$key]) && is_numeric($element_value)) {
+            $element_value = (int) $element_value;
+          }
+        }
+      }
+    }
+
+    // Compare values.
+    foreach ($dependency_values as $delta => $dependency_value) {
+      if (!isset($values[$delta])) {
+        return FALSE;
+      }
+      foreach ($dependency_value as $key => $dependency_element_value) {
+        // Ignore keys set in the field and not in the dependency.
+        if (isset($values[$delta][$key]) && $values[$delta][$key] !== $dependency_element_value) {
+          return FALSE;          
+        }
+      }
+    }
+
+    return TRUE;
   }
 
   // Flatten array of values.
-  $values = array();
-  foreach ((array) $form_values as $value) {
-    $values[] = is_array($value) ? array_shift($value) : $value;
+  $reference_values = array();
+  foreach ((array) $values as $value) {
+    // TODO: support multiple values.
+    $reference_values[] = is_array($value) ? array_shift($value) : $value;
   }
 
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
-      $diff = array_diff($options['values'], $values);
+      $diff = array_diff($options['values'], $reference_values);
       return empty($diff);
 
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
-      $intersect = array_intersect($options['values'], $values);
+      $intersect = array_intersect($options['values'], $reference_values);
       return !empty($intersect);
 
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
-      $intersect = array_intersect($options['values'], $values);
+      $intersect = array_intersect($options['values'], $reference_values);
       return count($intersect) == 1;
 
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
-      $intersect = array_intersect($options['values'], $values);
+      $intersect = array_intersect($options['values'], $reference_values);
       return empty($intersect);
   }
 }
