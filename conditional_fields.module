@@ -1035,28 +1035,22 @@ function conditional_fields_dependency_load_by_id($id) {
  */
 function conditional_fields_dependency_insert($dependee_id, $dependent_id, $options = array()) {
   $options += conditional_fields_dependency_default_options();
+  $dependency = array(
+    'dependee'  => $dependee_id,
+    'dependent' => $dependent_id,
+    'options'   => $options,
+  );
 
-  return db_insert('conditional_fields')
-    ->fields(array(
-      'dependee'  => $dependee_id,
-      'dependent' => $dependent_id,
-      'options'   => serialize($options),
-    ))
-    ->execute();
+  if (drupal_write_record('conditional_fields', $dependency)) {
+    return $dependency['id'];
+  }
 }
 
 /**
  * Updates a dependency.
  */
 function conditional_fields_dependency_update($dependency) {
-  return db_update('conditional_fields')
-    ->fields(array(
-      'dependee'  => $dependency['dependee'],
-      'dependent' => $dependency['dependent'],
-      'options'   => serialize($dependency['options']),
-    ))
-    ->condition('id', $dependency['id'])
-    ->execute();
+  drupal_write_record('conditional_fields', $dependency, 'id');
 }
 
 /**
