@@ -696,29 +696,54 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         continue;
       }
 
-      // Evaluate dependency.
-      // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
-      // only if all its dependencies evaluate to TRUE,
-
-      // This case is handled by the CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN behavior.
-      if (!isset($build[$dependee])) {
-        $evaluated_dependents[$dependent]['AND'][] = TRUE;
-      }
-      else {
-        $items = $build[$dependee]['#items'];
-        $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency('view', $items, $options);
-      }
-
       // Determine field view behaviors.
       // If this dependent has multiple dependencies, only the logic of the
       // first dependency will be taken into account.
       if (!isset($behaviors)) {
         $behaviors = conditional_fields_field_behaviors('view', $options);
       }
-    }
 
+      // Evaluate dependency.
+      // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
+      // only if all its dependencies evaluate to TRUE,
+      if (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE) {
+        if (in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
+          // We have to look for the dependee in the entity object.
+          // TODO: Is it possible to avoid hardcoding this?
+          switch ($type) {
+            case 'node':
+              $entity_property = '#node';
+              break;
+            case 'user':
+              $entity_property = '#account';
+              break;
+            case 'term':
+              $entity_property = '#term';
+              break;
+            case 'field_collection_item':
+            case 'profile2':
+            default:
+              $entity_property = '#entity';
+          }
+          if (!isset($build[$entity_property]->$dependee)) {
+            continue;
+          }
+          $items = $build[$entity_property]->$dependee;
+          // Values are keyed by language here, remove it.
+          $items = array_shift($items);
+        }
+        elseif (in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN, $behaviors)) {
+          $build[$dependent]['#access'] = FALSE;
+          continue;
+        }
+      }
+      else {
+        $items = $build[$dependee]['#items'];
+      }
+      $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency('view', $items, $options);
+    }
     if (isset($evaluated_dependents[$dependent])) {
-      $is_triggered = in_array(FALSE, $evaluated_dependents[$dependent]['AND']) ? FALSE : TRUE;
+      $is_triggered = !in_array(FALSE, $evaluated_dependents[$dependent]['AND']);
 
       foreach ($behaviors as $behavior) {
         switch ($behavior) {
@@ -730,10 +755,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
             break;
 
           case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN:
-            // Hide the dependent if the dependee is not viewable.
-            if (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE) {
-              $build[$dependent]['#access'] = FALSE;
-            }
+            // This case was handled while evaluating dependencies.
             break;
 
           case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN:
