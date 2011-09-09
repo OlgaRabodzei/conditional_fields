@@ -1399,7 +1399,7 @@ function conditional_fields_states_handlers() {
   $handlers = array(
     'conditional_fields_states_handler_select' => array(
       '#type' => 'select',
-      '#multiple' => FALSE,
+      '#multiple' => TRUE,
     ),
     'conditional_fields_states_handler_checkbox' => array(
       '#type' => 'checkbox',
@@ -1441,7 +1441,10 @@ function conditional_fields_states_handlers() {
 function conditional_fields_states_handler_select($field, $field_info, $options, &$state) {
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
+      return;
+
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
+      $state[$options['state']][$options['selector']]['value'] = (array) $state[$options['state']][$options['selector']]['value'];
       return;
 
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
@@ -1457,9 +1460,6 @@ function conditional_fields_states_handler_select($field, $field_info, $options,
         );
       }
       break;
-
-    default:
-      return;
   }
 
   $state = $select_states;
