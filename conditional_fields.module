@@ -424,6 +424,7 @@ function conditional_fields_form_after_build($form, $form_state) {
     return $form;
   }
 
+  $effects = array();
   $state_handlers = conditional_fields_states_handlers();
 
   // Cycle all dependents.
@@ -551,12 +552,14 @@ function conditional_fields_form_after_build($form, $form_state) {
       // Merge this dependency with the states array.
       $states = array_merge_recursive($states, $state);
 
-      // Add effect handler for effects with options.
+      // Build effect settings for effects with options.
+      // TODO: add dependee key to allow different effects on the same selector.
       if ($options['effect'] && $options['effect'] != 'show') {
-        drupal_add_js(drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.effect.js');
-
         $selector = conditional_fields_field_selector(drupal_array_get_nested_value($form, array($dependent_info['parents'][0])));
-        drupal_add_js(array('conditionalFields' => array('effects' => array($selector => array('effect' => $options['effect'], 'options' => $options['effect_options'])))), 'setting');
+        $effects[$selector] = array(
+          'effect' => $options['effect'],
+          'options' => $options['effect_options']
+        );
       }
     }
 
@@ -577,6 +580,19 @@ function conditional_fields_form_after_build($form, $form_state) {
     $dependent_parents = isset($dependent_form_field['#field_parents']) ? $dependent_form_field['#field_parents'] : array();
     $dependent_container = array_slice($dependent_info['parents'], 0, count($dependent_parents) + 1);
     drupal_array_set_nested_value($form, array_merge($dependent_container, array('#states')), $states);
+  }
+
+  // Add effect settings to the form.
+  if ($effects) {
+    $form['#attached']['js'][] = drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.effect.js';
+    $form['#attached']['js'][] = array(
+      'data' => array(
+        'conditionalFields' => array(
+          'effects' => $effects,
+        ),
+      ),
+      'type' => 'setting',
+    );
   }
 
   return $form;
