@@ -51,7 +51,7 @@
 
           default:
             // The "effect" variable is treated as a jQuery plugin.
-            $(e.target)[effect.effect](e, effect.options);
+            $(e.target)[effect.effect](e, effect.options, context);
         }
       });
     }
