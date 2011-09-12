@@ -669,7 +669,8 @@ function conditional_fields_behaviors_reset_default_validate(&$elements, &$form_
         $form_state['values'][$instance['field_name']][$elements['#language']] = $default_value;
         break;
       case 'options':
-        $elements['#value'] = $form_state['values'][$instance['field_name']][$elements['#language']] = $default_value[0]['value'];
+        $value = isset($default_value[0]['value']) ? $default_value[0]['value'] : NULL;
+        $elements['#value'] = $form_state['values'][$instance['field_name']][$elements['#language']] = $value;
         break;
     }
   }
