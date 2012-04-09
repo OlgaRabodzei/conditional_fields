@@ -232,16 +232,6 @@ function conditional_fields_element_info_alter(&$types) {
  * - Field dependencies data.
  */
 function conditional_fields_element_after_build($element, &$form_state) {
-  // Ensure that the form being built is an entity.
-  if (!isset($form_state['complete form']['#entity_type'], $form_state['complete form']['#bundle'])) {
-    return $element;
-  }
-
-  // Avoid processing fields in fields_ui administration pages.
-  if (drupal_substr($form_state['complete form']['#form_id'], 0, 9) == 'field_ui_') {
-    return $element;    
-  }
-
   // Ensure that the element is a field.
   if (isset($element['#field_name'])) {
     $field = $element;
@@ -254,17 +244,27 @@ function conditional_fields_element_after_build($element, &$form_state) {
     return $element;
   }
 
+  $form = &$form_state['complete form'];
+
+  // Avoid processing fields in fields_ui administration pages.
+  if (drupal_substr($form['#form_id'], 0, 9) == 'field_ui_') {
+    return $element;    
+  }
+
   // Some fields do not have entity type and bundle properties. In this case we
   // try to use the properties from the form. This is not an optimal solution,
-  // since in case of fields in entities within entities they won't correspond,
+  // since in case of fields in entities within entities they might not correspond,
   // and their dependencies will not be loaded.
-  if (!isset($field['#entity_type'], $field['#bundle'])) {
-    $entity_type = $form_state['complete form']['#entity_type'];
-    $bundle = $form_state['complete form']['#bundle'];
+  if (isset($field['#entity_type'], $field['#bundle'])) {
+    $entity_type = $field['#entity_type'];
+    $bundle = $field['#bundle'];
+  }
+  elseif (isset($form['#entity_type'], $form['#bundle'])) {
+    $entity_type = $form['#entity_type'];
+    $bundle = $form['#bundle'];    
   }
   else {
-    $entity_type = $field['#entity_type'];
-    $bundle = $field['#bundle'];    
+    return $element;
   }
 
   $dependencies = conditional_fields_load_dependencies($entity_type, $bundle);
@@ -276,8 +276,8 @@ function conditional_fields_element_after_build($element, &$form_state) {
   // Attach dependent.
   if (isset($dependencies['dependents'][$field['#field_name']])) {
     foreach ($dependencies['dependents'][$field['#field_name']] as $id => $dependency) {
-      if (!isset($form_state['complete form']['#conditional_fields'][$field['#field_name']]['dependees'][$id])) {
-        conditional_fields_attach_dependency($form_state['complete form'], array('#field_name' => $dependency['dependee']), $field, $dependency['options'], $id);
+      if (!isset($form['#conditional_fields'][$field['#field_name']]['dependees'][$id])) {
+        conditional_fields_attach_dependency($form, array('#field_name' => $dependency['dependee']), $field, $dependency['options'], $id);
       }
     }
   }
@@ -285,8 +285,8 @@ function conditional_fields_element_after_build($element, &$form_state) {
   // Attach dependee.
   if (isset($dependencies['dependees'][$field['#field_name']])) {
     foreach ($dependencies['dependees'][$field['#field_name']] as $id => $dependency) {
-      if (!isset($form_state['complete form']['#conditional_fields'][$field['#field_name']]['dependents'][$id])) {
-        conditional_fields_attach_dependency($form_state['complete form'], $field, array('#field_name' => $dependency['dependent']), $dependency['options'], $id);
+      if (!isset($form['#conditional_fields'][$field['#field_name']]['dependents'][$id])) {
+        conditional_fields_attach_dependency($form, $field, array('#field_name' => $dependency['dependent']), $dependency['options'], $id);
       }
     }
   }
@@ -866,8 +866,15 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
       $values = array(array('value' => $values));
     }
 
-    // If we are in form context, we are done here.
+    // If we are in form context, we are almost done.
     if ($context == 'edit') {
+      // If $dependency_values is not an array, we can only assume that it
+      // should map to the first key of the first value of $values.
+      if (!is_array($dependency_values)) {
+        $key = current(array_keys(current($values)));
+        $dependency_values = array(array($key => $dependency_values));
+      }
+
       // Compare arrays recursively ignoring keys, since multiple select widgets
       // values have numeric keys in form format and string keys in storage
       // format.
