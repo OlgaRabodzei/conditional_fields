@@ -420,7 +420,7 @@ function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $op
  */
 function conditional_fields_form_after_build($form, $form_state) {
   // Dependencies data is attached in conditional_fields_element_after_build().
-  if (!isset($form['#conditional_fields'])) {
+  if (empty($form['#conditional_fields'])) {
     return $form;
   }
 
@@ -431,7 +431,7 @@ function conditional_fields_form_after_build($form, $form_state) {
   foreach ($form['#conditional_fields'] as $dependent => $dependent_info) {
     $states = array();
 
-    if (!isset($dependent_info['dependees'])) {
+    if (empty($dependent_info['dependees'])) {
       continue;
     }
 
@@ -530,7 +530,7 @@ function conditional_fields_form_after_build($form, $form_state) {
         // validation. When the form is submitted, we will check if the dependency
         // was triggered and only then revalidate the field with the #required
         // property restored.
-        if (isset($dependent_form_field['#required']) && $dependent_form_field['#required'] == TRUE) {
+        if (!empty($dependent_form_field['#required'])) {
           $dependent_form_field['#required'] = FALSE;
 
           // Add validation callback to element.
@@ -700,7 +700,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
   $evaluated_dependents = array();
 
   foreach ($dependencies['dependents'] as $dependent => $dependency) {
-    if (!(isset($build[$dependent]) && $build[$dependent]['#access'])) {
+    if (empty($build[$dependent]['#access'])) {
       continue;
     }
 
@@ -723,7 +723,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
       // Evaluate dependency.
       // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
       // only if all its dependencies evaluate to TRUE,
-      if (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE) {
+      if (empty($build[$dependee]['#access'])) {
         if (in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
           // We have to look for the dependee in the entity object.
           // TODO: Is it possible to avoid hardcoding this?
@@ -777,7 +777,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 
           case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN:
             // Hide the dependent if the dependee is not viewable and the dependency is not triggered.
-            if (!$is_triggered && (!isset($build[$dependee]) || $build[$dependee]['#access'] == FALSE)) {
+            if (!$is_triggered && empty($build[$dependee]['#access'])) {
               $build[$dependent]['#access'] = FALSE;
             }
             break;
