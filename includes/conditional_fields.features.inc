@@ -93,7 +93,7 @@ function conditional_fields_features_rebuild($module) {
         foreach ($dependencies[$field['entity']][$field['bundle']] as $dependancy_type => $field_dep_settings) {
           if ($dependancy_type == 'dependees' && !empty($field_dep_settings)) {
             foreach ($field_dep_settings as $dep_setting) {
-              foreach ($dep_setting as $id => $dep_settings){
+              foreach ($dep_setting as $id => $dep_settings) {
                 $deps_to_remove[$id] = $id;
               }
             }

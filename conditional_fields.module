@@ -248,7 +248,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
 
   // Avoid processing fields in fields_ui administration pages.
   if (drupal_substr($form['#form_id'], 0, 9) == 'field_ui_') {
-    return $element;    
+    return $element;
   }
 
   // Some fields do not have entity type and bundle properties. In this case we
@@ -261,7 +261,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
   }
   elseif (isset($form['#entity_type'], $form['#bundle'])) {
     $entity_type = $form['#entity_type'];
-    $bundle = $form['#bundle'];    
+    $bundle = $form['#bundle'];
   }
   else {
     return $element;
@@ -340,7 +340,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
  *   - effect: The jQuery effect associated to the state change. See
  *     conditional_fields_effects() for available effects and options.
  *   - effect_options: The options for the active effect.
- *   - element_view: An associative array of field view behaviors with 
+ *   - element_view: An associative array of field view behaviors with
  *     CONDITIONAL_FIELDS_FIELD_VIEW_* constants as keys and the same constants
  *     as values for enabled behaviors and 0 for disabled behaviors.
  *     See conditional_fields_behaviors() for descriptions.
@@ -348,7 +348,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
  *   - element_view_roles: An associative array of field view settings per role
  *     where the keys are role ids and the values are arrays with the same
  *     structure of 'element_view'.
- *   - element_edit: An associative array of field edit behaviors with 
+ *   - element_edit: An associative array of field edit behaviors with
  *     CONDITIONAL_FIELDS_FIELD_EDIT_* constants as keys and the same constants
  *     as values for enabled behaviors and 0 for disabled behaviors.
  *     See conditional_fields_behaviors() for descriptions.
@@ -606,7 +606,7 @@ function conditional_fields_form_after_build($form, $form_state) {
 function _conditional_fields_element_add_property(&$element, $property, $value) {
   if (isset($element[$property])) {
     if (in_array($value, $element[$property])) {
-      return;      
+      return;
     }
     $element[$property] = array_merge((array) $value, $element[$property]);
   }
@@ -906,7 +906,7 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
       foreach ($dependency_value as $key => $dependency_element_value) {
         // Ignore keys set in the field and not in the dependency.
         if (isset($values[$delta][$key]) && $values[$delta][$key] !== $dependency_element_value) {
-          return FALSE;          
+          return FALSE;
         }
       }
     }
