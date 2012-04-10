@@ -445,7 +445,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
   $form['state'] = array(
     '#type' => 'select',
     '#title' => t('Form state'),
-    '#description' => t('The form state that is applied to the dependent field when the condition is met.'),
+    '#description' => t('The Javascript form state that is applied to the dependent field when the condition is met. Note that this has no effect on server-side logic and validation.'),
     '#options' => conditional_fields_states(),
     '#default_value' => $dependency['options']['state'],
     '#required' => TRUE,
