@@ -476,7 +476,7 @@ function conditional_fields_form_after_build($form, &$form_state) {
       }
 
       // Determine if the dependee is in the form.
-      if (empty($dependee_form_field) || $dependee_form_field['#access'] == FALSE) {
+      if (empty($dependee_form_field) || (isset($dependee_form_field['#access']) && $dependee_form_field['#access'] == FALSE)) {
         // Apply orphan dependent behaviors.
         /*
         if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
@@ -491,6 +491,8 @@ function conditional_fields_form_after_build($form, &$form_state) {
         if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN, $behaviors)) {
           $dependent_form_field['#access'] = FALSE;
         }
+        unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN]);
+        unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN]);
         continue;
       }
 
