@@ -455,11 +455,17 @@ function conditional_fields_form_after_build($form, &$form_state) {
 
     foreach ($dependent_info['dependees'] as $dependency) {
       $dependee = $dependency['dependee'];
+
+      if (empty($form['#conditional_fields'][$dependee])) {
+        continue;
+      }
+
       $dependee_info = $form['#conditional_fields'][$dependee];
       $dependee_location = array_merge($dependee_info['parents'], array($dependee));
       $dependee_form_field = drupal_array_get_nested_value($form, $dependee_location);
       // We need the data inside the language key.
       $dependee_form_field = $dependee_form_field[$dependee_form_field['#language']];
+
       $options = $dependency['options'];
 
       // Load field edit behaviors.
@@ -470,26 +476,26 @@ function conditional_fields_form_after_build($form, &$form_state) {
       }
 
       // Determine if the dependee is in the form.
-      if (!$dependee_form_field) {
+      if (empty($dependee_form_field) || $dependee_form_field['#access'] == FALSE) {
         // Apply orphan dependent behaviors.
+        /*
         if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
           // TODO
-          /*
           $is_triggered = TRUE;
 
           if ($is_orphan && !$is_triggered) {
             $form[$dependent]['#access'] = FALSE;
           }
-          */
         }
+        */
         if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN, $behaviors)) {
           $dependent_form_field['#access'] = FALSE;
         }
         continue;
       }
 
-      unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN]);
       unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN]);
+      unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN]);
 
       // Build a jQuery selector if it was not overridden by a custom value.
       // Note that this may be overridden later by a state handler.
@@ -574,8 +580,11 @@ function conditional_fields_form_after_build($form, &$form_state) {
         $$behavior('edit', $form, $form_state, $dependent, $dependencies);
       }
     }
-
     unset($behaviors);
+
+    if (empty($states)) {
+      continue;
+    }
 
     // Add validation callback to element.
     _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_dependent_validate', 'append');
