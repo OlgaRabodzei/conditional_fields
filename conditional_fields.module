@@ -559,7 +559,7 @@ function conditional_fields_form_after_build($form, &$form_state) {
       // Build effect settings for effects with options.
       // TODO: add dependee key to allow different effects on the same selector.
       if ($options['effect'] && $options['effect'] != 'show') {
-        $selector = conditional_fields_field_selector(drupal_array_get_nested_value($form, array($dependent_info['parents'][0])));
+        $selector = conditional_fields_field_selector(drupal_array_get_nested_value($form, array($dependent_location[0])));
         $effects[$selector] = array(
           'effect' => $options['effect'],
           'options' => $options['effect_options']
