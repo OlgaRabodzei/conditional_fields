@@ -784,7 +784,7 @@ function _conditional_fields_element_add_property(&$element, $property, $value, 
  * Applies entity view logic to conditional fields.
  */
 function conditional_fields_entity_view_alter(&$build, $type) {
-  if (!$dependencies = conditional_fields_load_dependencies($build['#entity_type'], $build['#bundle'])) {
+  if (!(isset($build['#entity_type'], $build['#bundle']) && $dependencies = conditional_fields_load_dependencies($build['#entity_type'], $build['#bundle']))) {
     return;
   }
 
