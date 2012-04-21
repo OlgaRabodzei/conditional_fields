@@ -775,4 +775,5 @@ function conditional_fields_dependency_delete_form($form, $form_state, $dependen
  */
 function conditional_fields_dependency_delete_form_submit($form, &$form_state) {
   conditional_fields_dependency_delete(array($form_state['values']['dependency']));
+  drupal_set_message(t('The dependency has been deleted.'));
 }
