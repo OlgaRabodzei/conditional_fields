@@ -206,6 +206,8 @@ function conditional_fields_forms() {
  * Overrides core states API with a patched version that allows multiple
  * conditions and OR/XOR logic. Ongoing development at:
  * http://drupal.org/node/735528
+ *
+ * TODO: remove when Drupal 7.14 is released.
  */
 function conditional_fields_js_alter(&$javascript) {
   if (isset($javascript['misc/states.js'])) {
@@ -596,7 +598,15 @@ function conditional_fields_form_after_build($form, &$form_state) {
 
     // Add the #states property to the dependent field.
     drupal_array_set_nested_value($form, array_merge($dependent_location, array('#states')), $states);
+
+    $has_states = TRUE;
   }
+
+  if (empty($has_states)) {
+    return $form;
+  }
+
+  $form['#attached']['js'][] = drupal_get_path('module', 'conditional_fields') . '/js/states_enhancements.js';
 
   // Add effect settings to the form.
   if ($effects) {
@@ -1570,8 +1580,6 @@ function conditional_fields_states_handlers() {
 function conditional_fields_states_handler_select($field, $field_info, $options, &$state) {
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-      return;
-
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       $state[$options['state']][$options['selector']]['value'] = (array) $state[$options['state']][$options['selector']]['value'];
       return;
