@@ -337,11 +337,8 @@ function theme_conditional_fields_table($variables) {
  * @see conditional_fields_dependency_edit_form_submit()
  * @ingroup forms
  */
-function conditional_fields_dependency_edit_form($form, &$form_state, $id) {
-  if (!is_numeric($id) || !$form['#dependency'] = $dependency = conditional_fields_dependency_load_by_id($id)) {
-    drupal_access_denied();
-    drupal_exit();
-  }
+function conditional_fields_dependency_edit_form($form, &$form_state, $dependency) {
+  $form['#dependency'] = $dependency;
 
   $form['#attached']['css'][] = drupal_get_path('module', 'conditional_fields') . '/conditional_fields.css';
 
@@ -749,17 +746,13 @@ function conditional_fields_ajax_admin_state_callback($form, &$form_state) {
  * Confirm form for the deletion of a dependency.
  */
 function conditional_fields_dependency_delete_form($form, $form_state, $dependency) {
-  if (!is_numeric($dependency)) {
-    drupal_access_denied();
-  }
-
   $destination = drupal_get_destination();
 
   return confirm_form(
     array(
     'dependency' => array(
       '#type' => 'value',
-      '#value' => $dependency,
+      '#value' => $dependency['id'],
     ),
   ),
     t('Are you sure you want to delete this dependency?'),

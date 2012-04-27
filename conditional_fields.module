@@ -121,7 +121,7 @@ function conditional_fields_menu() {
     'weight' => 1,
   );
 
-  $items['admin/structure/dependencies/edit/%'] = array(
+  $items['admin/structure/dependencies/edit/%conditional_fields_dependency'] = array(
     'title' => 'Edit dependency',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('conditional_fields_dependency_edit_form', 4),
@@ -129,7 +129,7 @@ function conditional_fields_menu() {
     'file' => 'includes/conditional_fields.admin.inc',
   );
 
-  $items['admin/structure/dependencies/delete/%'] = array(
+  $items['admin/structure/dependencies/delete/%conditional_fields_dependency'] = array(
     'title' => 'Delete dependency',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('conditional_fields_dependency_delete_form', 4),
@@ -1233,20 +1233,27 @@ function conditional_fields_load_dependencies($entity_type = NULL, $bundle = NUL
 }
 
 /**
- * Loads a dependency from the database by id.
+ * Menu argument loader: loads a dependency from the database.
+ *
+ * @param $id
+ *   The dependency ID.
+ *
+ * @return
+ *   A fully populated dependency array, complete with its conditions, or FALSE
+ *   if the dependency is not found.
  */
-function conditional_fields_dependency_load_by_id($id) {
+function conditional_fields_dependency_load($id) {
   $result = db_select('conditional_fields', 'cf')
     ->fields('cf', array('id', 'dependee', 'dependent', 'options'))
     ->condition('id', $id)
     ->execute()
     ->fetchAssoc();
 
-  if (isset($result['options'])) {
-    $options = unserialize($result['options']);
-    $options += conditional_fields_dependency_default_options();
-    $result['options'] = $options;
+  if (!$result) {
+    return FALSE;
   }
+
+  $result['options'] = unserialize($result['options']) + conditional_fields_dependency_default_options();
 
   return $result;
 }
