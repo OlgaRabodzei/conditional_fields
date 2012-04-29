@@ -553,6 +553,9 @@ function conditional_fields_form_after_build($form, &$form_state) {
             $handler($dependee_form_field, $dependee_form_state, $options, $state);
           }
         }
+
+        // Add validation callback to element.
+        _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_dependent_validate', 'append');
       }
 
       // Merge this dependency with the states array.
@@ -589,9 +592,6 @@ function conditional_fields_form_after_build($form, &$form_state) {
     if (empty($states)) {
       continue;
     }
-
-    // Add validation callback to element.
-    _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_dependent_validate', 'append');
 
     // Save the modified field back into the form.
     drupal_array_set_nested_value($form, $dependent_location, $dependent_form_field);
