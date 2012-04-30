@@ -1507,9 +1507,11 @@ function conditional_fields_behaviors($op = NULL) {
   $behaviors = array(
     'edit' => array(
       CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => t('Hide the dependent if the dependee is not in the form'),
-      CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => t('Reset the dependent to its default values if the dependency is not triggered.') . '<br /><em>' . t('Note: This setting may not work with some field types. Also, ensure that the default values are valid, since they will not be validated.') . '</em>',
+      CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => t('Reset the dependent to its default values when the form is submitted if the dependency is not triggered.') . '<br /><em>' . t('Note: This setting only applies if the condition is "Value" and may not work with some field types. Also, ensure that the default values are valid, since they will not be validated.') . '</em>',
       // TODO: Implement. Settings are imported from D6 though, they just do nothing for now.
+      /*
       CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => t('Hide the dependent if the dependee is not in the form and the dependency is not triggered.') . '<br /><em>' . t('Note: This setting is not currently not implemented and has no effect.') . '</em>',
+      */
     ),
     'view' => array(
       CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => t('Hide the dependent if the dependency is not triggered'),
