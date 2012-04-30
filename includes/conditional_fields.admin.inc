@@ -119,7 +119,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
     '#header' => array(
       t('Dependent'),
       t('Dependees'),
-      t('Description'),
+      array('data' => t('Description'), 'colspan' => 2),
       array('data' => t('Operations'), 'colspan' => 2),
     ),
     '#attributes' => array(
@@ -134,43 +134,64 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
     $destination = drupal_get_destination();
 
     foreach ($dependencies['dependents'] as $dependent => $dependees) {
+      uasort($dependees, '_conditional_fields_sort_dependees');
+
       $first_row = TRUE;
+      $show_AND = $show_OR = $show_XOR = TRUE;
 
       foreach ($dependees as $id => $dependency) {
         $form['table']['dependencies'][$id] = array();
+        $dependee_count = count($dependees);
 
         // Dependencies come ordered by dependent, so by adding it only to the
         // first row they will appear grouped.
         if ($first_row == TRUE) {
           $form['table']['dependencies'][$id]['dependent'] = array(
             '#markup' => $dependent,
-            '#rowspan' => count($dependees),
+            '#rowspan' => $dependee_count,
           );
 
           $first_row = FALSE;
         }
 
-        $form['table']['dependencies'][$id] += array(
+        $row = array(
           'dependee' => array(
             '#markup' => $dependency['dependee'],
           ),
-          'description' => array(
-            '#markup' => conditional_fields_dependency_description($dependency['dependee'], $dependent, $dependency['options']),
-          ),
-          'edit' => array(
-            '#type' => 'link',
-            '#title' => t('edit'),
-            '#href' => 'admin/structure/dependencies/edit/' . $id,
-            '#options' => array('query' => $destination, 'attributes' => array('title' => t('Edit dependency settings.'))),
-            '#query' => drupal_get_destination(),
-          ),
-          'delete' => array(
-            '#type' => 'link',
-            '#title' => t('delete'),
-            '#href' => 'admin/structure/dependencies/delete/' . $id,
-            '#options' => array('query' => $destination, 'attributes' => array('title' => t('Delete dependency.'))),
-          ),
         );
+
+        // To avoid clutter, collect information about groupings so we can show each
+        // operator once per dependent.
+        if ($dependee_count > 1) {
+          if (${'show_' . $dependency['options']['grouping']}) {
+            $row['group'] = array(
+              '#markup' => $dependency['options']['grouping'],
+              '#rowspan' => $dependee_count,
+            );
+            ${'show_' . $dependency['options']['grouping']} = FALSE;
+          }
+        }
+        else {
+          $row['description']['#colspan'] = 2;
+        }
+
+        $row['description']['#markup'] = conditional_fields_dependency_description($dependency['dependee'], $dependent, $dependency['options']);
+
+        $row['edit'] = array(
+          '#type' => 'link',
+          '#title' => t('edit'),
+          '#href' => 'admin/structure/dependencies/edit/' . $id,
+          '#options' => array('query' => $destination, 'attributes' => array('title' => t('Edit dependency settings.'))),
+          '#query' => drupal_get_destination(),
+        );
+        $row['delete'] = array(
+          '#type' => 'link',
+          '#title' => t('delete'),
+          '#href' => 'admin/structure/dependencies/delete/' . $id,
+          '#options' => array('query' => $destination, 'attributes' => array('title' => t('Delete dependency.'))),
+        );
+
+        $form['table']['dependencies'][$id] += $row;
       }
     }
   }
@@ -299,20 +320,15 @@ function theme_conditional_fields_table($variables) {
   // Dependencies rows.
   foreach (element_children($elements['dependencies']) as $dependency) {
     foreach (element_children($elements['dependencies'][$dependency]) as $cell_key) {
-      if ($cell_key == 'dependent') {
-        if ($elements['dependencies'][$dependency][$cell_key]['#rowspan'] == 1) {
-          $table['rows'][$dependency][] = drupal_render($elements['dependencies'][$dependency][$cell_key]);
-        }
-        else {
-          $table['rows'][$dependency][] = array(
-            'data' => drupal_render($elements['dependencies'][$dependency][$cell_key]),
-            'rowspan' => $elements['dependencies'][$dependency][$cell_key]['#rowspan'],
-          );
+      $cell = array(
+        'data' => drupal_render($elements['dependencies'][$dependency][$cell_key]),
+      );
+      foreach (array('#colspan', '#rowspan') as $row_attribute) {
+        if (isset($elements['dependencies'][$dependency][$cell_key][$row_attribute])) {
+          $cell[ltrim($row_attribute, '#')] = $elements['dependencies'][$dependency][$cell_key][$row_attribute];
         }
       }
-      else {
-        $table['rows'][$dependency][] = drupal_render($elements['dependencies'][$dependency][$cell_key]);
-      }
+      $table['rows'][$dependency][] = $cell;
     }
   }
 
@@ -320,7 +336,10 @@ function theme_conditional_fields_table($variables) {
   $table['rows'][] = array(
     drupal_render($elements['add_new_dependency']['dependent']),
     drupal_render($elements['add_new_dependency']['dependee']),
-    drupal_render($elements['add_new_dependency']['state']) . drupal_render($elements['add_new_dependency']['condition']),
+    array(
+      'data' => drupal_render($elements['add_new_dependency']['state']) . drupal_render($elements['add_new_dependency']['condition']),
+      'colspan' => 2,
+    ),
     array(
       'data' => drupal_render($elements['add_new_dependency']['actions']),
       'colspan' => 2,
@@ -437,6 +456,15 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $dependenc
         ':input[name="condition"]' => array('value' => 'value'),
       ),
     ),
+  );
+
+  $form['grouping'] = array(
+    '#type' => 'radios',
+    '#title' => t('Interaction with other dependencies'),
+    '#description' => t('When this dependent has more than one dependee, how should this condition be evaluated against the others?') . '<br />' . t('Note that sets will be grouped this way: (ANDs) AND (ORs) AND (XORs).'),
+    '#options' => array('AND' => 'AND', 'OR' => 'OR', 'XOR' => 'XOR'),
+    '#default_value' => $dependency['options']['grouping'],
+    '#required' => TRUE,
   );
 
   $entity = entity_get_info($dependee_instance['entity_type']);
@@ -639,17 +667,6 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $dependenc
 
   array_push($form['entity_view'], $element_view_roles);
 
-  /* TODO: Add OR and XOR to multiple dependencies on same dependent field
-  $form['grouping'] = array(
-    '#type' => 'radios',
-    '#title' => t('Interaction with other dependencies'),
-    '#description' => t('When the field [dependent] depends from fields other than [dependee], how should this set of conditions be evaluated against the others? Note that sets will be grouped this way: (ANDs) AND (ORs) AND (XORs).'),
-    '#options' => array('AND', 'OR', 'XOR'),
-    '#default_value' => $dependency['options']['grouping'],
-    '#required' => TRUE,
-  );
-  */
-
   $form['actions'] = array(
     '#type' => 'actions',
     'save' => array(
@@ -697,6 +714,7 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
     'options'   => array(
       'state'                 => $form_state['values']['state'],
       'condition'             => $form_state['values']['condition'],
+      'grouping'              => $form_state['values']['grouping'],
       'effect'                => isset($form_state['values']['effect']) ? $form_state['values']['effect'] : FALSE,
       'effect_options'        => isset($form_state['values']['effect'], $form_state['values']['effect_options'][$form_state['values']['effect']]) ? $form_state['values']['effect_options'][$form_state['values']['effect']] : array(),
       'element_view'          => $form_state['values']['element_view'],
@@ -770,4 +788,14 @@ function conditional_fields_dependency_delete_form($form, $form_state, $dependen
 function conditional_fields_dependency_delete_form_submit($form, &$form_state) {
   conditional_fields_dependency_delete(array($form_state['values']['dependency']));
   drupal_set_message(t('The dependency has been deleted.'));
+}
+
+/**
+ * Uasort callback; sorts dependencies by group operator and dependee name.
+ */
+function _conditional_fields_sort_dependees($a, $b) {
+  if ($a['options']['grouping'] == $b['options']['grouping']) {
+    return strcasecmp($a['dependee'], $b['dependee']);
+  }
+  return strcasecmp($a['options']['grouping'], $b['options']['grouping']);
 }

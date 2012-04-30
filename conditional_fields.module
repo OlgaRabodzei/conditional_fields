@@ -77,12 +77,6 @@ define('CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN', 2);
  */
 define('CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED', 3);
 
-/* TODO: Grouping
-define('CONDITIONAL_FIELDS_GROUPING_AND', 0);
-define('CONDITIONAL_FIELDS_GROUPING_OR',  1);
-define('CONDITIONAL_FIELDS_GROUPING_XOR', 2);
- */
-
 /**
  * Implements hook_permission().
  */
@@ -454,6 +448,7 @@ function conditional_fields_form_after_build($form, &$form_state) {
     $dependent_location = array_merge($dependent_info['field_parents'], array($dependent));
     $dependent_form_field = drupal_array_get_nested_value($form, $dependent_location);
 
+    // Cycle the dependant's dependees.
     foreach ($dependent_info['dependees'] as $dependency) {
       $dependee = $dependency['dependee'];
 
@@ -552,8 +547,15 @@ function conditional_fields_form_after_build($form, &$form_state) {
         _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_dependent_validate', 'append');
       }
 
-      // Merge this dependency with the states array.
-      $states = array_merge_recursive($states, $state);
+      // Add the $state into the correct logic group in $states.
+      foreach ($state as $key => $constraints) {
+        if (empty($states[$key][$options['grouping']])) {
+          $states[$key][$options['grouping']] = $constraints;
+        }
+        else {
+          $states[$key][$options['grouping']] = array_merge($states[$key][$options['grouping']], $constraints);
+        }
+      }
 
       // Build effect settings for effects with options.
       // TODO: add dependee key to allow different effects on the same selector.
@@ -589,6 +591,36 @@ function conditional_fields_form_after_build($form, &$form_state) {
 
     // Save the modified field back into the form.
     drupal_array_set_nested_value($form, $dependent_location, $dependent_form_field);
+
+    // Map the states based on the conjunctions.
+    $states_new = array();
+    foreach ($states as $state_key => $value) {
+      // As the main object is ANDed together we can add the AND items directly.
+      if (!empty($states[$state_key]['AND'])) {
+        $states_new[$state_key] = $states[$state_key]['AND'];
+      }
+      // The OR and XOR groups are moved into a sub-array that has numeric keys
+      // so that we get a JSON array and not an object, as required by the States
+      // API for OR and XOR groupings.
+      if (!empty($states[$state_key]['OR'])) {
+        $or = array();
+        foreach ($states[$state_key]['OR'] as $constraint_key => $constraint_value) {
+          $or[] = array($constraint_key => $constraint_value);
+        }
+        // '1' as a string so that we get an object (which means logic groups 
+        // are ANDed together).
+        $states_new[$state_key]['1'] = $or;
+      }
+      if (!empty($states[$state_key]['XOR'])) {
+        $xor = array('xor');
+        foreach ($states[$state_key]['XOR'] as $constraint_key => $constraint_value) {
+          $xor[] = array($constraint_key => $constraint_value);
+        }
+        // '2' as a string so that we get an object.
+        $states_new[$state_key]['2'] = $xor;
+      }
+    }
+    $states = $states_new;
 
     // Add the #states property to the dependent field.
     drupal_array_set_nested_value($form, array_merge($dependent_location, array('#states')), $states);
@@ -831,8 +863,6 @@ function conditional_fields_entity_view_alter(&$build, $type) {
       }
 
       // Evaluate dependency.
-      // TODO: grouping of dependencies to allow OR. For now, the dependent is "triggered"
-      // only if all its dependencies evaluate to TRUE,
       if (empty($build[$dependee]['#access'])) {
         if (in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
           // We have to look for the dependee in the entity object.
@@ -867,10 +897,10 @@ function conditional_fields_entity_view_alter(&$build, $type) {
       else {
         $items = $build[$dependee]['#items'];
       }
-      $evaluated_dependents[$dependent]['AND'][] = conditional_fields_evaluate_dependency('view', $items, $options);
+      $evaluated_dependents[$dependent][$options['grouping']][] = conditional_fields_evaluate_dependency('view', $items, $options);
     }
     if (isset($evaluated_dependents[$dependent])) {
-      $is_triggered = !in_array(FALSE, $evaluated_dependents[$dependent]['AND']);
+      $is_triggered = conditional_fields_evaluate_grouping($evaluated_dependents[$dependent]);
 
       foreach ($behaviors as $behavior) {
         switch ($behavior) {
@@ -926,6 +956,24 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 }
 
 /**
+ * Evaluates an array with 'AND', 'OR' and 'XOR' groupings,
+ * each containing a list of boolean values.
+ */
+function conditional_fields_evaluate_grouping($groups) {
+  $or = $and = $xor = TRUE;
+  if (!empty($groups['OR'])) {
+    $or = in_array(TRUE, $groups['OR']);
+  }
+  if (!empty($groups['AND'])) {
+    $and = !in_array(FALSE, $groups['AND']);
+  }
+  if (!empty($groups['XOR'])) {
+    $xor = array_sum($groups['XOR']) == 1;
+  }
+  return $or && $and && $xor;
+}
+
+/**
  * Evaluate a set of dependencies for a dependent field.
  *
  * @param $dependent
@@ -945,11 +993,10 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
       $values = $dependee_values_location[$dependee_form_field['#language']];
     }
 
-    // TODO: OR/XOR grouping of dependencies.
-    $evaluated_dependees[$dependent['#field_name']]['AND'][] = conditional_fields_evaluate_dependency('edit', $values, $dependency['options']);
+    $evaluated_dependees[$dependent['#field_name']][$dependency['options']['grouping']][] = conditional_fields_evaluate_dependency('edit', $values, $dependency['options']);
   }
 
-  return in_array(FALSE, $evaluated_dependees[$dependent['#field_name']]['AND']) ? FALSE : TRUE;
+  return conditional_fields_evaluate_grouping($evaluated_dependees[$dependent['#field_name']]);
 }
 
 /**
@@ -1129,11 +1176,11 @@ function conditional_fields_dependency_default_options() {
   return array(
     'state'                 => 'visible',
     'condition'             => 'value',
+    'grouping'              => 'AND',
     'values_set'            => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
     'value'                 => array(),
     'values'                => array(),
     'value_form'            => array(),
-    // TODO 'grouping'      => CONDITIONAL_FIELDS_GROUPING_AND,
     'effect'                => 'show',
     'effect_options'        => array(),
     'element_view'          => array(
