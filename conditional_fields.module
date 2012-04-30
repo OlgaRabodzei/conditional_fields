@@ -285,6 +285,9 @@ function conditional_fields_element_after_build($element, &$form_state) {
   }
 
   // Attach dependee.
+  // TODO: collect information about every element of the dependee widget, not
+  // just the first encountered. This bottom-up approach would allow us to
+  // define per-element sets of dependency values.
   if (isset($dependencies['dependees'][$field['#field_name']])) {
     foreach ($dependencies['dependees'][$field['#field_name']] as $id => $dependency) {
       if (!isset($form['#conditional_fields'][$field['#field_name']]['dependents'][$id])) {
@@ -307,7 +310,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
  * @param $dependee
  *   The dependee field form element. Either a string identifying the element
  *   key in the form, or a fully built field array. Actually used properties of
- *   the array are #field_name and #field_parents.
+ *   the array are #field_name and #parents.
  * @param $dependent
  *   The dependent field form element. Either a string identifying the element
  *   key in the form, or a fully built field array. Actually used properties of
@@ -375,8 +378,8 @@ function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $op
     // forms.
     if (is_string($dependee) && is_string($dependent)) {
       $dependee = array(
-        '#field_name'    => $dependee,
-        '#field_parents' => array($dependee),
+        '#field_name' => $dependee,
+        '#parents'    => array($dependee),
       );
       $dependent = array(
         '#field_name'    => $dependent,
@@ -394,14 +397,10 @@ function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $op
   }
 
   // Attach dependee.
-  if (isset($dependee['#field_parents'])) {
-    $dependee_parents = $dependee['#field_parents'];
-  }
-  elseif (isset($dependee['#parents'])) {
-    $dependee_parents = $dependee['#parents'];
-  }
-  if (isset($dependee_parents)) {
-    $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee_parents;
+  // Use the #parents property of the dependee instead of #field_parents since
+  // we will need access to the full structure of the widget.
+  if (isset($dependee['#parents'])) {
+    $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#parents'];
     $form['#conditional_fields'][$dependee['#field_name']]['dependents'][$id] = array(
       'dependent' => $dependent['#field_name'],
       'options'   => $options,
@@ -416,7 +415,7 @@ function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $op
     $dependent_parents = $dependent['#parents'];
   }
   if (isset($dependent_parents)) {
-    $form['#conditional_fields'][$dependent['#field_name']]['parents'] = $dependent_parents;
+    $form['#conditional_fields'][$dependent['#field_name']]['field_parents'] = $dependent_parents;
     $form['#conditional_fields'][$dependent['#field_name']]['dependees'][$id] = array(
       'dependee' => $dependee['#field_name'],
       'options'  => $options,
@@ -452,7 +451,7 @@ function conditional_fields_form_after_build($form, &$form_state) {
       continue;
     }
 
-    $dependent_location = array_merge($dependent_info['parents'], array($dependent));
+    $dependent_location = array_merge($dependent_info['field_parents'], array($dependent));
     $dependent_form_field = drupal_array_get_nested_value($form, $dependent_location);
 
     foreach ($dependent_info['dependees'] as $dependency) {
@@ -463,11 +462,7 @@ function conditional_fields_form_after_build($form, &$form_state) {
       }
 
       $dependee_info = $form['#conditional_fields'][$dependee];
-      $dependee_location = array_merge($dependee_info['parents'], array($dependee));
-      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_location);
-      // We need the data inside the language key.
-      $dependee_form_field = $dependee_form_field[$dependee_form_field['#language']];
-
+      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
       // Load field edit behaviors.
@@ -542,7 +537,6 @@ function conditional_fields_form_after_build($form, &$form_state) {
         }
 
         $state = array($options['state'] => array($options['selector'] => $values));
-
         $dependee_form_state = isset($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $dependee_form_field['#language']) ? field_form_get_state($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $dependee_form_field['#language'], $form_state) : NULL;
 
         // Execute special handler for fields that need further processing.
@@ -930,9 +924,8 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
     // Extract field values from submitted values.
     $values = NULL;
     $dependee = $dependency['dependee'];
-    $dependee_location = array_merge($form['#conditional_fields'][$dependee]['parents'], array($dependee));
-    $dependee_form_field = drupal_array_get_nested_value($form, $dependee_location);
-    $dependee_values_location = conditional_fields_form_field_get_values($dependee_form_field, $form_state);
+    $dependee_form_field = drupal_array_get_nested_value($form, $form['#conditional_fields'][$dependee]['parents']);
+    $dependee_values_location = conditional_fields_form_field_get_values($form[$dependee_form_field['#parents'][0]], $form_state);
     if (isset($dependee_values_location)) {
       $values = $dependee_values_location[$dependee_form_field['#language']];
     }
