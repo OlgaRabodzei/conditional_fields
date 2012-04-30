@@ -617,9 +617,9 @@ function conditional_fields_form_after_build($form, &$form_state) {
 
   // Validation callback to manage dependent fields validation.
   $form['#validate'][] = 'conditional_fields_form_validate';
-  // Errors caused by untriggered dependent fields will be stored at field-level
-  // validation and unset later at form-level validation.
-  $form_state['conditional_fields_dependents_errors'] = array();
+  // Initialize validation information every time the form is rendered to avoid
+  // stale data after a failed submission.
+  $form_state['conditional_fields_untriggered_dependents'] = array();
 
   return $form;
 }
@@ -630,10 +630,10 @@ function conditional_fields_form_after_build($form, &$form_state) {
  * If the dependencies of a dependent field are not triggered, the validation
  * errors that it might have thrown must be removed, together with its submitted
  * values. This will simulate the field not being present in the form at all.
- * In this field-level callback we only remove the submitted values; errors are
- * just collected and stored in $form_state so they can be removed in a single
- * sweep in conditional_fields_form_validate(), which runs at the end of the
- * validation cycle.
+ * In this field-level callback we just collect needed information and store it
+ * in $form_state. Values and errors will be removed in a single sweep in
+ * conditional_fields_form_validate(), which runs at the end of the validation
+ * cycle.
  *
  * @see conditional_fields_form_validate()
  */
@@ -641,34 +641,20 @@ function conditional_fields_dependent_validate($element, &$form_state, $form) {
   $dependent = $element[$element['#language']];
 
   // Check if this field's dependencies were triggered.
-  if ($is_triggered = conditional_fields_evaluate_dependencies($dependent, $form, $form_state)) {
+  if (conditional_fields_evaluate_dependencies($dependent, $form, $form_state)) {
     return;
   }
 
-  $field_values_location = conditional_fields_form_field_get_values($dependent, $form_state);
+  // Mark submitted values for removal. We have to remove the after all fields
+  // have been validated to avoid collision between dependencies.
+  $form_state_addition['parents'] = $dependent['#array_parents'];
 
-  // If we couldn't find a location for the field's submitted values, let the
-  // validation errors pass through to avoid security holes.
-  if (!isset($field_values_location[$dependent['#field_name']])) {
-    return;
-  }
-
-  // Remove submitted values.
-  unset($field_values_location[$dependent['#field_name']]);
 
   // Optional behavior: reset the field to its default values.
   // Default values are always valid, so it's safe to skip validation.
   if (!empty($element['#conditional_fields_reset_if_untriggered'])) {
-    $dependent_info = field_form_get_state($dependent['#field_parents'], $dependent['#field_name'], $dependent['#language'], $form_state);
-    $field_values_location[$dependent['#field_name']][$dependent['#language']] = field_get_default_value($dependent_info['instance']['entity_type'], NULL, $dependent_info['field'], $dependent_info['instance'], $dependent['#language']);
+    $form_state_addition['reset'] = TRUE;
   }
-
-  // Save the changed array back in place.
-  // Do not use form_set_value() since it assumes that the values are located at
-  // $form_state['values'][ ... $element['#parents'] ... ], while the
-  // documentation of hook_field_widget_form() states that field values are
-  // $form_state['values'][ ... $element['#field_parents'] ... ].
-  drupal_array_set_nested_value($form_state['values'], $dependent['#field_parents'], $field_values_location);
 
   // Tag validation errors previously set on this field for removal in
   // conditional_fields_form_validate().
@@ -687,16 +673,11 @@ function conditional_fields_dependent_validate($element, &$form_state, $form) {
     }
   }
 
-  if (empty($field_errors)) {
-    return;
+  if (!empty($field_errors)) {
+    $form_state_addition['errors'] = $field_errors;
   }
 
-  if (empty($form_state['conditional_fields_dependents_errors'])) {
-    $form_state['conditional_fields_dependents_errors'] = $field_errors;
-  }
-  else {
-   $form_state['conditional_fields_dependents_errors'] = array_merge($form_state['conditional_fields_dependents_errors'], $field_errors); 
-  }
+  $form_state['conditional_fields_untriggered_dependents'][] = $form_state_addition;
 }
 
 /**
@@ -723,31 +704,65 @@ function conditional_fields_form_field_get_values($element, $form_state) {
  * @see conditional_fields_dependent_validate()
  */
 function conditional_fields_form_validate($form, &$form_state) {
-  if (empty($form_state['conditional_fields_dependents_errors'])) {
+  if (empty($form_state['conditional_fields_untriggered_dependents'])) {
     return;
   }
 
-  // Since Drupal provides no clean way to selectively remove error messages,
-  // we have to store all current form errors and error messages, clear them,
-  // filter out from our stored values the errors originating from untriggered
-  // dependent fields, and then reinstate remaining errors and messages.
-  $errors = array_diff_assoc((array) form_get_errors(), $form_state['conditional_fields_dependents_errors']);
-  form_clear_error();
-  $error_messages = drupal_get_messages('error');
-  $removed_messages = array_values($form_state['conditional_fields_dependents_errors']);
+  $untriggered_dependents_errors = array();
 
-  // Reinstate remaining errors.
-  foreach ($errors as $name => $error) {
-    form_set_error($name, $error);
-    // form_set_error() calls drupal_set_message(), so we have to filter out
-    // these from the messages to avoid duplicates.
-    $removed_messages[] = $error;
+  foreach ($form_state['conditional_fields_untriggered_dependents'] as $field) {
+    $dependent = drupal_array_get_nested_value($form, $field['parents']);
+    $field_values_location = conditional_fields_form_field_get_values($dependent, $form_state);
+
+    // If we couldn't find a location for the field's submitted values, let the
+    // validation errors pass through to avoid security holes.
+    if (!isset($field_values_location[$dependent['#field_name']])) {
+      continue;
+    }
+
+    if (empty($field['reset'])) {
+      unset($field_values_location[$dependent['#field_name']]);
+    }
+    else {
+      $dependent_info = field_form_get_state($dependent['#field_parents'], $dependent['#field_name'], $dependent['#language'], $form_state);
+      $field_values_location[$dependent['#field_name']][$dependent['#language']] = field_get_default_value($dependent_info['instance']['entity_type'], NULL, $dependent_info['field'], $dependent_info['instance'], $dependent['#language']);
+    }
+
+    // Save the changed array back in place.
+    // Do not use form_set_value() since it assumes that the values are located at
+    // $form_state['values'][ ... $element['#parents'] ... ], while the
+    // documentation of hook_field_widget_form() states that field values are
+    // $form_state['values'][ ... $element['#field_parents'] ... ].
+    drupal_array_set_nested_value($form_state['values'], $dependent['#field_parents'], $field_values_location);
+
+    if (!empty($field['errors'])) {
+      $untriggered_dependents_errors = array_merge($untriggered_dependents_errors, $field['errors']);
+    }
   }
 
-  // Reinstate remaining error messages (which, at this point, are messages that
-  // were originated outside of the validation process).
-  foreach (array_diff($error_messages['error'], $removed_messages) as $message) {
-    drupal_set_message($message, 'error');
+  if (!empty($untriggered_dependents_errors)) {
+    // Since Drupal provides no clean way to selectively remove error messages,
+    // we have to store all current form errors and error messages, clear them,
+    // filter out from our stored values the errors originating from untriggered
+    // dependent fields, and then reinstate remaining errors and messages.
+    $errors = array_diff_assoc((array) form_get_errors(), $untriggered_dependents_errors);
+    form_clear_error();
+    $error_messages = drupal_get_messages('error');
+    $removed_messages = array_values($untriggered_dependents_errors);
+
+    // Reinstate remaining errors.
+    foreach ($errors as $name => $error) {
+      form_set_error($name, $error);
+      // form_set_error() calls drupal_set_message(), so we have to filter out
+      // these from the messages to avoid duplicates.
+      $removed_messages[] = $error;
+    }
+
+    // Reinstate remaining error messages (which, at this point, are messages that
+    // were originated outside of the validation process).
+    foreach (array_diff($error_messages['error'], $removed_messages) as $message) {
+      drupal_set_message($message, 'error');
+    }
   }
 }
 
