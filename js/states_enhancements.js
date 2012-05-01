@@ -24,6 +24,20 @@ Drupal.states.Dependent.comparisons['Array'] = function (reference, value) {
 };
 
 /**
+ * Handle Object values.
+ */
+Drupal.states.Dependent.comparisons['Object'] = function (reference, value) {
+  /* Regular expressions are objects with a RegExp property. */
+  if (reference.hasOwnProperty('RegExp')) {
+    reference = new RegExp(reference.RegExp);
+    return this.RegExp(reference, value);
+  }
+  else {
+    return compare(reference, value);
+  }
+};
+
+/**
  * Focused condition.
  */
 Drupal.states.Trigger.states.focused = function(element) {

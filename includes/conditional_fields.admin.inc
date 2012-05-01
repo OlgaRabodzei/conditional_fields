@@ -404,6 +404,7 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $dependenc
     '#description' => t('The input mode of the values that trigger the dependency.'),
     '#options' => array(
       CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET => t('Insert value from widget...'),
+      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX => t('Regular expression...'),
       t('Set of values') => array(
         CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND => t('All these values (AND)...'),
         CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR  => t('Any of these values (OR)...'),
@@ -453,6 +454,25 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $dependenc
         ':input[name="condition"]' => array('value' => 'value'),
       ),
       'required' => array(
+        ':input[name="condition"]' => array('value' => 'value'),
+      ),
+    ),
+  );
+
+  $form['regex'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Regular expression'),
+    '#description' => t('The dependency is triggered when all the values of the dependee %field match the regular expression. The expression should be valid both in PHP and in Javascript. Do not include delimiters.', array('%field' => $dependee_instance['label'])) . '<br>' . t('Note: If the dependee has allowed values, these are actually the keys, not the labels, of those values.'),
+    '#maxlength' => 2048,
+    '#size' => 120,
+    '#default_value' => isset($dependency['options']['value']['RegExp']) ? $dependency['options']['value']['RegExp'] : '',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="values_set"]' => array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX),
+        ':input[name="condition"]' => array('value' => 'value'),
+      ),
+      'required' => array(
+        ':input[name="values_set"]' => array('value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX),
         ':input[name="condition"]' => array('value' => 'value'),
       ),
     ),
@@ -690,8 +710,13 @@ function conditional_fields_dependency_edit_form($form, &$form_state, $dependenc
  * @see conditional_fields_dependency_edit_form()
  */
 function conditional_fields_dependency_edit_form_validate($form, &$form_state) {
-  if ($form_state['values']['condition'] == 'value' && $form_state['values']['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET && drupal_strlen(trim($form_state['values']['values'])) == 0) {
-    form_set_error('values', t('!name field is required.', array('!name' => t('Set of values'))));
+  if ($form_state['values']['condition'] == 'value') {
+    if (in_array($form_state['values']['values_set'], array(CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND, CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR, CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR, CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT)) && drupal_strlen(trim($form_state['values']['values'])) == 0) {
+      form_set_error('values', t('!name field is required.', array('!name' => t('Set of values'))));
+    }
+    elseif ($form_state['values']['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && drupal_strlen(trim($form_state['values']['regex'])) == 0) {
+      form_set_error('regex', t('!name field is required.', array('!name' => t('Regular expression'))));
+    }
   }
 }
 
@@ -741,6 +766,13 @@ function conditional_fields_dependency_edit_form_submit($form, &$form_state) {
       $value = array();
       field_default_extract_form_values(NULL, NULL, array('field_name' => $dependee), NULL, LANGUAGE_NONE, $value, $form['value']['field'], $form_state);
       $dependency['options']['value'] = $value;
+    }
+    elseif ($dependency['options']['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
+      // The regular expression is inserted in an associative array, so it will
+      // be converted to a Javascript object.
+      // In states_enhancements.js we will then use the "RegExp" key to
+      // distinguish the object and evaluate it as a regular expression.
+      $dependency['options']['value'] = array('RegExp' => $form_state['values']['regex']);
     }
     else {
       $values = explode("\n", $form_state['values']['values']);

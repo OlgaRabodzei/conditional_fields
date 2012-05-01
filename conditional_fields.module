@@ -34,6 +34,11 @@ define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR', 4);
 define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT', 5);
 
 /**
+ * Dependency is triggered if the dependee values match a regular expression.
+ */
+define('CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX', 6);
+
+/**
  * Field view setting. Dependent is shown only if the dependency is triggered.
  */
 define('CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE', 1);
@@ -511,6 +516,9 @@ function conditional_fields_form_after_build($form, &$form_state) {
 
         if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
           $values[$options['condition']] = $options['value_form'];
+        }
+        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
+          $values[$options['condition']] = $options['value'];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
           $values[$options['condition']] = count($options['values']) == 1 ? $options['values'][0] : $options['values'];
@@ -1088,6 +1096,16 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
     $reference_values[] = is_array($value) ? array_shift($value) : $value;
   }
 
+  // Regular expression method.
+  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
+    foreach ($reference_values as $reference_value) {
+      if (!preg_match('/' . $options['value']['RegExp'] . '/', $reference_value)) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       $diff = array_diff($options['values'], $reference_values);
@@ -1651,12 +1669,14 @@ function conditional_fields_states_handler_select($field, $field_info, $options,
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
       $select_states[$options['state']][] = 'xor';
 
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+      $regex = TRUE;
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
       foreach ($options['values'] as $value) {
         $select_states[$options['state']][] = array(
           $options['selector'] => array(
-            $options['condition'] => array($value),
+            $options['condition'] => empty($regex) ? array($value) : $options['value'],
           ),
         );
       }
@@ -1673,6 +1693,9 @@ function conditional_fields_states_handler_checkbox($field, $field_info, $option
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
       $checked = $options['value'][0]['value'] == $field['#on_value'] ? TRUE : FALSE;
+      break;
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+      $checked = preg_match('/' . $options['value']['RegExp'] . '/', $field['#on_value']) ? TRUE : FALSE;
       break;
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
       // ANDing values of a single checkbox doesn't make sense: just use the first value.
@@ -1700,6 +1723,15 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
       foreach ($options['value'] as $value) {
         $checkboxes_selectors[conditional_fields_field_selector($field[current($value)])] = array('checked' => TRUE);
+      }
+      break;
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+      // We interpret this as: checkboxes whose values match the regular
+      // expression should be checked.
+      foreach ($field['#options'] as $key => $label) {
+        if (preg_match('/' . $options['value']['RegExp'] . '/', $key)) {
+          $checkboxes_selectors[conditional_fields_field_selector($field[$key])] = array('checked' => TRUE);
+        }
       }
       break;
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
@@ -1755,15 +1787,17 @@ function conditional_fields_states_handler_date_combo($field, $field_info, $opti
   // Add a condition for each date part.
   $date_selectors = array();
 
+  $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;
+
   // Date popup.
   if ($field_info['instance']['widget']['type'] == 'date_popup') {
     $date_selectors[conditional_fields_field_selector($field['value']['date'])] = array(
-      'value' => $options['value_form'][0]['value']['date'],
+      'value' => $regex ? $options['value'] : $options['value_form'][0]['value']['date'],
     );
 
     if ($field_info['field']['settings']['granularity']['hour'] || $field_info['field']['settings']['granularity']['minute'] || $field_info['field']['settings']['granularity']['second']) {
       $date_selectors[conditional_fields_field_selector($field['value']['time'])] = array(
-        'value' => $options['value_form'][0]['value']['time'],
+        'value' => $regex ? $options['value'] : $options['value_form'][0]['value']['time'],
       );
     }
   }
@@ -1772,7 +1806,7 @@ function conditional_fields_states_handler_date_combo($field, $field_info, $opti
     foreach ($field_info['field']['settings']['granularity'] as $date_part) {
       if ($date_part) {
         $date_selectors[conditional_fields_field_selector($field['value'][$date_part])] = array(
-          'value' => $options['value_form'][0]['value'][$date_part],
+          'value' => $regex ? $options['value'] : $options['value_form'][0]['value'][$date_part],
         );
       }
     }
@@ -1786,12 +1820,13 @@ function conditional_fields_states_handler_date_combo($field, $field_info, $opti
  */
 function conditional_fields_states_handler_link_field($field, $field_info, $options, &$state) {
   $link_selectors = array();
+  $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;
 
   // Add a condition for each link part (Title and URL)
   if ($field_info['instance']['settings']['title'] == 'optional' || $field_info['instance']['settings']['title'] == 'required') {
-    $link_selectors[conditional_fields_field_selector($field['title'])] = array('value' => $options['value_form'][0]['title']);
+    $link_selectors[conditional_fields_field_selector($field['title'])] = array('value' => $regex ? $options['value'] : $options['value_form'][0]['title']);
   }
-  $link_selectors[conditional_fields_field_selector($field['url'])] = array('value' => $options['value_form'][0]['url']);
+  $link_selectors[conditional_fields_field_selector($field['url'])] = array('value' => $regex ? $options['value'] : $options['value_form'][0]['url']);
 
   $state = array($options['state'] => $link_selectors);
 }
@@ -1804,6 +1839,7 @@ function conditional_fields_states_handler_link_addressfield($field, $field_info
     return;
   }
 
+  $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;
   $keys = array();
 
   if ($field['#handlers']['address']) {
@@ -1824,7 +1860,7 @@ function conditional_fields_states_handler_link_addressfield($field, $field_info
   $addressfield_selectors = array();
 
   foreach ($keys as $key) {
-    $addressfield_selectors[str_replace('%key', $key, $options['selector'])] = array('value' => $options['value'][0][$key]);
+    $addressfield_selectors[str_replace('%key', $key, $options['selector'])] = array('value' => $regex ? $options['value'] : $options['value'][0][$key]);
   }
 
   $state = array($options['state'] => $addressfield_selectors);
@@ -1856,6 +1892,14 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           $value_array[] = current($value);
         }
         $values = implode(', ', $value_array);
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+        return t('%dependent_name is !state when %dependee_name values match the regular expression: @regex.', array(
+          '%dependent_name' => $dependent_name,
+          '!state' => drupal_strtolower($states[$options['state']]),
+          '%dependee_name' => $dependee_name,
+          '@regex' => $options['value']['RegExp'],
+        ));
+        break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         return t('%dependent_name is !state when %dependee_name has all the values: @values.', array(
           '%dependent_name' => $dependent_name,
