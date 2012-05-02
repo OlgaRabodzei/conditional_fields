@@ -569,9 +569,15 @@ function conditional_fields_form_after_build($form, &$form_state) {
       // TODO: add dependee key to allow different effects on the same selector.
       if ($options['effect'] && $options['effect'] != 'show') {
         $selector = conditional_fields_field_selector(drupal_array_get_nested_value($form, array($dependent_location[0])));
+        // Convert numeric strings to numbers.
+        foreach ($options['effect_options'] as &$effect_option) {
+          if (is_numeric($effect_option)) {
+            $effect_option += 0;
+          }
+        }
         $effects[$selector] = array(
           'effect' => $options['effect'],
-          'options' => $options['effect_options']
+          'options' => $options['effect_options'],
         );
       }
 
@@ -640,11 +646,10 @@ function conditional_fields_form_after_build($form, &$form_state) {
     return $form;
   }
 
-  $form['#attached']['js'][] = drupal_get_path('module', 'conditional_fields') . '/js/states_enhancements.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.js';
 
   // Add effect settings to the form.
   if ($effects) {
-    $form['#attached']['js'][] = drupal_get_path('module', 'conditional_fields') . '/js/conditional_fields.effect.js';
     $form['#attached']['js'][] = array(
       'data' => array(
         'conditionalFields' => array(
@@ -1449,7 +1454,7 @@ function conditional_fields_states() {
  * Builds a list of supported effects that may be applied to a dependent field
  * when it changes from visible to invisible and viceversa. The effects may
  * have options that will be passed as Javascript settings and used by
- * conditional_fields.effect.js.
+ * conditional_fields.js.
  *
  * @return
  *   An associative array of effects. Each key is an unique name for the effect.
