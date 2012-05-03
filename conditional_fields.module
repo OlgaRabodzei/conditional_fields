@@ -203,13 +203,12 @@ function conditional_fields_forms() {
  * Implements hook_js_alter().
  *
  * Overrides core states API with a patched version that allows multiple
- * conditions and OR/XOR logic. Ongoing development at:
- * http://drupal.org/node/735528
+ * conditions and OR/XOR logic.
  *
- * TODO: remove when Drupal 7.14 is released.
  */
 function conditional_fields_js_alter(&$javascript) {
-  if (isset($javascript['misc/states.js'])) {
+  // Since Drupal 7.14, states.js includes the OR/XOR patch.
+  if (isset($javascript['misc/states.js']) && version_compare(VERSION, '7.14', '<')) {
     $javascript['misc/states.js']['data'] = drupal_get_path('module', 'conditional_fields') . '/js/states.js';
   }
 }
