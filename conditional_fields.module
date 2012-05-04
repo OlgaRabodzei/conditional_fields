@@ -204,7 +204,6 @@ function conditional_fields_forms() {
  *
  * Overrides core states API with a patched version that allows multiple
  * conditions and OR/XOR logic.
- *
  */
 function conditional_fields_js_alter(&$javascript) {
   // Since Drupal 7.14, states.js includes the OR/XOR patch.
@@ -874,9 +873,21 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         $behaviors = conditional_fields_field_behaviors('view', $options);
       }
 
-      // Evaluate dependency.
-      if (empty($build[$dependee]['#access'])) {
-        if (in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
+      $evaluate = in_array(CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE, $behaviors);
+      $hide_orphan = in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN, $behaviors);
+      $hide_untriggered_orphan = in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN, $behaviors);
+      $is_orphan = empty($build[$dependee]['#access']);
+      // .
+      if ($is_orphan) {
+        // Hide the dependent. No need to evaluate the dependency.
+        if ($hide_orphan) {
+          $build[$dependent]['#access'] = FALSE;
+          continue;
+        }
+        if ($hide_untriggered_orphan) {
+          $evaluate = TRUE;
+        }
+        if ($evaluate) {
           // We have to look for the dependee in the entity object.
           // TODO: Is it possible to avoid hardcoding this?
           switch ($type) {
@@ -894,6 +905,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
             default:
               $entity_property = '#entity';
           }
+          // If we didn't find the field, there is nothing more we can do.
           if (!isset($build[$entity_property]->$dependee)) {
             continue;
           }
@@ -901,15 +913,14 @@ function conditional_fields_entity_view_alter(&$build, $type) {
           // Values are keyed by language here, remove it.
           $items = array_shift($items);
         }
-        elseif (in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN, $behaviors)) {
-          $build[$dependent]['#access'] = FALSE;
-          continue;
-        }
       }
       else {
         $items = $build[$dependee]['#items'];
       }
-      $evaluated_dependents[$dependent][$options['grouping']][] = conditional_fields_evaluate_dependency('view', $items, $options);
+
+      if ($evaluate) {
+        $evaluated_dependents[$dependent][$options['grouping']][] = conditional_fields_evaluate_dependency('view', $items, $options);
+      }
     }
     if (isset($evaluated_dependents[$dependent])) {
       $is_triggered = conditional_fields_evaluate_grouping($evaluated_dependents[$dependent]);
@@ -924,12 +935,12 @@ function conditional_fields_entity_view_alter(&$build, $type) {
             break;
 
           case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN:
-            // This case was handled while evaluating dependencies.
+            // This case was handled while looking for the field.
             break;
 
           case CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN:
             // Hide the dependent if the dependee is not viewable and the dependency is not triggered.
-            if (!$is_triggered && empty($build[$dependee]['#access'])) {
+            if ($is_orphan && !$is_triggered) {
               $build[$dependent]['#access'] = FALSE;
             }
             break;
@@ -959,6 +970,10 @@ function conditional_fields_entity_view_alter(&$build, $type) {
             // Custom behaviors are callbacks.
             $$behavior('view', $dependee, $dependent, $is_triggered, $dependencies, $build, $type);
             break;
+        }
+
+        if (empty($build[$dependent]['#access'])) {
+          break;
         }
       }
     }
