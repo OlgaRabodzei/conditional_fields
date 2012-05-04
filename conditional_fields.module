@@ -1911,14 +1911,6 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           $value_array[] = current($value);
         }
         $values = implode(', ', $value_array);
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
-        return t('%dependent_name is !state when %dependee_name values match the regular expression: @regex.', array(
-          '%dependent_name' => $dependent_name,
-          '!state' => drupal_strtolower($states[$options['state']]),
-          '%dependee_name' => $dependee_name,
-          '@regex' => $options['value']['RegExp'],
-        ));
-        break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         return t('%dependent_name is !state when %dependee_name has all the values: @values.', array(
           '%dependent_name' => $dependent_name,
@@ -1949,6 +1941,14 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
           '!state' => drupal_strtolower($states[$options['state']]),
           '%dependee_name' => $dependee_name,
           '@values' => $values,
+        ));
+        break;
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+        return t('%dependent_name is !state when %dependee_name values match the regular expression: @regex.', array(
+          '%dependent_name' => $dependent_name,
+          '!state' => drupal_strtolower($states[$options['state']]),
+          '%dependee_name' => $dependee_name,
+          '@regex' => $options['value']['RegExp'],
         ));
         break;
     }
