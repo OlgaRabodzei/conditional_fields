@@ -99,7 +99,9 @@ function conditional_fields_features_rebuild($module) {
             }
           }
         }
-        conditional_fields_dependency_delete($deps_to_remove);
+        if (!empty($deps_to_remove)) {
+          conditional_fields_dependency_delete($deps_to_remove);
+        }
       }
       $entity_instances = $instances[$field['entity']][$field['bundle']];
       $dependee_id = $entity_instances[$field['dependee']]['id'];
