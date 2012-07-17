@@ -1317,11 +1317,7 @@ function conditional_fields_load_dependencies($entity_type = NULL, $bundle = NUL
     return $dependencies[$entity_type];
   }
 
-  if (!empty($dependencies)) {
-    return $dependencies;
-  }
-
-  return FALSE;
+  return $dependencies;
 }
 
 /**
