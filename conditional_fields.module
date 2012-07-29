@@ -875,11 +875,11 @@ function conditional_fields_entity_view_alter(&$build, $type) {
         $behaviors = conditional_fields_field_behaviors('view', $options);
       }
 
+      // Manage orphan fields (dependents with no dependees).
       $evaluate = in_array(CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE, $behaviors);
       $hide_orphan = in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN, $behaviors);
       $hide_untriggered_orphan = in_array(CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN, $behaviors);
       $is_orphan = empty($build[$dependee]['#access']);
-      // .
       if ($is_orphan) {
         // Hide the dependent. No need to evaluate the dependency.
         if ($hide_orphan) {
