@@ -38,6 +38,10 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
 
   $build = array();
 
+  if (!$entity_type) {
+    $build['#attached']['library'][] = array('system', 'drupal.collapse');
+  }
+
   foreach ($entities as $entity_name => $entity_info) {
     if (!$entity_info['fieldable']) {
       continue;
@@ -54,12 +58,6 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
         '#title' => $entity_info['label'],
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
-        '#attached' => array(
-          'js' => array(
-            'misc/form.js',
-            'misc/collapse.js',
-          ),
-        ),
         '#attributes' => array(
           'class' => array('collapsible collapsed'),
         ),
