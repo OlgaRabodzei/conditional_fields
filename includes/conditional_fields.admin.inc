@@ -64,24 +64,31 @@ function conditional_fields_dependencies_overview_page($bundle_name = NULL, $ent
       );
     }
 
-    foreach ($entity_info['bundles'] as $bundle_info_name => $bundle_info) {
-      if ($bundle_name && $bundle_name != $bundle_info_name) {
-        continue;
-      }
+    if (empty($entity_info['bundles'])) {
+      $build[$entity_name]['no_bundles'] = array(
+        '#markup' => $entity_name == 'node' ? t('No content types available.') : t('No bundles available.'),
+      );
+    }
+    else {
+      foreach ($entity_info['bundles'] as $bundle_info_name => $bundle_info) {
+        if ($bundle_name && $bundle_name != $bundle_info_name) {
+          continue;
+        }
 
-      $build[$entity_name][$bundle_info_name] = array();
+        $build[$entity_name][$bundle_info_name] = array();
 
-      if (!$bundle_name && count($entity_info['bundles']) > 1) {
-        $build[$entity_name][$bundle_info_name]['title'] = array(
-          '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundle_info['label'] . '</h4>',
-        );
-      }
+        if (!$bundle_name && count($entity_info['bundles']) > 1) {
+          $build[$entity_name][$bundle_info_name]['title'] = array(
+            '#markup' => '<h4 class="conditional-fields-bundles-list clearfix">' . $bundle_info['label'] . '</h4>',
+          );
+        }
 
-      $build[$entity_name][$bundle_info_name] += drupal_get_form('conditional_fields_dependency_add_form_' . $entity_name . '_' . $bundle_info_name);
+        $build[$entity_name][$bundle_info_name] += drupal_get_form('conditional_fields_dependency_add_form_' . $entity_name . '_' . $bundle_info_name);
 
-      if (!$entity_type && !isset($build[$entity_name][$bundle_info_name]['no_fields'])) {
-        $build[$entity_name]['#collapsed'] = FALSE;
-        $build[$entity_name]['#attributes']['class'] = array('collapsible');
+        if (!$entity_type && !isset($build[$entity_name][$bundle_info_name]['no_fields'])) {
+          $build[$entity_name]['#collapsed'] = FALSE;
+          $build[$entity_name]['#attributes']['class'] = array('collapsible');
+        }
       }
     }
   }
@@ -102,7 +109,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
 
   if (count($instances) < 2) {
     $form['no_fields'] = array(
-      '#markup' => '<p>' . t('Add at least two fields to enable dependencies.') . '</p>',
+      '#markup' => t('Add at least two fields to enable dependencies.'),
     );
 
     return $form;
