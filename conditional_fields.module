@@ -1910,36 +1910,16 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
         }
         $values = implode(', ', $value_array);
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
-        return t('%dependent_name is !state when %dependee_name has all the values: @values.', array(
-          '%dependent_name' => $dependent_name,
-          '!state' => drupal_strtolower($states[$options['state']]),
-          '%dependee_name' => $dependee_name,
-          '@values' => $values,
-        ));
+        $description = '%dependent_name is !state when %dependee_name has all the values: @values.';
         break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
-        return t('%dependent_name is !state when %dependee_name has at least one of the values: @values.', array(
-          '%dependent_name' => $dependent_name,
-          '!state' => drupal_strtolower($states[$options['state']]),
-          '%dependee_name' => $dependee_name,
-          '@values' => $values,
-        ));
+        $description = '%dependent_name is !state when %dependee_name has at least one of the values: @values.';
         break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
-        return t('%dependent_name is !state when %dependee_name has only one of the values: @values.', array(
-          '%dependent_name' => $dependent_name,
-          '!state' => drupal_strtolower($states[$options['state']]),
-          '%dependee_name' => $dependee_name,
-          '@values' => $values,
-        ));
+        $description = '%dependent_name is !state when %dependee_name has only one of the values: @values.';
         break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
-        return t('%dependent_name is !state when %dependee_name has none of the values: @values.', array(
-          '%dependent_name' => $dependent_name,
-          '!state' => drupal_strtolower($states[$options['state']]),
-          '%dependee_name' => $dependee_name,
-          '@values' => $values,
-        ));
+        $description = '%dependent_name is !state when %dependee_name has none of the values: @values.';
         break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
         return t('%dependent_name is !state when %dependee_name values match the regular expression: @regex.', array(
@@ -1950,6 +1930,13 @@ function conditional_fields_dependency_description($dependee_name, $dependent_na
         ));
         break;
     }
+
+    return t($description, array(
+      '%dependent_name' => $dependent_name,
+      '!state' => drupal_strtolower($states[$options['state']]),
+      '%dependee_name' => $dependee_name,
+      '@values' => $values,
+    ));
   }
   else {
     $conditions = conditional_fields_conditions();
