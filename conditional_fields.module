@@ -690,7 +690,7 @@ function conditional_fields_dependent_validate($element, &$form_state, $form) {
     return;
   }
 
-  // Mark submitted values for removal. We have to remove the after all fields
+  // Mark submitted values for removal. We have to remove them after all fields
   // have been validated to avoid collision between dependencies.
   $form_state_addition['parents'] = $dependent['#array_parents'];
 
