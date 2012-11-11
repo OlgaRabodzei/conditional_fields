@@ -180,7 +180,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
           $row['description']['#colspan'] = 2;
         }
 
-        $row['description']['#markup'] = conditional_fields_dependency_description(check_plain($instances[$dependency['dependee']]['label']), check_plain($instances[$dependent]['label']), $dependency['options']);
+        $row['description']['#markup'] = conditional_fields_dependency_description($instances[$dependency['dependee']]['label'], $instances[$dependent]['label'], $dependency['options']);
 
         $row['edit'] = array(
           '#type' => 'link',
