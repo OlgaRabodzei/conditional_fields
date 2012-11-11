@@ -152,7 +152,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
         // first row they will appear grouped.
         if ($first_row == TRUE) {
           $form['table']['dependencies'][$id]['dependent'] = array(
-            '#markup' => $dependent,
+            '#markup' => check_plain($instances[$dependent]['label']) . ' (' . $dependent . ')',
             '#rowspan' => $dependee_count,
           );
 
@@ -161,7 +161,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
 
         $row = array(
           'dependee' => array(
-            '#markup' => $dependency['dependee'],
+            '#markup' => check_plain($instances[$dependency['dependee']]['label']) . ' (' . $dependency['dependee'] . ')',
           ),
         );
 
@@ -180,7 +180,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
           $row['description']['#colspan'] = 2;
         }
 
-        $row['description']['#markup'] = conditional_fields_dependency_description($dependency['dependee'], $dependent, $dependency['options']);
+        $row['description']['#markup'] = conditional_fields_dependency_description(check_plain($instances[$dependency['dependee']]['label']), check_plain($instances[$dependent]['label']), $dependency['options']);
 
         $row['edit'] = array(
           '#type' => 'link',
@@ -205,7 +205,7 @@ function conditional_fields_dependency_add_form($form, &$form_state, $entity_typ
   $fields = array();
 
   foreach ($instances as $field) {
-    $fields[$field['id']] = check_plain($field['label']);
+    $fields[$field['id']] = check_plain($field['label'] . ' (' . $field['field_name'] . ')');
   }
 
   asort($fields);
