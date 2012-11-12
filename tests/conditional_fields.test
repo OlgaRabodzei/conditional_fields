@@ -309,9 +309,9 @@ class ConditionalFieldsUITestCase extends DrupalWebTestCase {
     );
     $this->drupalPost(NULL, $edit, t('Save settings'), array('query' => array('destination' => 'admin/structure/types/manage/conditional-fields-test/dependencies')));
     $this->assertRaw(t('%dependent_name is !state when %dependee_name has all the values: @values.', array(
-      '%dependent_name' => 'dependent',
+      '%dependent_name' => t('Label of the dependent field'),
       '!state' => 'visible',
-      '%dependee_name' => 'dependee',
+      '%dependee_name' => t('Label of the dependee field'),
       '@values' => 'on',
     )), 'The dependency was updated correctly.');
 
