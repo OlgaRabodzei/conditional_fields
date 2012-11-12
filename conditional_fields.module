@@ -1014,12 +1014,20 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
 
   foreach ($dependencies as $dependency_id => $dependency) {
     // Extract field values from submitted values.
-    $values = NULL;
     $dependee = $dependency['dependee'];
-    $dependee_form_field = drupal_array_get_nested_value($form, $form['#conditional_fields'][$dependee]['parents']);
-    $dependee_values_location = conditional_fields_form_field_get_values($form[$dependee_form_field['#parents'][0]], $form_state);
-    if (isset($dependee_values_location)) {
-      $values = $dependee_values_location[$dependee_form_field['#language']];
+    $dependee_parents = $form['#conditional_fields'][$dependee]['parents'];
+
+    // We have the parents of the field, but depending on the entity type and
+    // the widget type, they may include additional elements that are actually
+    // part of the value. So we find the depth of the field inside the form
+    // structure and use the parents only up to that depth.
+    $dependee_parents_keys = array_flip($dependee_parents);
+    $dependee_parent = drupal_array_get_nested_value($form, array_slice($dependee_parents, 0, $dependee_parents_keys[$dependee]));
+    $values = conditional_fields_form_field_get_values($dependee_parent[$dependee], $form_state);
+
+    // Remove the language key.
+    if (isset($dependee_parent[$dependee]['#language'], $values[$dependee_parent[$dependee]['#language']])) {
+      $values = $values[$dependee_parent[$dependee]['#language']];
     }
 
     $evaluated_dependees[$dependent['#field_name']][$dependency['options']['grouping']][] = conditional_fields_evaluate_dependency('edit', $values, $dependency['options']);
