@@ -593,7 +593,7 @@ function conditional_fields_form_after_build($form, &$form_state) {
       foreach ($behaviors as $behavior) {
         // Custom behaviors are callbacks.
         if (function_exists($$behavior)) {
-          $$behavior('edit', $form, $form_state, $dependent, $dependencies);
+          $$behavior($form, $form_state, $dependent, $dependent_info);
         }
       }
     }
@@ -970,7 +970,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 
           default:
             // Custom behaviors are callbacks.
-            $$behavior('view', $dependee, $dependent, $is_triggered, $dependencies, $build, $type);
+            $$behavior($dependee, $dependent, $is_triggered, $dependencies, $build, $type);
             break;
         }
 
@@ -1621,7 +1621,7 @@ function conditional_fields_behaviors($op = NULL) {
   );
 
   // Allow other modules to modify the options.
-  drupal_alter('conditional_fields_behaviors', $op, $behaviors);
+  drupal_alter('conditional_fields_behaviors', $behaviors);
 
   if (isset($behaviors[$op])) {
     return $behaviors[$op];
