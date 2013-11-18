@@ -9,14 +9,14 @@
  * @see http://drupal.org/node/1149078
  */
 Drupal.states.Dependent.comparisons['Array'] = function (reference, value) {
-  if (value === null || value === undefined) {
-    return (reference.length == 0) ? true : false;
-  }
-  if (reference.length > value.length) {
+  // Make sure value is an array.
+  if (!(typeof(value) === 'object' && (value instanceof Array))) {
     return false;
   }
-  for (var i in reference) {
-    if ($.inArray(reference[i], value) < 0) {
+  // We iterate through each value provided in the reference. If all of them
+  // exist in value array, we return true. Otherwise return false.
+  for (var key in reference) {
+    if (reference.hasOwnProperty(key) && $.inArray(reference[key], value) < 0) {
       return false;
     }
   }
