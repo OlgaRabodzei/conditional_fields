@@ -3,5 +3,6 @@ description = Define dependencies between fields based on their states and value
 core = 7.x
 package = Fields
 
+dependencies[] = system (>=7.14)
 dependencies[] = field
 configure = admin/structure/dependencies
