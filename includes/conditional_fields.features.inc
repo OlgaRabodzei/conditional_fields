@@ -50,6 +50,11 @@ function conditional_fields_features_export_render($module_name, $data, $export 
 
     if (isset($dependencies[$entity]) && isset($dependencies[$entity][$bundle])) {
       $info = $dependencies[$entity][$bundle];
+
+      // Ensure that dependencies are always exported in the same order to
+      // avoid fake overrides.
+      ksort($info['dependents']);
+
       foreach ($info['dependents'] as $dependent_field_name => $dependees) {
         foreach ($dependees as $dependee) {
           $code[] = '';
