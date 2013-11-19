@@ -588,15 +588,11 @@ function conditional_fields_form_after_build($form, &$form_state) {
       }
     }
 
-    // Execute custom behaviors.
-    if (!empty($behaviors)) {
-      foreach ($behaviors as $behavior) {
-        // Custom behaviors are callbacks.
-        if (function_exists($$behavior)) {
-          $$behavior($form, $form_state, $dependent, $dependent_info);
-        }
-      }
+    // Execute custom behaviors callbacks.
+    foreach ($behaviors as $behavior) {
+      $behavior($form, $form_state, $dependent, $dependent_info);
     }
+
     unset($behaviors);
 
     if (empty($states)) {
@@ -970,7 +966,7 @@ function conditional_fields_entity_view_alter(&$build, $type) {
 
           default:
             // Custom behaviors are callbacks.
-            $$behavior($dependee, $dependent, $is_triggered, $dependencies, $build, $type);
+            $behavior($dependee, $dependent, $is_triggered, $dependencies, $build, $type);
             break;
         }
 
