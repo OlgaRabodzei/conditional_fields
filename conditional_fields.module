@@ -589,8 +589,10 @@ function conditional_fields_form_after_build($form, &$form_state) {
     }
 
     // Execute custom behaviors callbacks.
-    foreach ($behaviors as $behavior) {
-      $behavior($form, $form_state, $dependent, $dependent_info);
+    if (!empty($behaviors)) {
+      foreach ($behaviors as $behavior) {
+        $behavior($form, $form_state, $dependent, $dependent_info);
+      }      
     }
 
     unset($behaviors);
