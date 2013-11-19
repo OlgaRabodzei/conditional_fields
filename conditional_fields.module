@@ -1635,11 +1635,10 @@ function conditional_fields_behaviors($op = NULL) {
  * $options and $state.
  *
  * @see conditional_fields_field_attach_form()
- * @see conditional_fields_states_handler_select()
  */
 function conditional_fields_states_handlers() {
   $handlers = array(
-    'conditional_fields_states_handler_select' => array(
+    'conditional_fields_states_handler_select_multiple' => array(
       '#type' => 'select',
       '#multiple' => TRUE,
     ),
@@ -1680,7 +1679,7 @@ function conditional_fields_states_handlers() {
  * reference values of type Array are selected, a different selector must be
  * added for each value of a set for OR, XOR and NOT evaluations.
  */
-function conditional_fields_states_handler_select($field, $field_info, $options, &$state) {
+function conditional_fields_states_handler_select_multiple($field, $field_info, $options, &$state) {
   switch ($options['values_set']) {
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
