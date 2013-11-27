@@ -1174,7 +1174,7 @@ function conditional_fields_field_behaviors($op, $options) {
 }
 
 /**
- * Builds a jQuery selector from the id or name attribute of a field.
+ * Builds a jQuery selector from the name or id attribute of a field.
  *
  * @todo support custom selectors with %lang and %key placeholders.
  *
@@ -1185,21 +1185,21 @@ function conditional_fields_field_behaviors($op, $options) {
  *   A jQuery selector string.
  */
 function conditional_fields_field_selector($field) {
-  if (isset($field['#attributes']['id'])) {
-    return '#' . $field['#attributes']['id'];
-  }
-
-  if (isset($field['#id'])) {
-    return '#' . $field['#id'];
-  }
-
-  // Try with name if id is not found.
   if (isset($field['#attributes']['name'])) {
     return '[name="' . $field['#attributes']['name'] . '"]';
   }
 
   if (isset($field['#name'])) {
     return '[name="' . $field['#name'] . '"]';
+  }
+
+  // Try with id if name is not found.
+  if (isset($field['#attributes']['id'])) {
+    return '#' . $field['#attributes']['id'];
+  }
+
+  if (isset($field['#id'])) {
+    return '#' . $field['#id'];
   }
 
   return FALSE;
