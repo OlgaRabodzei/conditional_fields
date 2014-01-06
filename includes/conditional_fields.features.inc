@@ -86,13 +86,11 @@ function conditional_fields_features_export_render($module_name, $data, $export 
  * Implements hook_features_rebuild().
  */
 function conditional_fields_features_rebuild($module) {
-  $defaults = module_invoke($module, 'conditional_fields_default_fields');
-
-  $dependencies = conditional_fields_load_dependencies();
-  $instances = field_info_instances();
+  $defaults = features_get_default('conditional_fields', $module);
 
   if (!empty($defaults)) {
-    $node_types = array();
+    $dependencies = conditional_fields_load_dependencies();
+    $instances = field_info_instances();
     foreach ($defaults as $field) {
       if (isset($dependencies[$field['entity']][$field['bundle']])) {
         foreach ($dependencies[$field['entity']][$field['bundle']] as $dependancy_type => $field_dep_settings) {
@@ -111,8 +109,7 @@ function conditional_fields_features_rebuild($module) {
       $entity_instances = $instances[$field['entity']][$field['bundle']];
       $dependee_id = $entity_instances[$field['dependee']]['id'];
       $dependent_id = $entity_instances[$field['dependent']]['id'];
-      $options = $field['options'];
-      conditional_fields_dependency_insert($dependee_id, $dependent_id, $options);
+      conditional_fields_dependency_insert($dependee_id, $dependent_id, $field['options']);
     }
   }
 }
