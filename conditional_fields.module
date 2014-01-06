@@ -1960,7 +1960,7 @@ function conditional_fields_module_implements_alter(&$implementations, $hook) {
     // callback last to ensure that conditional_fields_form_validate runs after
     // all other validation routines.
     // The Features hook must be processed when the fields actually exist.
-    if ($hook == 'element_info_alter' || $hook = 'features_api') {
+    if ($hook == 'element_info_alter' || $hook == 'features_api') {
       $group = $implementations['conditional_fields'];
       unset($implementations['conditional_fields']);
       $implementations['conditional_fields'] = $group;
