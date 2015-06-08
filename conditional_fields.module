@@ -720,7 +720,7 @@ function conditional_fields_dependent_validate($element, &$form_state, $form) {
  */
 function conditional_fields_form_field_get_values($element, $form_state) {
   // Fall back to #parents to support custom dependencies.
-  $parents = isset($element['#field_parents']) ? $element['#field_parents'] : $element['#parents'];
+  $parents = !empty($element['#field_parents']) ? $element['#field_parents'] : $element['#parents'];
   return drupal_array_get_nested_value($form_state['values'], $parents);
 }
 
@@ -748,6 +748,9 @@ function conditional_fields_form_validate($form, &$form_state) {
     // If we couldn't find a location for the field's submitted values, let the
     // validation errors pass through to avoid security holes.
     if (!isset($field_values_location[$dependent['#field_name']])) {
+      if (!empty($field['errors'])) {
+        $untriggered_dependents_errors = array_merge($untriggered_dependents_errors, $field['errors']);
+      }
       continue;
     }
 
