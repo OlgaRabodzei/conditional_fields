@@ -381,10 +381,10 @@ function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $op
   }
 
   // Attach dependee.
-  // Use the #parents property of the dependee instead of #field_parents since
-  // we will need access to the full structure of the widget.
+  // Use the #array_parents property of the dependee instead of #field_parents
+  // since we will need access to the full structure of the widget.
   if (isset($dependee['#parents'])) {
-    $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#parents'];
+    $form['#conditional_fields'][$dependee['#field_name']]['parents'] = $dependee['#array_parents'];
     $form['#conditional_fields'][$dependee['#field_name']]['dependents'][$id] = array(
       'dependent' => $dependent['#field_name'],
       'options'   => $options,
