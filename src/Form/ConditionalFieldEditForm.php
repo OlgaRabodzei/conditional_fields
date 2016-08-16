@@ -4,6 +4,7 @@ namespace Drupal\conditional_fields\Form;
 
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Unicode;
 
 /**
  * Form controller for Conditional field edit forms.
@@ -22,13 +23,16 @@ class ConditionalFieldEditForm extends ContentEntityForm {
     //$checkboxes = ($dependee_instance['widget']['type'] == 'options_buttons' && $dependee['cardinality'] != 1) || $dependee_instance['widget']['type'] == 'options_onoff' ? TRUE : FALSE;
     $label = $this->entity->dependee->value;
 
+    // TODO: Build a dummy field widget to use as form field in single value selection
+    // option.
+
     $form['condition'] = [
       '#type' => 'select',
       '#title' => $this->t('Condition'),
       '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
       '#options' => conditional_fields_conditions(),
       //$checkboxes),
-      '#default_value' => array_key_exists('condition', $options['condition']) ? $options['condition'] : '',
+      '#default_value' => array_key_exists('condition', $options) ? $options['condition'] : '',
       '#required' => TRUE,
     ];
 
@@ -117,7 +121,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#title' => $this->t('Interaction with other dependencies'),
       '#description' => $this->t('When this dependent has more than one dependee, how should this condition be evaluated against the others?') . '<br />' . $this->t('Note that sets will be grouped this way: (ANDs) AND (ORs) AND (XORs).'),
       '#options' => ['AND' => 'AND', 'OR' => 'OR', 'XOR' => 'XOR'],
-      '#default_value' => array_key_exists('grouping', $options['grouping']) ? $options['grouping'] : 'AND',
+      '#default_value' => array_key_exists('grouping', $options) ? $options['grouping'] : 'AND',
       '#required' => TRUE,
     ];
 
@@ -156,7 +160,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#title' => $this->t('Form state'),
       '#description' => t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
       '#options' => conditional_fields_states(),
-      '#default_value' => array_key_exists('state', $options['state']) ? $options['state'] : 0,
+      '#default_value' => array_key_exists('state', $options) ? $options['state'] : 0,
       '#required' => TRUE,
       '#ajax' => [
         'callback' => '::ajaxAdminStateCallback',
@@ -233,7 +237,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
           $effect_option['#default_value'] = $form_state->getValue('effect_options')[$effect_name][$effect_option_name];
         }
         elseif ($options['effect'] == $effect_name) {
-          $effect_option['#default_value'] = $options['effect_options'][$effect_option_name];
+          $effect_option['#default_value'] = $options['effect_options'][$effect_name][$effect_option_name];
         }
 
         $form['effects_wrapper']['effect_options'][$effect_name][$effect_option_name] = $effect_option;
@@ -360,6 +364,38 @@ class ConditionalFieldEditForm extends ContentEntityForm {
    */
   protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    if ($form_state->getValue('condition') == 'value') {
+      if (in_array($form_state->getValue('values_set'), [
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
+        ]) &&
+        Unicode::strlen(trim($form_state->getValue('values')) == 0)
+      ) {
+        $form_state->setErrorByName('values', $this->t('!name field is required.', ['!name' => $this->t('Set of values')]));
+      }
+      elseif ($form_state->getValue('values_set') == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && Unicode::strlen(trim($form_state->getValue('regex'))) == 0) {
+        $form_state->setErrorByName('regex', $this->t('!name field is required.', ['!name' => $this->t('Regular expression')]));
+      }
+    }
+    return parent::validateForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $options = $form_state->cleanValues()->getValues();
+    $form_state->setValues([]);
+    $form_state->setValue('options', $options);
+    parent::submitForm($form, $form_state);
   }
 
 }
