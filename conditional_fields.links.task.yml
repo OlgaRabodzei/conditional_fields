@@ -1,0 +1,38 @@
+# Conditional field routing definition
+entity.conditional_field.canonical:
+  route_name: entity.conditional_field.canonical
+  base_route: entity.conditional_field.canonical
+  title: 'View'
+
+entity.conditional_field.edit_form:
+  route_name: entity.conditional_field.edit_form
+  base_route: entity.conditional_field.canonical
+  title: Edit
+
+entity.conditional_field.delete_form:
+  route_name:  entity.conditional_field.delete_form
+  base_route:  entity.conditional_field.canonical
+  title: Delete
+  weight: 10
+
+# Conditional field routing definition
+conditional_field.settings_tab:
+  route_name: conditional_field.settings
+  title: 'Settings'
+  base_route: conditional_field.settings
+entity.conditional_field.canonical:
+  route_name: entity.conditional_field.canonical
+  base_route: entity.conditional_field.canonical
+  title: 'View'
+
+entity.conditional_field.edit_form:
+  route_name: entity.conditional_field.edit_form
+  base_route: entity.conditional_field.canonical
+  title: Edit
+
+entity.conditional_field.delete_form:
+  route_name:  entity.conditional_field.delete_form
+  base_route:  entity.conditional_field.canonical
+  title: Delete
+  weight: 10
+

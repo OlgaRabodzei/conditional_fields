@@ -1,0 +1,14 @@
+{
+  "name": "drupal/conditional_fields",
+  "type": "drupal-module",
+  "description": "Define dependencies between fields based on their states and values.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/conditional_fields",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "http://drupal.org/project/issues/conditional_fields",
+    "source": "http://cgit.drupalcode.org/conditional_fields"
+  },
+  "require": { }
+}
