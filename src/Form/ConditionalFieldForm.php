@@ -17,18 +17,37 @@ class ConditionalFieldForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $entity_type = 'node';
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     $form = parent::buildForm($form, $form_state);
+    $form['entity_type']['widget']['#ajax'] = [
+      'callback' => '::entityTypeCallback',
+      'wrapper' => 'entity-type-wrapper',
+    ];
 
-    $entity_types_defs = NodeType::loadMultiple();
-    $entity_types_options = [];
-    foreach ($entity_types_defs as $entity_types_def) {
-      $entity_types_options[$entity_types_def->id()] = $entity_types_def->label();
+    $form['entity_type_wrapper'] = [
+      '#type' => 'container',
+      '#attributes' => ['id' => 'entity-type-wrapper'],
+    ];
+
+    // Get entity type value.
+    if (!$form_state->hasValue('entity_type')) {
+      return $form;
+    }
+    $entity_type = reset($form_state->getValue('entity_type'));
+    if (!array_key_exists('value', $entity_type)) {
+      return $form;
+    }
+    $entity_type = $entity_type['value'];
+
+    // Get entity type bundles.
+    $entity_types_options = \Drupal::entityManager()
+      ->getBundleInfo($entity_type);
+    foreach ($entity_types_options as $key => $entity_types_def) {
+      $entity_types_options[$key] = array_key_exists('label', $entity_types_def) ? $entity_types_def['label'] : $key;
     }
 
-    $form['field_bundle_name'] = [
+    $form['entity_type_wrapper']['bundle'] = [
       '#title' => $this->t('Bundle name'),
       '#type' => 'select',
       '#options' => $entity_types_options,
@@ -39,12 +58,12 @@ class ConditionalFieldForm extends ContentEntityForm {
       ],
     ];
 
-    $form['conditional_fields_wrapper'] = [
+    $form['entity_type_wrapper']['conditional_fields_wrapper'] = [
       '#type' => 'container',
       '#attributes' => ['id' => 'conditional-fields-wrapper'],
     ];
-    if ($bundle_name = $form_state->getValue('field_bundle_name')) {
-      $form['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle_name);
+    if ($bundle_name = $form_state->getValue('bundle')) {
+      $form['entity_type_wrapper']['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle_name);
     }
 
     return $form;
@@ -98,6 +117,7 @@ class ConditionalFieldForm extends ContentEntityForm {
         '#description' => t('Dependent'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">' . t('Add new dependency') . '</div>',
+        '#required' => TRUE,
       ),
       'dependee' => array(
         '#type' => 'select',
@@ -106,6 +126,7 @@ class ConditionalFieldForm extends ContentEntityForm {
         '#description' => t('Dependee'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
+        '#required' => TRUE,
       ),
       'state' => array(
         '#type' => 'select',
@@ -158,7 +179,7 @@ class ConditionalFieldForm extends ContentEntityForm {
   }
 
   /**
-   * Implements callback for Ajax event on entity type selection.
+   * Implements callback for Ajax event on entity bundle selection.
    *
    * @param array $form
    *   From render array.
@@ -169,7 +190,22 @@ class ConditionalFieldForm extends ContentEntityForm {
    *   Fields section of the form.
    */
   public function conditionalFieldsCallback(array &$form, FormStateInterface $form_state) {
-    return $form['conditional_fields_wrapper'];
+    return $form['entity_type_wrapper']['conditional_fields_wrapper'];
+  }
+
+  /**
+   * Implements callback for Ajax event on entity type selection.
+   *
+   * @param array $form
+   *   From render array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Current state of form.
+   *
+   * @return array
+   *   Fields section of the form.
+   */
+  public function entityTypeCallback(array &$form, FormStateInterface $form_state) {
+    return $form['entity_type_wrapper'];
   }
 
   /**
@@ -205,7 +241,7 @@ class ConditionalFieldForm extends ContentEntityForm {
     // Copy values from table for submit.
     $options = [];
     foreach ($conditional_values as $key => $value) {
-      if (in_array($key, ['dependee', 'dependent'])) {
+      if (in_array($key, ['entity_type', 'bundle', 'dependee', 'dependent'])) {
         $form_state->setValue($key, $value);
       }
       $options[$key] = $value;

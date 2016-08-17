@@ -181,6 +181,39 @@ class ConditionalField extends ContentEntityBase implements ConditionalFieldInte
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the entity was last edited.'));
 
+    $entity_type_options = \Drupal::entityTypeManager()->getDefinitions();
+    foreach ($entity_type_options as $key => $entity_type) {
+      $entity_type_options[$key] = $entity_type->getLabel();
+    }
+    $fields['entity_type'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Entity type'))
+      ->setDescription(t('The name of the entity_type.'))
+      ->setRequired(TRUE)
+      ->setSetting('allowed_values', $entity_type_options)
+      ->setDisplayOptions('view', array(
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ))
+      ->setDisplayOptions('form', array(
+        'type' => 'options_select',
+        'weight' => 0,
+      ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['bundle'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Entity bundle'))
+      ->setDescription(t('The name of the entity bundle.'))
+      ->setRequired(TRUE)
+      ->setDisplayOptions('view', array(
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['dependee'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Dependee field'))
       ->setDescription(t('The id of the dependee field instance.'))
@@ -208,7 +241,6 @@ class ConditionalField extends ContentEntityBase implements ConditionalFieldInte
     $fields['options'] = BaseFieldDefinition::create('map')
       ->setLabel(t('Options'))
       ->setDescription(t('Serialized data containing the options for the dependency.'));
-
 
 
     return $fields;
