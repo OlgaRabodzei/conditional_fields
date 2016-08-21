@@ -4,7 +4,6 @@ namespace Drupal\conditional_fields\Form;
 
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\node\Entity\NodeType;
 
 /**
  * Form controller for Conditional field edit forms.
@@ -24,6 +23,8 @@ class ConditionalFieldForm extends ContentEntityForm {
       'callback' => '::entityTypeCallback',
       'wrapper' => 'entity-type-wrapper',
     ];
+
+    $form['entity_type']['widget']['#options'] = $this->filterContentEntityTypes($form['entity_type']['widget']['#options']);
 
     $form['entity_type_wrapper'] = [
       '#type' => 'container',
@@ -91,7 +92,7 @@ class ConditionalFieldForm extends ContentEntityForm {
 
     // Build list of available fields.
     $fields = array();
-    $instances = \Drupal::entityManager()
+    $instances = \Drupal::entityTypeManager()
       ->getFieldDefinitions($entity_type, $bundle_name);
     foreach ($instances as $field) {
       $fields[$field->getName()] = $field->getLabel() . ' (' . $field->getName() . ')';
@@ -249,6 +250,28 @@ class ConditionalFieldForm extends ContentEntityForm {
     $options += conditional_fields_dependency_default_options();
     $form_state->setValue('options', $options);
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Filter ContentEntity entity_types out of all entity_types.
+   *
+   * @param array $entity_types
+   *   List of all EntityTypes available.
+   */
+  protected function filterContentEntityTypes(array $entity_types) {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    foreach ($entity_types as $entity_type_id => $entity_type_label) {
+      if ('_none' == $entity_type_id) {
+        continue;
+      }
+      if (!($entity_type_manager->getStorage($entity_type_id)
+        ->getEntityType()
+        ->isSubclassOf('\Drupal\Core\Entity\ContentEntityInterface'))
+      ) {
+        unset($entity_types[$entity_type_id]);
+      }
+    }
+    return $entity_types;
   }
 
 }
