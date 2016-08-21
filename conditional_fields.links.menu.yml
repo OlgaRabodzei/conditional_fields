@@ -1,21 +1,13 @@
 # Conditional field menu items definition
 entity.conditional_field.collection:
-  title: 'Conditional field list'
+  title: 'Conditional fields'
   route_name: entity.conditional_field.collection
-  description: 'List Conditional field entities'
-  parent: system.admin_structure
-  weight: 100
-
-# Conditional field menu items definition
-entity.conditional_field.collection:
-  title: 'Conditional field list'
-  route_name: entity.conditional_field.collection
-  description: 'List Conditional field entities'
+  description: 'List Conditional fields'
   parent: system.admin_structure
   weight: 100
 
 conditional_field.admin.structure.settings:
-  title: Conditional field settings
-  description: 'Configure Conditional field entities'
+  title: Conditional fields settings
+  description: 'Configure Conditional fields'
   route_name: conditional_field.settings
-  parent: system.admin_structure
+  parent: entity.conditional_field.collection
