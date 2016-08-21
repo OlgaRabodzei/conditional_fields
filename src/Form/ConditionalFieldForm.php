@@ -42,7 +42,7 @@ class ConditionalFieldForm extends ContentEntityForm {
     $entity_type = $entity_type['value'];
 
     // Get entity type bundles.
-    $entity_types_options = \Drupal::entityManager()
+    $entity_types_options = \Drupal::getContainer()->get('entity_type.bundle.info')
       ->getBundleInfo($entity_type);
     foreach ($entity_types_options as $key => $entity_types_def) {
       $entity_types_options[$key] = array_key_exists('label', $entity_types_def) ? $entity_types_def['label'] : $key;
@@ -92,7 +92,7 @@ class ConditionalFieldForm extends ContentEntityForm {
 
     // Build list of available fields.
     $fields = array();
-    $instances = \Drupal::entityTypeManager()
+    $instances = \Drupal::getContainer()->get('entity_field.manager')
       ->getFieldDefinitions($entity_type, $bundle_name);
     foreach ($instances as $field) {
       $fields[$field->getName()] = $field->getLabel() . ' (' . $field->getName() . ')';
@@ -214,7 +214,7 @@ class ConditionalFieldForm extends ContentEntityForm {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $table = $form_state->getValue('table');
-    if (!is_array($table) || !array_key_exists('add_new_dependency', $table) || !is_array($table['add_new_dependency'])) {
+    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
       return parent::validateForm($form, $form_state);
     }
     $conditional_values = $table['add_new_dependency'];
@@ -235,9 +235,10 @@ class ConditionalFieldForm extends ContentEntityForm {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $table = $form_state->getValue('table');
-    if (!is_array($table) || !array_key_exists('add_new_dependency', $table) || !is_array($table['add_new_dependency'])) {
-      parent::submitForm($form, $form_state);
+    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
+      return parent::submitForm($form, $form_state);
     }
+
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
     $options = [];
