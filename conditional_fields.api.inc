@@ -5,13 +5,14 @@
  */
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\NestedArray;
 
 /**
  * Loads all dependencies from the database.
  *
  * The result can be filtered by providing an entity type and a bundle name.
  */
-function conditional_fields_load_dependencies($entity_type = NULL, $bundle = NULL) {
+function conditional_fields_load_dependencies_entity($entity_type = NULL, $bundle = NULL) {
   $dependencies = \Drupal::entityTypeManager()
     ->getStorage('conditional_field')
     ->loadByProperties([
@@ -96,7 +97,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     }
 
     $dependent_location = array_merge($dependent_info['field_parents'], array($dependent));
-    $dependent_form_field = drupal_array_get_nested_value($form, $dependent_location);
+    $dependent_form_field = NestedArray::getValue($form, $dependent_location);
 
     // Cycle the dependant's dependees.
     foreach ($dependent_info['dependees'] as $dependency) {
@@ -107,7 +108,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       }
 
       $dependee_info = $form['#conditional_fields'][$dependee];
-      $dependee_form_field = drupal_array_get_nested_value($form, $dependee_info['parents']);
+      $dependee_form_field = NestedArray::getValue($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
       // Load field edit behaviors.
@@ -215,7 +216,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       // Build effect settings for effects with options.
       // TODO: add dependee key to allow different effects on the same selector.
       if ($options['effect'] && $options['effect'] != 'show') {
-        $selector = conditional_fields_field_selector(drupal_array_get_nested_value($form, array($dependent_location[0])));
+        $selector = conditional_fields_field_selector(NestedArray::getValue($form, array($dependent_location[0])));
         // Convert numeric strings to numbers.
         foreach ($options['effect_options'] as &$effect_option) {
           if (is_numeric($effect_option)) {
@@ -251,7 +252,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     }
 
     // Save the modified field back into the form.
-    drupal_array_set_nested_value($form, $dependent_location, $dependent_form_field);
+    NestedArray::getValue($form, $dependent_location, $dependent_form_field);
 
     // Map the states based on the conjunctions.
     $states_new = array();
@@ -284,7 +285,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     $states = $states_new;
 
     // Add the #states property to the dependent field.
-    drupal_array_set_nested_value($form, array_merge($dependent_location, array('#states')), $states);
+    NestedArray::getValue($form, array_merge($dependent_location, array('#states')), $states);
 
     $has_states = TRUE;
   }
@@ -293,10 +294,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     return $form;
   }
 
-  $form['#attached']['library'][] = array(
-    'conditional_fields',
-    'conditional_fields'
-  );
+  $form['#attached']['library'][] = 'conditional_fields/conditional_fields';
 
   // Add effect settings to the form.
   if ($effects) {
@@ -314,7 +312,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
   $form['#validate'][] = 'conditional_fields_form_validate';
   // Initialize validation information every time the form is rendered to avoid
   // stale data after a failed submission.
-  $form_state['conditional_fields_untriggered_dependents'] = array();
+  $form_state->setValue('conditional_fields_untriggered_dependents', []);
 
   return $form;
 }

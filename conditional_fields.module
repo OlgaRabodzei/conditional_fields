@@ -6,6 +6,9 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Database\Database;
+use \Drupal\conditional_fields\Entity\ConditionalField;
 
 /**
  * Dependency is triggered if the dependee has a certain value.
@@ -120,16 +123,16 @@ function conditional_fields_theme() {
  */
 function conditional_fields_dependency_default_options() {
   return array(
-    'state'                 => 'visible',
-    'condition'             => 'value',
-    'grouping'              => 'AND',
-    'values_set'            => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-    'value'                 => array(),
-    'values'                => array(),
-    'value_form'            => array(),
-    'effect'                => 'show',
-    'effect_options'        => array(),
-    'element_view'          => array(
+    'state' => 'visible',
+    'condition' => 'value',
+    'grouping' => 'AND',
+    'values_set' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
+    'value' => array(),
+    'values' => array(),
+    'value_form' => array(),
+    'effect' => 'show',
+    'effect_options' => array(),
+    'element_view' => array(
       CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE,
       CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN,
       CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => 0,
@@ -137,14 +140,263 @@ function conditional_fields_dependency_default_options() {
       CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => 0,
     ),
     'element_view_per_role' => 0,
-    'element_view_roles'    => array(),
-    'element_edit'          => array(
+    'element_view_roles' => array(),
+    'element_edit' => array(
       CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN,
       CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => 0,
       CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => 0,
     ),
     'element_edit_per_role' => 0,
-    'element_edit_roles'    => array(),
-    'selector'              => '',
+    'element_edit_roles' => array(),
+    'selector' => '',
   );
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function conditional_fields_element_info_alter(array &$types) {
+  foreach ($types as $type => $info) {
+    $types[$type]['#after_build'][] = 'conditional_fields_element_after_build';
+  }
+}
+
+/**
+ * Processes form elements with dependencies.
+ *
+ * Just adds a #conditional_fields property to the form with the needed
+ * data, which is used later in conditional_fields_form_after_build():
+ * - The fields #parents property.
+ * - Field dependencies data.
+ */
+function conditional_fields_element_after_build($element, &$form_state) {
+  // Ensure that the element is a field.
+  if (isset($element['#title']) && isset($element['#parents'][0])) {
+    $field = $element;
+  }
+  else {
+    return $element;
+  }
+
+  $form = &$form_state->getCompleteForm();
+
+  if($form['#form_id'] != 'conditional_field_delete_form' && $form['#form_id'] != 'conditional_field_edit_form') {
+    // Some fields do not have entity type and bundle properties. In this case we
+    // try to use the properties from the form. This is not an optimal solution,
+    // since in case of fields in entities within entities they might not correspond,
+    // and their dependencies will not be loaded.
+    $build_info = $form_state->getBuildInfo();
+    $entity = $build_info['callback_object']->getEntity();
+    $bundle = $entity->getType();
+    $entity_type = $entity->getEntityTypeId();
+
+    $dependencies = conditional_fields_load_dependencies($entity_type, $bundle);
+
+    if (!$dependencies) {
+      return $element;
+    }
+
+    $field_name = $field['#parents'][0];
+
+    // Attach dependent.
+    if (isset($dependencies['dependents'][$field_name])) {
+      foreach ($dependencies['dependents'][$field_name] as $id => $dependency) {
+        if (!isset($form['#conditional_fields'][$field_name]['dependees'][$id])) {
+          conditional_fields_attach_dependency($form, array('#field_name' => $dependency['dependee']), $field, $dependency['options'], $id);
+        }
+      }
+    }
+
+    // Attach dependee.
+    // TODO: collect information about every element of the dependee widget, not
+    // just the first encountered. This bottom-up approach would allow us to
+    // define per-element sets of dependency values.
+    if (isset($dependencies['dependees'][$field_name])) {
+      foreach ($dependencies['dependees'][$field_name] as $id => $dependency) {
+        if (!isset($form['#conditional_fields'][$field_name]['dependents'][$id])) {
+          conditional_fields_attach_dependency($form, $field, array('#field_name' => $dependency['dependent']), $dependency['options'], $id);
+        }
+      }
+    }
+  }
+
+  return $element;
+}
+
+/**
+ * Loads all dependencies from the database.
+ *
+ * The result can be filtered by providing an entity type and a bundle name.
+ */
+function conditional_fields_load_dependencies($entity_type, $bundle) {
+  // Use the advanced drupal_static() pattern.
+  static $dependencies;
+
+  if (!isset($dependencies[$entity_type][$bundle])) {
+    if (!empty($entity_type) && !empty($bundle)) {
+      $dependencies[$entity_type][$bundle] = array();
+    }
+
+    $default_options = conditional_fields_dependency_default_options();
+
+    $connection = Database::getConnection();
+    $select = $connection->select('conditional_field', 'cf')
+      ->fields('cf', [
+        'id',
+      ])
+      ->condition('entity_type', $entity_type, '=')
+      ->condition('bundle', $bundle, '=')
+      ->execute()
+      ->fetchAll();
+
+    if (!empty($select)) {
+      foreach ($select as $value) {
+        $conditional_field_entity = ConditionalField::load($value->id);
+        $options = $conditional_field_entity->options->getValue();
+        $options += $default_options;
+
+        $dependencies[$entity_type][$bundle]['dependents'][$conditional_field_entity->dependent->value][$value->id] = array(
+          'dependee' => $conditional_field_entity->dependee->value,
+          'options' => reset($options),
+        );
+
+        $dependencies[$entity_type][$bundle]['dependees'][$conditional_field_entity->dependee->value][$value->id] = array(
+          'dependent' => $conditional_field_entity->dependent->value,
+          'options' => reset($options),
+        );
+      }
+    }
+  }
+
+  if ($entity_type && isset($dependencies[$entity_type])) {
+    if ($bundle && isset($dependencies[$entity_type][$bundle])) {
+      return $dependencies[$entity_type][$bundle];
+    }
+
+    return $dependencies[$entity_type];
+  }
+
+  return $dependencies;
+}
+
+function conditional_fields_attach_dependency(&$form, $dependee, $dependent, $options, $id = 0) {
+  module_load_include('inc', 'conditional_fields', 'conditional_fields.api');
+  // The absence of the $id parameter identifies a custom dependency.
+  if (!$id) {
+    // String values are accepted to simplify usage of this function with custom
+    // forms.
+    if (is_string($dependee) && is_string($dependent)) {
+      $dependee = array(
+        '#field_name' => $dependee,
+        '#parents' => array($dependee),
+      );
+      $dependent = array(
+        '#field_name' => $dependent,
+        '#field_parents' => array($dependent),
+      );
+
+      // Custom dependencies have automatically assigned a progressive id.
+      static $current_id;
+      if (!$current_id) {
+        $current_id = 1;
+      }
+      $id = $current_id;
+      $current_id++;
+    }
+  }
+
+  // Attach dependee.
+  // Use the #array_parents property of the dependee instead of #field_parents
+  // since we will need access to the full structure of the widget.
+  if (isset($dependee['#parents'])) {
+    $form['#conditional_fields'][$dependee['#parents'][0]]['parents'] = $dependee['#array_parents'];
+    $form['#conditional_fields'][$dependee['#parents'][0]]['dependents'][$id] = array(
+      'dependent' => $dependent['#field_name'],
+      'options' => $options,
+    );
+  }
+
+  // Attach dependent.
+  if (!empty($dependent['#parents'])) {
+    $dependent_parents = $dependent['#parents'];
+  }
+  elseif (isset($dependent['#field_parents'])) {
+    $dependent_parents = $dependent['#field_parents'];
+  }
+  if (isset($dependent_parents)) {
+    $form['#conditional_fields'][$dependent['#parents'][0]]['field_parents'] = $dependent_parents;
+    $form['#conditional_fields'][$dependent['#parents'][0]]['dependees'][$id] = array(
+      'dependee' => $dependee['#field_name'],
+      'options' => $options,
+    );
+  }
+
+  // Actual processing is done in conditional_fields_form_after_build().
+  // Append the property so the callback runs last.
+  _conditional_fields_element_add_property($form, '#after_build', 'conditional_fields_form_after_build', 'append');
+}
+
+/**
+ * Helper function to add a property/value pair to a render array safely without
+ * overriding any pre-existing value.
+ *
+ * @param $position
+ *   'append' if $value should be inserted at the end of the $element[$property]
+ *   array, any other value to insert it at the beginning.
+ *
+ */
+function _conditional_fields_element_add_property(&$element, $property, $value, $position = 'prepend') {
+  // Avoid overriding default element properties that might not yet be set.
+  if (!isset($element[$property])) {
+    $element[$property] = isset($element['#type']) ? element_info_property($element['#type'], $property, array()) : array();
+  }
+
+  if (in_array($value, $element[$property])) {
+    return;
+  }
+
+  switch ($position) {
+    case 'append':
+      $element[$property] = array_merge($element[$property], (array) $value);
+      break;
+
+    case 'prepend':
+    default:
+      $element[$property] = array_merge((array) $value, $element[$property]);
+      break;
+  }
+}
+
+/**
+ * Determine which dependency behaviors should be used in forms and content
+ * display, depending on dependency options and user roles.
+ *
+ * @param $op
+ *   'view' or 'edit'.
+ * @param $options
+ *    Dependency options.
+ *
+ * @return
+ *   An array of behaviors.
+ *
+ */
+function conditional_fields_field_behaviors($op, $options) {
+  global $user;
+
+  if ($options['element_' . $op . '_per_role']) {
+    foreach ($options['element_' . $op . '_roles'] as $rid => $role_behaviors) {
+      if (isset($user->roles[$rid])) {
+        $behaviors = $role_behaviors;
+        break;
+      }
+    }
+  }
+  else {
+    $behaviors = $options['element_' . $op];
+  }
+
+  // Filter out inactive behaviors.
+  $behaviors = array_filter($behaviors);
+
+  return $behaviors;
 }
