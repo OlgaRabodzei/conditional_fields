@@ -77,7 +77,6 @@ function conditional_fields_states_handlers() {
  * to the form that handles validation of dependent fields.
  */
 function conditional_fields_form_after_build($form, FormStateInterface &$form_state) {
-  // TODO: 1) Add #conditional_fields to form.
   // TODO: 2) Check this func for attaching states.
 
   // Dependencies data is attached in conditional_fields_element_after_build().
@@ -96,7 +95,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       continue;
     }
 
-//    $dependent_location = array_merge($dependent_info['field_parents'], array($dependent));
     $dependent_location = array_merge([], array($dependent));
     $dependent_form_field = NestedArray::getValue($form, $dependent_location);
 
@@ -297,6 +295,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
   $form['#attached']['library'][] = 'conditional_fields/conditional_fields';
 
+  // @FIXME: on extra-effect we receive LogicError - can use JS in #attached.
   // Add effect settings to the form.
   if ($effects) {
     $form['#attached']['js'][] = array(
