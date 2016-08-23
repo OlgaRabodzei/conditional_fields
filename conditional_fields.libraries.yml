@@ -1,5 +1,5 @@
 conditional_fields:
-  version: 8.x-1.x
+  version: "8.x-1.x"
   js:
     js/conditional_fields.js: {}
   dependencies:

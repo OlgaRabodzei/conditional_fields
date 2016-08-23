@@ -96,7 +96,8 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       continue;
     }
 
-    $dependent_location = array_merge($dependent_info['field_parents'], array($dependent));
+//    $dependent_location = array_merge($dependent_info['field_parents'], array($dependent));
+    $dependent_location = array_merge([], array($dependent));
     $dependent_form_field = NestedArray::getValue($form, $dependent_location);
 
     // Cycle the dependant's dependees.
@@ -231,8 +232,8 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
       // Apply reset dependent to default if untriggered behavior.
       if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED, $behaviors)) {
-        // Add property to element so conditional_fields_dependent_validate() can
-        // pick it up.
+        // Add property to element so conditional_fields_dependent_validate()
+        // can pick it up.
         $dependent_form_field['#conditional_fields_reset_if_untriggered'] = TRUE;
         unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED]);
       }
@@ -252,7 +253,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     }
 
     // Save the modified field back into the form.
-    NestedArray::getValue($form, $dependent_location, $dependent_form_field);
+    NestedArray::setValue($form, $dependent_location, $dependent_form_field);
 
     // Map the states based on the conjunctions.
     $states_new = array();
@@ -285,7 +286,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     $states = $states_new;
 
     // Add the #states property to the dependent field.
-    NestedArray::getValue($form, array_merge($dependent_location, array('#states')), $states);
+    NestedArray::setValue($form, array_merge($dependent_location, array('#states')), $states);
 
     $has_states = TRUE;
   }
@@ -316,4 +317,3 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
   return $form;
 }
-
