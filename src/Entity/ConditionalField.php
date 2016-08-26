@@ -147,6 +147,70 @@ class ConditionalField extends ContentEntityBase implements ConditionalFieldInte
   /**
    * {@inheritdoc}
    */
+  public function getEntityTypeValue() {
+    return $this->get('entity_type')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setEntityTypeValue($entity_type) {
+    $this->set('entity_type', $entity_type);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getBundleValue() {
+    return $this->get('bundle')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setBundleValue($bundle) {
+    $this->set('bundle', $bundle);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDependentField() {
+    $field_name = $this->getDependent();
+    return $this->getField($field_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDependeeField() {
+    $field_name = $this->getDependee();
+    return $this->getField($field_name);
+  }
+
+  /**
+   * Gets field object by name.
+   *
+   * @param string $field_name
+   *   Field name.
+   *
+   * @return \Drupal\Core\Field\BaseFieldDefinition | NULL
+   *   A field from the bundle by the name.
+   */
+  protected function getField($field_name) {
+    $entity_type = $this->getEntityTypeValue();
+    $bundle_name = $this->getBundleValue();
+    $fields = \Drupal::getContainer()->get('entity_field.manager')
+      ->getFieldDefinitions($entity_type, $bundle_name);
+
+    return array_key_exists($field_name, $fields) ? $fields[$field_name] : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields['id'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('ID'))

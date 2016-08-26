@@ -76,4 +76,58 @@ interface ConditionalFieldInterface extends ContentEntityInterface, EntityChange
    */
   public function setCreatedTime($timestamp);
 
+  /**
+   * Gets the Conditional field entity_type.
+   *
+   * @return string
+   *   Entity type id of the Conditional field.
+   */
+  public function getEntityTypeValue();
+
+  /**
+   * Sets the Conditional field entity_type.
+   *
+   * @param string $entity_type
+   *   Entity type id of the Conditional field.
+   *
+   * @return \Drupal\conditional_fields\ConditionalFieldInterface
+   *   The called Conditional field entity.
+   */
+  public function setEntityTypeValue($entity_type);
+
+  /**
+   * Gets the Conditional field bundle.
+   *
+   * @return string
+   *   Bundle id of the Conditional field.
+   */
+  public function getBundleValue();
+
+  /**
+   * Sets the Conditional field bundle.
+   *
+   * @param string $bundle
+   *   Bundle id of the Conditional field.
+   *
+   * @return \Drupal\conditional_fields\ConditionalFieldInterface
+   *   The called Conditional field entity.
+   */
+  public function setBundleValue($bundle);
+
+  /**
+   * Gets the Conditional field dependent as an object.
+   *
+   * @return \Drupal\Core\Field\BaseFieldDefinition
+   *   Dependent of the Conditional field.
+   */
+  public function getDependentField();
+
+  /**
+   * Gets the Conditional field dependee as an object.
+   *
+   * @return \Drupal\Core\Field\BaseFieldDefinition
+   *   Dependee of the Conditional field.
+   */
+  public function getDependeeField();
+
 }
