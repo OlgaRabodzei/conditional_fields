@@ -19,9 +19,13 @@ class ConditionalFieldEditForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $form = parent::buildForm($form, $form_state);
+
+    // Disable entity_type.
+    $form['entity_type']['widget']['#attributes']['disabled'] = TRUE;
+
     $options = array_shift($this->entity->options->getValue());
     //$checkboxes = ($dependee_instance['widget']['type'] == 'options_buttons' && $dependee['cardinality'] != 1) || $dependee_instance['widget']['type'] == 'options_onoff' ? TRUE : FALSE;
-    $label = $this->entity->dependee->value;
+    $label = $this->entity->getDependee();
 
     // TODO: Build a dummy field widget to use as form field in single value selection
     // option.
