@@ -2,33 +2,55 @@
 
 namespace Drupal\conditional_fields\Form;
 
-use Drupal\Core\Entity\ContentEntityForm;
+use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Component\Utility\Unicode;
 
 /**
- * Form controller for Conditional field edit forms.
+ * Class ConditionalFieldEditForm.
  *
- * @ingroup conditional_fields
+ * @package Drupal\conditional_fields\Form
  */
-class ConditionalFieldEditForm extends ContentEntityForm {
+class ConditionalFieldEditForm extends FormBase {
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function getFormId() {
+    return 'conditional_field_edit_form';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
-    $form = parent::buildForm($form, $form_state);
 
-    // Disable entity_type.
-    $form['entity_type']['widget']['#attributes']['disabled'] = TRUE;
+    if (empty($entity_type) || empty($bundle) || empty($field_name)) {
+      return $form;
+    }
 
-    $options = array_shift($this->entity->options->getValue());
-    //$checkboxes = ($dependee_instance['widget']['type'] == 'options_buttons' && $dependee['cardinality'] != 1) || $dependee_instance['widget']['type'] == 'options_onoff' ? TRUE : FALSE;
-    $label = $this->entity->getDependee();
+    $form_display_entity = entity_get_form_display($entity_type, $bundle, 'default');
+    $field = $form_display_entity->getComponent($field_name);
 
-    // TODO: Build a dummy field widget to use as form field in single value selection
-    // option.
+    if (empty($field['third_party_settings']['conditional_fields'])) {
+      return $form;
+    }
+    $condition = $field['third_party_settings']['conditional_fields'];
+    $settings = $condition['settings'];
+    $label = $condition['dependee'];
+
+    $form['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Save settings'),
+      '#weight' => 50,
+    ];
+
+    $form['entity_type'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Entity type'),
+      '#value' => $entity_type,
+      '#disabled' => TRUE,
+    ];
 
     $form['condition'] = [
       '#type' => 'select',
@@ -36,7 +58,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
       '#options' => conditional_fields_conditions(),
       //$checkboxes),
-      '#default_value' => array_key_exists('condition', $options) ? $options['condition'] : '',
+      '#default_value' => array_key_exists('condition', $condition) ? $condition['condition'] : '',
       '#required' => TRUE,
     ];
 
@@ -44,7 +66,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#type' => 'select',
       '#title' => $this->t('Values input mode'),
       '#description' => $this->t('The input mode of the values that trigger the dependency.'),
-      '#options' => array(
+      '#options' => [
         CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET => $this->t('Insert value from widget...'),
         CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX => $this->t('Regular expression...'),
         'Set of values' => [
@@ -54,8 +76,8 @@ class ConditionalFieldEditForm extends ContentEntityForm {
           CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT => $this->t('None of these values (NOT)...'),
           // TODO: PHP evaluation.
         ],
-      ),
-      '#default_value' => array_key_exists('values_set', $options) ? $options['values_set'] : 0,
+      ],
+      '#default_value' => array_key_exists('values_set', $settings) ? $settings['values_set'] : 0,
       '#required' => TRUE,
       '#states' => [
         'visible' => [
@@ -63,6 +85,9 @@ class ConditionalFieldEditForm extends ContentEntityForm {
         ],
       ],
     ];
+
+    // TODO: Build a dummy field widget to use as form field in single value selection
+    // option.
 
     $form['value'] = [
       '#type' => 'fieldset',
@@ -84,7 +109,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#type' => 'textarea',
       '#title' => $this->t('Set of values'),
       '#description' => $this->t('The values of the dependee %field that trigger the dependency.', ['%field' => $label]) . '<br>' . $this->t('Enter one value per line. Note: if the dependee has allowed values, these are actually the keys, not the labels, of those values.'),
-      '#default_value' => array_key_exists('values', $options) ? implode("\n", $options['values']) : '',
+      '#default_value' => array_key_exists('values', $settings) ? implode("\n", $settings['values']) : '',
       '#states' => [
         'visible' => [
           ':input[name="values_set"]' => [
@@ -107,7 +132,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#description' => $this->t('The dependency is triggered when all the values of the dependee %field match the regular expression. The expression should be valid both in PHP and in Javascript. Do not include delimiters.', ['%field' => $label]) . '<br>' . $this->t('Note: If the dependee has allowed values, these are actually the keys, not the labels, of those values.'),
       '#maxlength' => 2048,
       '#size' => 120,
-      '#default_value' => isset($options['value']['RegExp']) ? $options['value']['RegExp'] : '',
+      '#default_value' => isset($settings['value']['RegExp']) ? $settings['value']['RegExp'] : '',
       '#states' => [
         'visible' => [
           ':input[name="values_set"]' => ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX],
@@ -125,7 +150,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#title' => $this->t('Interaction with other dependencies'),
       '#description' => $this->t('When this dependent has more than one dependee, how should this condition be evaluated against the others?') . '<br />' . $this->t('Note that sets will be grouped this way: (ANDs) AND (ORs) AND (XORs).'),
       '#options' => ['AND' => 'AND', 'OR' => 'OR', 'XOR' => 'XOR'],
-      '#default_value' => array_key_exists('grouping', $options) ? $options['grouping'] : 'AND',
+      '#default_value' => array_key_exists('grouping', $settings) ? $settings['grouping'] : 'AND',
       '#required' => TRUE,
     ];
 
@@ -136,7 +161,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#collapsible' => FALSE,
     ];
 
-    $form['entity_edit'] += $this->buildEditContextSettings([], $form_state);
+    $form['entity_edit'] += $this->buildEditContextSettings([], $form_state, $condition);
 
     $form['entity_view'] = [
       '#type' => 'fieldset',
@@ -145,26 +170,32 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#collapsible' => FALSE,
     ];
 
-    $form['entity_view'] += $this->buildViewContextSettings([], $form_state);
+    $form['entity_view'] += $this->buildViewContextSettings([], $form_state, $condition);
 
     return $form;
+  }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    // TODO: Implement submitForm() method.
   }
 
   /**
    * Builds Edit Context Settings block.
    */
-  public function buildEditContextSettings(array $form, FormStateInterface $form_state) {
+  public function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
-    $options = array_shift($this->entity->options->getValue());
-    $label = $this->entity->dependee->value;
+    $label = array_key_exists('dependee', $condition) ? $condition['dependee'] : '?';
+    $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
     $form['state'] = [
       '#type' => 'select',
       '#title' => $this->t('Form state'),
-      '#description' => t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
+      '#description' => $this->t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
       '#options' => conditional_fields_states(),
-      '#default_value' => array_key_exists('state', $options) ? $options['state'] : 0,
+      '#default_value' => array_key_exists('state', $condition) ? $condition['state'] : 0,
       '#required' => TRUE,
       '#ajax' => [
         'callback' => '::ajaxAdminStateCallback',
@@ -173,8 +204,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
     ];
 
     $effects = $effects_options = [];
-    // TODO Rewrite statement.
-    $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $options['state'];
+    $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $condition['state'];
     foreach (conditional_fields_effects() as $effect_name => $effect) {
       if (in_array($selected_state, $effect['states'])) {
         $effects[$effect_name] = $effect['label'];
@@ -190,8 +220,8 @@ class ConditionalFieldEditForm extends ContentEntityForm {
         'id' => 'effects-wrapper',
       ],
     ];
-    // TODO Rewrite statement.
-    $effect = $form_state->hasValue('effect') ? $form_state->getValue('effect') : $options['effect'];
+    $effect = array_key_exists('effect', $settings) ? $settings['effect'] : '';
+    $effect = $form_state->hasValue('effect') ? $form_state->getValue('effect') : $effect;
 
     if (count($effects) == 1) {
       $effects_keys = array_keys($effects);
@@ -224,10 +254,10 @@ class ConditionalFieldEditForm extends ContentEntityForm {
     foreach ($effects_options as $effect_name => $effect_options) {
       foreach ($effect_options as $effect_option_name => $effect_option) {
         $effect_option += [
-          '#title' => t('@effect effect option: @effect_option', array(
+          '#title' => $this->t('@effect effect option: @effect_option', [
             '@effect' => $effects[$effect_name],
             '@effect_option' => $effect_option_name,
-          )),
+          ]),
           '#states' => [
             'visible' => [
               ':input[name="effect"]' => [
@@ -240,8 +270,8 @@ class ConditionalFieldEditForm extends ContentEntityForm {
         if (isset($form_state->getValue('effect_options')[$effect_name][$effect_option_name])) {
           $effect_option['#default_value'] = $form_state->getValue('effect_options')[$effect_name][$effect_option_name];
         }
-        elseif ($options['effect'] == $effect_name) {
-          $effect_option['#default_value'] = $options['effect_options'][$effect_name][$effect_option_name];
+        elseif ($settings['effect'] == $effect_name) {
+          $effect_option['#default_value'] = $settings['effect_options'][$effect_name][$effect_option_name];
         }
 
         $form['effects_wrapper']['effect_options'][$effect_name][$effect_option_name] = $effect_option;
@@ -250,19 +280,19 @@ class ConditionalFieldEditForm extends ContentEntityForm {
 
     $form['element_edit_per_role'] = [
       '#type' => 'checkbox',
-      '#title' => t('Activate per user role settings in edit context'),
-      '#description' => t('If the user has more than one role, the first matching role will be used.'),
-      '#default_value' => $options['element_edit_per_role'],
+      '#title' => $this->t('Activate per user role settings in edit context'),
+      '#description' => $this->t('If the user has more than one role, the first matching role will be used.'),
+      '#default_value' => array_key_exists('element_edit_per_role', $settings) ? $settings['element_edit_per_role'] : FALSE,
     ];
 
     $behaviors = conditional_fields_behaviors();
 
     $form['element_edit'] = [
       '#type' => 'checkboxes',
-      '#title' => t('Edit context settings for all roles'),
+      '#title' => $this->t('Edit context settings for all roles'),
       '#title_display' => 'invisible',
       '#options' => $behaviors['edit'],
-      '#default_value' => $options['element_edit'],
+      '#default_value' => array_key_exists('element_edit', $settings) ? $settings['element_edit'] : 0,
       '#states' => [
         'visible' => [
           ':input[name="element_edit_per_role"]' => ['checked' => FALSE],
@@ -277,7 +307,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
         '#type' => 'checkboxes',
         '#title' => $this->t('Edit context settings for %role', ['%role' => $role->label()]),
         '#options' => $behaviors['edit'],
-        '#default_value' => isset($options['element_edit_roles'][$rid]) ? $options['element_edit_roles'][$rid] : $options['element_edit'],
+        '#default_value' => isset($settings['element_edit_roles'][$rid]) ? $settings['element_edit_roles'][$rid] : $settings['element_edit'],
         '#states' => [
           'visible' => [
             ':input[name="element_edit_per_role"]' => ['checked' => TRUE],
@@ -306,23 +336,24 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#type' => 'textfield',
       '#title' => $this->t('Custom jQuery selector for dependee'),
       '#description' => $selector_description,
-      '#default_value' => $options['selector'],
+      '#default_value' => array_key_exists('selector', $settings) ? $settings['selector'] : '',
     ];
+
     return $form;
   }
 
   /**
    * Builds View Context Settings block.
    */
-  public function buildViewContextSettings(array $form, FormStateInterface $form_state) {
+  public function buildViewContextSettings(array $form, FormStateInterface $form_state, $condition) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
-    $options = array_shift($this->entity->options->getValue());
+    $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
     $form['element_view_per_role'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Activate per user role settings in view context'),
       '#description' => $this->t('If the user has more than one role, the first matching role will be used.'),
-      '#default_value' => $options['element_view_per_role'],
+      '#default_value' => array_key_exists('element_view_per_role', $settings) ? $settings['element_view_per_role'] : 0,
     ];
 
     $behaviors = conditional_fields_behaviors();
@@ -333,7 +364,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
       '#title_display' => 'invisible',
       '#description' => $this->t('Note: Options that need to evaluate if the dependency is triggered only apply if the condition is "Value", "Empty", or "Filled".'),
       '#options' => $behaviors['view'],
-      '#default_value' => $options['element_view'],
+      '#default_value' => array_key_exists('element_view', $settings) ? $settings['element_view'] : 0,
       '#states' => [
         'visible' => [
           ':input[name="element_view_per_role"]' => ['checked' => FALSE],
@@ -349,7 +380,7 @@ class ConditionalFieldEditForm extends ContentEntityForm {
         '#type' => 'checkboxes',
         '#title' => $this->t('View context settings for %role', ['%role' => $role->label()]),
         '#options' => $behaviors['view'],
-        '#default_value' => isset($options['element_view_roles'][$rid]) ? $options['element_view_roles'][$rid] : $options['element_view'],
+        '#default_value' => isset($settings['element_view_roles'][$rid]) ? $settings['element_view_roles'][$rid] : $settings['element_view'],
         '#states' => [
           'visible' => [
             ':input[name="element_view_per_role"]' => ['checked' => TRUE],
@@ -361,45 +392,6 @@ class ConditionalFieldEditForm extends ContentEntityForm {
     $form += $element_view_roles;
 
     return $form;
-  }
-
-  /**
-   * Ajax callback for effects list.
-   */
-  protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
-    return $form['entity_edit']['effects_wrapper'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    if ($form_state->getValue('condition') == 'value') {
-      if (in_array($form_state->getValue('values_set'), [
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
-        ]) &&
-        Unicode::strlen(trim($form_state->getValue('values')) == 0)
-      ) {
-        $form_state->setErrorByName('values', $this->t('!name field is required.', ['!name' => $this->t('Set of values')]));
-      }
-      elseif ($form_state->getValue('values_set') == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && Unicode::strlen(trim($form_state->getValue('regex'))) == 0) {
-        $form_state->setErrorByName('regex', $this->t('!name field is required.', ['!name' => $this->t('Regular expression')]));
-      }
-    }
-    return parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $options = $form_state->cleanValues()->getValues();
-    $form_state->setValues([]);
-    $form_state->setValue('options', $options);
-    parent::submitForm($form, $form_state);
   }
 
 }
