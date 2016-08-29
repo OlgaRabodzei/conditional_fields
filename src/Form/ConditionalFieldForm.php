@@ -143,8 +143,8 @@ class ConditionalFieldForm extends FormBase {
     $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
       ->generate();
 
-    $entity = entity_get_form_display($component_value['entity_type'], $component_value['bundle'], 'default');
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $entity = entity_get_form_display($component_value['entity_type'], $component_value['bundle'], 'default');
     $field = $entity->getComponent($field_name);
     $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
     $entity->setComponent($field_name, $field);
@@ -155,21 +155,17 @@ class ConditionalFieldForm extends FormBase {
    * Builds table with conditional fields.
    */
   protected function buildTable(array $form, FormStateInterface $form_state, $entity_type, $bundle_name = NULL) {
-    $form['table'] = array(
+    $form['table'] = [
       '#type' => 'table',
       '#entity_type' => $entity_type,
       '#bundle_name' => $bundle_name,
-      '#header' => array(
-        t('Dependent'),
-        t('Dependees'),
-        array('data' => t('Description'), 'colspan' => 2),
+      '#header' => [
+        $this->t('Dependent'),
+        $this->t('Dependees'),
+        ['data' => $this->t('Description'), 'colspan' => 2],
         // array('data' => t('Operations'), 'colspan' => 2),
-      ),
-      '#attributes' => array(
-        'class' => array('conditional-fields-overview'),
-      ),
-      'dependencies' => array(),
-    );
+      ],
+    ];
 
     // Build list of available fields.
     $fields = array();
@@ -181,13 +177,36 @@ class ConditionalFieldForm extends FormBase {
 
     asort($fields);
 
+    /* Existing conditions. */
+
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $form_display_entity = entity_get_form_display($entity_type, $bundle_name, 'default');
+    foreach ($fields as $field_name => $label) {
+      $field = $form_display_entity->getComponent($field_name);
+      if (empty($field['third_party_settings']['conditional_fields'])) {
+        continue;
+      }
+      // Create row for existing field's conditions.
+      foreach ($field['third_party_settings']['conditional_fields'] as $condition) {
+        $form['table'][] = [
+          'dependent' => ['#markup' => $field_name],
+          'dependee' => ['#markup' => $condition['dependee']],
+          'state' => ['#markup' => $condition['settings']['state']],
+          'condition' => ['#markup' => $condition['settings']['condition']],
+          // 'actions' => [],
+        ];
+      }
+    }
+
+    /* Row for creating new condition. */
+
     // Build list of states.
     $states = conditional_fields_states();
 
     // Build list of conditions.
     $conditions = [];
     foreach (conditional_fields_conditions() as $condition => $label) {
-      $conditions[$condition] = $condition == 'value' ? t('has value...') : t('is !label', array('!label' => $label));
+      $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is !label', ['!label' => $label]);
     }
 
     // Add new dependency row.
@@ -216,8 +235,7 @@ class ConditionalFieldForm extends FormBase {
         '#title_display' => 'invisible',
         '#options' => $states,
         '#default_value' => 'visible',
-        '#prefix' => $this->t('The dependent field is') . '&nbsp;<span class="description-select">',
-        '#suffix' => '</span>&nbsp;' . $this->t('when the dependee'),
+        '#prefix' => $this->t('The dependent field is'),
       ],
       'condition' => [
         '#type' => 'select',
@@ -225,8 +243,7 @@ class ConditionalFieldForm extends FormBase {
         '#title_display' => 'invisible',
         '#options' => $conditions,
         '#default_value' => 'value',
-        '#prefix' => '&nbsp;<span class="description-select">',
-        '#suffix' => '</span>',
+        '#prefix' => $this->t('when the dependee'),
       ],
       /*'actions' => array(
         'submit' => array(
