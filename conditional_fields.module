@@ -121,7 +121,7 @@ function conditional_fields_theme() {
 /**
  * Provides default options for a dependency.
  */
-function conditional_fields_dependency_default_options() {
+function conditional_fields_dependency_default_settings() {
   return array(
     'state' => 'visible',
     'condition' => 'value',
@@ -238,7 +238,7 @@ function conditional_fields_load_dependencies($entity_type, $bundle) {
       $dependencies[$entity_type][$bundle] = array();
     }
 
-    $default_options = conditional_fields_dependency_default_options();
+    $default_options = conditional_fields_dependency_default_settings();
 
     $connection = Database::getConnection();
     $select = $connection->select('conditional_field', 'cf')

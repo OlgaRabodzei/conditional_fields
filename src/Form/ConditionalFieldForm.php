@@ -42,7 +42,8 @@ class ConditionalFieldForm extends ContentEntityForm {
     $entity_type = $entity_type['value'];
 
     // Get entity type bundles.
-    $entity_types_options = \Drupal::getContainer()->get('entity_type.bundle.info')
+    $entity_types_options = \Drupal::getContainer()
+      ->get('entity_type.bundle.info')
       ->getBundleInfo($entity_type);
     foreach ($entity_types_options as $key => $entity_types_def) {
       $entity_types_options[$key] = array_key_exists('label', $entity_types_def) ? $entity_types_def['label'] : $key;
@@ -239,18 +240,38 @@ class ConditionalFieldForm extends ContentEntityForm {
       return parent::submitForm($form, $form_state);
     }
 
+    $field_name = '';
+    $form_state->set('plugin_settings_edit', $field_name);
+
+    // @FIXME Don't use form_state, just make associative array.
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
-    $options = [];
+    $component_value = [];
+    $settings = [];
     foreach ($conditional_values as $key => $value) {
-      if (in_array($key, ['entity_type', 'bundle', 'dependee', 'dependent'])) {
-        $form_state->setValue($key, $value);
+      if ($key == 'dependent') {
+        $field_name = $value;
       }
-      $options[$key] = $value;
+      if (in_array($key, ['entity_type', 'bundle', 'dependee'])) {
+        $component_value[$key] = $value;
+      }
+      $settings[$key] = $value;
     }
-    $options += conditional_fields_dependency_default_options();
-    $form_state->setValue('options', $options);
-    parent::submitForm($form, $form_state);
+    $settings += conditional_fields_dependency_default_settings();
+    $component_value['settings'] = $settings;
+
+    $component_value['entity_type'] = $form_state->getValue('entity_type')[0]['value'];
+    $component_value['bundle'] = $form_state->getValue('bundle');
+
+    $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
+      ->generate();
+
+    $entity = entity_get_form_display($component_value['entity_type'], $component_value['bundle'], 'default');
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $field = $entity->getComponent($field_name);
+    $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
+    $entity->setComponent($field_name, $field);
+    $entity->save();
   }
 
   /**
