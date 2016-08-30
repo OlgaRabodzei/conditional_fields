@@ -230,6 +230,9 @@ class ConditionalFieldEditForm extends FormBase {
           'bundle',
           'field_name',
           'uuid',
+          // FIXME: provide saving for parameters below.
+          'element_edit_roles',
+          'element_view_roles',
         ]) || empty($value)
       ) {
         continue;
