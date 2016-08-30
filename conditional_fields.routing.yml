@@ -6,7 +6,7 @@ conditional_fields.add_form:
     _permission: 'add conditional fields'
 
 conditional_fields.edit_form:
-  path: '/admin/content/conditional_field/edit/{entity_type}/{bundle}/{field_name}'
+  path: '/admin/content/conditional_field/edit/{entity_type}/{bundle}/{field_name}/{uuid}'
   defaults:
     _form: '\Drupal\conditional_fields\Form\ConditionalFieldEditForm'
   requirements:

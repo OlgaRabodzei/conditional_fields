@@ -128,9 +128,11 @@ class ConditionalFieldForm extends FormBase {
     foreach ($conditional_values as $key => $value) {
       if ($key == 'dependent') {
         $field_name = $value;
+        continue;
       }
       if (in_array($key, ['entity_type', 'bundle', 'dependee'])) {
         $component_value[$key] = $value;
+        continue;
       }
       $settings[$key] = $value;
     }
@@ -154,6 +156,7 @@ class ConditionalFieldForm extends FormBase {
           'entity_type' => $component_value['entity_type'],
           'bundle' => $component_value['bundle'],
           'field_name' => $field_name,
+          'uuid' => $uuid,
         ]
     );
   }

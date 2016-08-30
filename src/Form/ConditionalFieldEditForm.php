@@ -4,6 +4,7 @@ namespace Drupal\conditional_fields\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Unicode;
 
 /**
  * Class ConditionalFieldEditForm.
@@ -22,20 +23,20 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
-    if (empty($entity_type) || empty($bundle) || empty($field_name)) {
+    if (empty($entity_type) || empty($bundle) || empty($field_name) || empty($uuid)) {
       return $form;
     }
 
     $form_display_entity = entity_get_form_display($entity_type, $bundle, 'default');
     $field = $form_display_entity->getComponent($field_name);
 
-    if (empty($field['third_party_settings']['conditional_fields'])) {
+    if (empty($field['third_party_settings']['conditional_fields'][$uuid])) {
       return $form;
     }
-    $condition = $field['third_party_settings']['conditional_fields'];
+    $condition = $field['third_party_settings']['conditional_fields'][$uuid];
     $settings = $condition['settings'];
     $label = $condition['dependee'];
 
@@ -43,6 +44,28 @@ class ConditionalFieldEditForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Save settings'),
       '#weight' => 50,
+    ];
+
+    // Save parameters for submit saving.
+    $form['entity_type'] = [
+      '#type' => 'textfield',
+      '#value' => $entity_type,
+      '#access' => FALSE,
+    ];
+    $form['bundle'] = [
+      '#type' => 'textfield',
+      '#value' => $bundle,
+      '#access' => FALSE,
+    ];
+    $form['field_name'] = [
+      '#type' => 'textfield',
+      '#value' => $field_name,
+      '#access' => FALSE,
+    ];
+    $form['uuid'] = [
+      '#type' => 'textfield',
+      '#value' => $uuid,
+      '#access' => FALSE,
     ];
 
     $form['entity_type'] = [
@@ -178,8 +201,47 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    if ($form_state->getValue('condition') == 'value') {
+      if (in_array($form_state->getValue('values_set'), [
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
+        ]) &&
+        Unicode::strlen(trim($form_state->getValue('values')) == 0)
+      ) {
+        $form_state->setErrorByName('values', $this->t('!name field is required.', ['!name' => $this->t('Set of values')]));
+      }
+      elseif ($form_state->getValue('values_set') == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && Unicode::strlen(trim($form_state->getValue('regex'))) == 0) {
+        $form_state->setErrorByName('regex', $this->t('!name field is required.', ['!name' => $this->t('Regular expression')]));
+      }
+    }
+    parent::validateForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Implement submitForm() method.
+    // TODO: Inprogress
+    $values = $form_state->cleanValues()->getValues();
+
+    $entity = entity_get_form_display($values['entity_type'], $values['bundle'], 'default');
+    $field = $entity->getComponent($values['field_name']);
+    $new_settings = $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'];
+
+    foreach ($values as $key => $value) {
+      if (in_array($key, ['entity_type', 'bundle', 'field_name', 'uuid'])) {
+        continue;
+      }
+      $new_settings[$key] = $value;
+    }
+
+    $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'] = $new_settings;
+    $entity->setComponent($values['field_name'], $field);
+    //$entity->save();
+    //$form_state->setRedirect('conditional_fields.add_form');
   }
 
   /**
@@ -393,5 +455,13 @@ class ConditionalFieldEditForm extends FormBase {
 
     return $form;
   }
+
+  /**
+   * Ajax callback for effects list.
+   */
+  protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
+    return $form['entity_edit']['effects_wrapper'];
+  }
+
 
 }
