@@ -1,7 +1,7 @@
 # Conditional field menu items definition
-entity.conditional_field.add:
+config.conditional_field:
   title: 'Conditional fields'
-  route_name: conditional_fields.add_form
+  route_name: conditional_fields
   description: 'List Conditional fields'
   parent: system.admin_structure
   weight: 100

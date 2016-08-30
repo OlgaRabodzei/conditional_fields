@@ -1,5 +1,5 @@
-conditional_fields.add_form:
-  path: '/admin/content/conditional_field/add'
+conditional_fields:
+  path: '/admin/content/conditional_field'
   defaults:
     _form: '\Drupal\conditional_fields\Form\ConditionalFieldForm'
   requirements:
