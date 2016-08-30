@@ -1,5 +1,0 @@
-entity.conditional_field.add_form:
-  route_name: entity.conditional_field.add_form
-  title: 'Add Conditional field'
-  appears_on:
-    - entity.conditional_field.collection

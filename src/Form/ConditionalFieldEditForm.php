@@ -68,20 +68,13 @@ class ConditionalFieldEditForm extends FormBase {
       '#access' => FALSE,
     ];
 
-    $form['entity_type'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Entity type'),
-      '#value' => $entity_type,
-      '#disabled' => TRUE,
-    ];
-
     $form['condition'] = [
       '#type' => 'select',
       '#title' => $this->t('Condition'),
       '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
       '#options' => conditional_fields_conditions(),
       //$checkboxes),
-      '#default_value' => array_key_exists('condition', $condition) ? $condition['condition'] : '',
+      '#default_value' => array_key_exists('condition', $settings) ? $settings['condition'] : '',
       '#required' => TRUE,
     ];
 
@@ -232,7 +225,13 @@ class ConditionalFieldEditForm extends FormBase {
     $new_settings = $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'];
 
     foreach ($values as $key => $value) {
-      if (in_array($key, ['entity_type', 'bundle', 'field_name', 'uuid'])) {
+      if (in_array($key, [
+          'entity_type',
+          'bundle',
+          'field_name',
+          'uuid',
+        ]) || empty($value)
+      ) {
         continue;
       }
       $new_settings[$key] = $value;
@@ -240,7 +239,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'] = $new_settings;
     $entity->setComponent($values['field_name'], $field);
-    //$entity->save();
+    $entity->save();
     //$form_state->setRedirect('conditional_fields.add_form');
   }
 
@@ -462,6 +461,5 @@ class ConditionalFieldEditForm extends FormBase {
   protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
   }
-
 
 }
