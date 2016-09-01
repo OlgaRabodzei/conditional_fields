@@ -6,9 +6,6 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\Component\Utility\Unicode;
-use Drupal\Core\Database\Database;
-use \Drupal\conditional_fields\Entity\ConditionalField;
 
 /**
  * Dependency is triggered if the dependee has a certain value.
@@ -238,33 +235,23 @@ function conditional_fields_load_dependencies($entity_type, $bundle) {
       $dependencies[$entity_type][$bundle] = array();
     }
 
-    $default_options = conditional_fields_dependency_default_settings();
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $entity = entity_get_form_display($entity_type, $bundle, 'default');
+    $fields = $entity->getComponents();
+    foreach ($fields as $field_name => $field) {
+      if (empty($field['third_party_settings']['conditional_fields'])) {
+        continue;
+      }
+      foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $conditional_field) {
+        $dependencies[$entity_type][$bundle]['dependents'][$field_name][$uuid] = [
+          'dependee' => $conditional_field['dependee'],
+          'options' => $conditional_field['settings'],
+        ];
 
-    $connection = Database::getConnection();
-    $select = $connection->select('conditional_field', 'cf')
-      ->fields('cf', [
-        'id',
-      ])
-      ->condition('entity_type', $entity_type, '=')
-      ->condition('bundle', $bundle, '=')
-      ->execute()
-      ->fetchAll();
-
-    if (!empty($select)) {
-      foreach ($select as $value) {
-        $conditional_field_entity = ConditionalField::load($value->id);
-        $options = $conditional_field_entity->options->getValue();
-        $options += $default_options;
-
-        $dependencies[$entity_type][$bundle]['dependents'][$conditional_field_entity->dependent->value][$value->id] = array(
-          'dependee' => $conditional_field_entity->dependee->value,
-          'options' => reset($options),
-        );
-
-        $dependencies[$entity_type][$bundle]['dependees'][$conditional_field_entity->dependee->value][$value->id] = array(
-          'dependent' => $conditional_field_entity->dependent->value,
-          'options' => reset($options),
-        );
+        $dependencies[$entity_type][$bundle]['dependees'][$conditional_field['dependee']][$uuid] = [
+          'dependent' => $field_name,
+          'options' => $conditional_field['settings'],
+        ];
       }
     }
   }
