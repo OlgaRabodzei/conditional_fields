@@ -243,7 +243,7 @@ class ConditionalFieldEditForm extends FormBase {
     $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'] = $new_settings;
     $entity->setComponent($values['field_name'], $field);
     $entity->save();
-    //$form_state->setRedirect('conditional_fields');
+    $form_state->setRedirect('conditional_fields');
   }
 
   /**

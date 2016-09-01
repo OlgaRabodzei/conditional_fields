@@ -4,6 +4,7 @@ namespace Drupal\conditional_fields\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 
 /**
  * Class ConditionalFieldForm.
@@ -24,12 +25,6 @@ class ConditionalFieldForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
-
-    $form['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Add condition'),
-      '#weight' => 50,
-    ];
 
     $entity_type_options = \Drupal::entityTypeManager()->getDefinitions();
     foreach ($entity_type_options as $key => $entity_type) {
@@ -152,12 +147,12 @@ class ConditionalFieldForm extends FormBase {
     $entity->setComponent($field_name, $field);
     $entity->save();
     $form_state->setRedirect(
-        'conditional_fields.edit_form', [
-          'entity_type' => $component_value['entity_type'],
-          'bundle' => $component_value['bundle'],
-          'field_name' => $field_name,
-          'uuid' => $uuid,
-        ]
+      'conditional_fields.edit_form', [
+        'entity_type' => $component_value['entity_type'],
+        'bundle' => $component_value['bundle'],
+        'field_name' => $field_name,
+        'uuid' => $uuid,
+      ]
     );
   }
 
@@ -173,7 +168,7 @@ class ConditionalFieldForm extends FormBase {
         $this->t('Dependent'),
         $this->t('Dependees'),
         ['data' => $this->t('Description'), 'colspan' => 2],
-        // array('data' => t('Operations'), 'colspan' => 2),
+        ['data' => $this->t('Operations'), 'colspan' => 2],
       ],
     ];
 
@@ -197,13 +192,35 @@ class ConditionalFieldForm extends FormBase {
         continue;
       }
       // Create row for existing field's conditions.
-      foreach ($field['third_party_settings']['conditional_fields'] as $condition) {
+      foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $condition) {
         $form['table'][] = [
           'dependent' => ['#markup' => $field_name],
           'dependee' => ['#markup' => $condition['dependee']],
           'state' => ['#markup' => $condition['settings']['state']],
           'condition' => ['#markup' => $condition['settings']['condition']],
-          // 'actions' => [],
+          'actions' => [
+            '#type' => 'operations',
+            '#links' => [
+              'edit' => [
+                'title' => $this->t('Edit'),
+                'url' => Url::fromRoute('conditional_fields.edit_form', [
+                  'entity_type' => $condition['entity_type'],
+                  'bundle' => $condition['bundle'],
+                  'field_name' => $field_name,
+                  'uuid' => $uuid,
+                ]),
+              ],
+              'delete' => [
+                'title' => $this->t('Delete'),
+                'url' => Url::fromRoute('conditional_fields.delete_form', [
+                  'entity_type' => $condition['entity_type'],
+                  'bundle' => $condition['bundle'],
+                  'field_name' => $field_name,
+                  'uuid' => $uuid,
+                ]),
+              ],
+            ],
+          ],
         ];
       }
     }
@@ -255,12 +272,12 @@ class ConditionalFieldForm extends FormBase {
         '#default_value' => 'value',
         '#prefix' => $this->t('when the dependee'),
       ],
-      /*'actions' => array(
-        'submit' => array(
+      'actions' => [
+        'submit' => [
           '#type' => 'submit',
-          '#value' => t('Add dependency'),
-        ),
-      ),*/
+          '#value' => $this->t('Add dependency'),
+        ],
+      ],
     ];
     return $form['table'];
   }
