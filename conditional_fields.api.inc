@@ -316,3 +316,303 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
   return $form;
 }
+
+
+function conditional_fields_dependent_validate($element, FormStateInterface &$form_state, $form) {
+  $dependent = $form['#conditional_fields'][reset($element['#array_parents'])];
+
+  // Check if this field's dependencies were triggered.
+  if (conditional_fields_evaluate_dependencies($dependent, $form, $form_state)) {
+    return;
+  }
+
+  // Mark submitted values for removal. We have to remove them after all fields
+  // have been validated to avoid collision between dependencies.
+  $form_state_addition['parents'] = $dependent['field_parents'];
+
+
+  // Optional behavior: reset the field to its default values.
+  // Default values are always valid, so it's safe to skip validation.
+  if (!empty($element['#conditional_fields_reset_if_untriggered'])) {
+    $form_state_addition['reset'] = TRUE;
+  }
+
+  // Tag validation errors previously set on this field for removal in
+  // conditional_fields_form_validate().
+  $errors = $form_state->getErrors();
+
+  if ($errors) {
+    $error_key = reset($dependent['field_parents']);
+    foreach ($errors as $name => $error) {
+      // An error triggered by this field might have been set on a descendant
+      // element. This also means that so there can be multiple errors on the
+      // same field (even though Drupal doesn't support multiple errors on the
+      // same element).
+      if (strpos($name, $error_key) === 0) {
+        $field_errors[$name] = $error;
+      }
+    }
+  }
+
+  if (!empty($field_errors)) {
+    $form_state_addition['errors'] = $field_errors;
+  }
+
+  $fiel_state_values_count = count($form_state->getValue('conditional_fields_untriggered_dependents'));
+  $form_state->setValue([
+    'conditional_fields_untriggered_dependents',
+    $fiel_state_values_count
+  ], $form_state_addition);
+}
+
+/**
+ * Evaluate a set of dependencies for a dependent field.
+ *
+ * @param $dependent
+ *   The field form element in the current language.
+ */
+function conditional_fields_evaluate_dependencies($dependent, $form, $form_state) {
+  $dependencies = $form['#conditional_fields'][reset($dependent['field_parents'])]['dependees'];
+  $evaluated_dependees = array();
+
+  foreach ($dependencies as $dependency_id => $dependency) {
+    // Extract field values from submitted values.
+    $dependee = $dependency['dependee'];
+    $dependee_parents = $form['#conditional_fields'][$dependee]['parents'];
+
+    // We have the parents of the field, but depending on the entity type and
+    // the widget type, they may include additional elements that are actually
+    // part of the value. So we find the depth of the field inside the form
+    // structure and use the parents only up to that depth.
+    $dependee_parents_keys = array_flip($dependee_parents);
+    $dependee_parent = NestedArray::getValue($form, array_slice($dependee_parents, 0, $dependee_parents_keys[$dependee]));
+    $values = conditional_fields_form_field_get_values($dependee_parent[$dependee], $form_state);
+
+    // Remove the language key.
+    if (isset($dependee_parent[$dependee]['#language'], $values[$dependee_parent[$dependee]['#language']])) {
+      $values = $values[$dependee_parent[$dependee]['#language']];
+    }
+
+    $evaluated_dependees[reset($dependent['field_parents'])][$dependency['options']['grouping']][] = conditional_fields_evaluate_dependency('edit', $values, $dependency['options']);
+  }
+
+  return conditional_fields_evaluate_grouping($evaluated_dependees[reset($dependent['field_parents'])]);
+}
+
+/**
+ * Evaluates an array with 'AND', 'OR' and 'XOR' groupings,
+ * each containing a list of boolean values.
+ */
+function conditional_fields_evaluate_grouping($groups) {
+  $or = $and = $xor = TRUE;
+  if (!empty($groups['OR'])) {
+    $or = in_array(TRUE, $groups['OR']);
+  }
+  if (!empty($groups['AND'])) {
+    $and = !in_array(FALSE, $groups['AND']);
+  }
+  if (!empty($groups['XOR'])) {
+    $xor = array_sum($groups['XOR']) == 1;
+  }
+  return $or && $and && $xor;
+}
+
+function conditional_fields_form_validate($form, FormStateInterface &$form_state) {
+  if (empty($form_state->getValue('conditional_fields_untriggered_dependents'))) {
+    return;
+  }
+
+  $untriggered_dependents_errors = array();
+
+  foreach ($form_state->getValue('conditional_fields_untriggered_dependents') as $field) {
+    $parent = array($field['parents'][0]);
+    $dependent = NestedArray::getValue($form, $parent);
+    $field_values_location = conditional_fields_form_field_get_values($dependent, $form_state);
+
+    // If we couldn't find a location for the field's submitted values, let the
+    // validation errors pass through to avoid security holes.
+    if (!isset($field_values_location[reset($dependent['#array_parents'])])) {
+      if (!empty($field['errors'])) {
+        $untriggered_dependents_errors = array_merge($untriggered_dependents_errors, $field['errors']);
+      }
+      continue;
+    }
+
+    if (empty($field['reset'])) {
+      unset($field_values_location[$dependent['#field_name']]);
+    }
+    else {
+      $dependent_info = field_form_get_state($dependent['#field_parents'], $dependent['#field_name'], $dependent['#language'], $form_state);
+      $field_values_location[$dependent['#field_name']][$dependent['#language']] = field_get_default_value($dependent_info['instance']['entity_type'], NULL, $dependent_info['field'], $dependent_info['instance'], $dependent['#language']);
+    }
+
+    // Save the changed array back in place.
+    // Do not use form_set_value() since it assumes that the values are located at
+    // $form_state['values'][ ... $element['#parents'] ... ], while the
+    // documentation of hook_field_widget_form() states that field values are
+    // $form_state['values'][ ... $element['#field_parents'] ... ].
+    NestedArray::setValue($form_state['values'], $dependent['#field_parents'], $field_values_location);
+
+    if (!empty($field['errors'])) {
+      $untriggered_dependents_errors = array_merge($untriggered_dependents_errors, $field['errors']);
+    }
+  }
+
+  if (!empty($untriggered_dependents_errors)) {
+    // Since Drupal provides no clean way to selectively remove error messages,
+    // we have to store all current form errors and error messages, clear them,
+    // filter out from our stored values the errors originating from untriggered
+    // dependent fields, and then reinstate remaining errors and messages.
+    $errors = array_diff_assoc((array) $form_state->getErrors(), $untriggered_dependents_errors);
+    $form_state->clearErrors();
+    $error_messages = drupal_get_messages('error');
+    $removed_messages = array_values($untriggered_dependents_errors);
+
+    // Reinstate remaining errors.
+    foreach ($errors as $name => $error) {
+      $form_state->setError($name, $error);
+      // form_set_error() calls drupal_set_message(), so we have to filter out
+      // these from the messages to avoid duplicates.
+      $removed_messages[] = $error;
+    }
+
+    // Reinstate remaining error messages (which, at this point, are messages that
+    // were originated outside of the validation process).
+    if (!empty($error_messages['error'])) {
+      foreach (array_diff($error_messages['error'], $removed_messages) as $message) {
+        drupal_set_message($message, 'error');
+      }
+    }
+  }
+}
+
+/**
+ * Extracts submitted field values during form validation.
+ *
+ * @return
+ *   The requested field values parent. Actual field vales are stored under the
+ *   key $element['#field_name'].
+ */
+function conditional_fields_form_field_get_values($element, FormStateInterface $form_state) {
+  // Fall back to #parents to support custom dependencies.
+  $parents = !empty($element['#array_parents']) ? $element['#array_parents'] : $element['#parents'];
+  return NestedArray::getValue($form_state->getValues(), $parents);
+}
+
+/**
+ * Evaluate if a dependency meets the requirements to be triggered.
+ *
+ * @param $context
+ *   'edit' if $values are extracted from $form_state or 'view' if
+ *   $values are extracted from an entity.
+ */
+function conditional_fields_evaluate_dependency($context, $values, $options) {
+  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+    $dependency_values = $context == 'view' ? $options['value'] : $options['value_form'];
+
+    // Simple case: both values are strings or integers. Should never happen in
+    // view context, but does no harm to check anyway.
+    if (!is_array($values)) {
+      // Options elements consider "_none" value same as empty.
+      $values = $values === '_none' ? '' : $values;
+
+      if (!is_array($dependency_values)) {
+        // Some widgets store integers, but values saved in $dependency_values
+        // are always strings. Convert them to integers because we want to do a
+        // strict equality check to differentiate empty strings from '0'.
+        if (is_int($values) && is_numeric($dependency_values)) {
+          $dependency_values = (int) $dependency_values;
+        }
+
+        return $dependency_values === $values;
+      }
+
+      // If $values is a string and $dependency_values an array, convert $values
+      // to the standard field array form format. This covers cases like single
+      // value textfields.
+      $values = array(array('value' => $values));
+    }
+
+    // If we are in form context, we are almost done.
+    if ($context == 'edit') {
+      // If $dependency_values is not an array, we can only assume that it
+      // should map to the first key of the first value of $values.
+      if (!is_array($dependency_values)) {
+        $key = current(array_keys((array) current($values)));
+        $dependency_values = array(array($key => $dependency_values));
+      }
+
+      // Compare arrays recursively ignoring keys, since multiple select widgets
+      // values have numeric keys in form format and string keys in storage
+      // format.
+      return array_values($dependency_values) == array_values($values);
+    }
+
+    // $values, when viewing fields, may contain all sort of additional
+    // information, so filter out from $values the keys that are not present in
+    // $dependency_values.
+    // Values here are alway keyed by delta (regardless of multiple value
+    // settings).
+    foreach ($values as $delta => &$value) {
+      if (isset($dependency_values[$delta])) {
+        $value = array_intersect_key($value, $dependency_values[$delta]);
+
+        foreach ($value as $key => &$element_value) {
+          if (isset($dependency_values[$delta][$key]) && is_int($dependency_values[$delta][$key]) && is_numeric($element_value)) {
+            $element_value = (int) $element_value;
+          }
+        }
+      }
+    }
+
+    // Compare values.
+    foreach ($dependency_values as $delta => $dependency_value) {
+      if (!isset($values[$delta])) {
+        return FALSE;
+      }
+      foreach ($dependency_value as $key => $dependency_element_value) {
+        // Ignore keys set in the field and not in the dependency.
+        if (isset($values[$delta][$key]) && $values[$delta][$key] !== $dependency_element_value) {
+          return FALSE;
+        }
+      }
+    }
+
+    return TRUE;
+  }
+
+  // Flatten array of values.
+  $reference_values = array();
+  foreach ((array) $values as $value) {
+    // TODO: support multiple values.
+    $reference_values[] = is_array($value) ? array_shift($value) : $value;
+  }
+
+  // Regular expression method.
+  if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
+    foreach ($reference_values as $reference_value) {
+      if (!preg_match('/' . $options['value']['RegExp'] . '/', $reference_value)) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
+  switch ($options['values_set']) {
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
+      $diff = array_diff($options['values'], $reference_values);
+      return empty($diff);
+
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
+      $intersect = array_intersect($options['values'], $reference_values);
+      return !empty($intersect);
+
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
+      $intersect = array_intersect($options['values'], $reference_values);
+      return count($intersect) == 1;
+
+    case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
+      $intersect = array_intersect($options['values'], $reference_values);
+      return empty($intersect);
+  }
+}
