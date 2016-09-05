@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Contains conditional fields logic of modify forms.
@@ -323,7 +324,19 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
   return $form;
 }
 
-
+/**
+ * Dependent field validation callback.
+ *
+ * If the dependencies of a dependent field are not triggered, the validation
+ * errors that it might have thrown must be removed, together with its submitted
+ * values. This will simulate the field not being present in the form at all.
+ * In this field-level callback we just collect needed information and store it
+ * in $form_state. Values and errors will be removed in a single sweep in
+ * conditional_fields_form_validate(), which runs at the end of the validation
+ * cycle.
+ *
+ * @see conditional_fields_form_validate()
+ */
 function conditional_fields_dependent_validate($element, FormStateInterface &$form_state, $form) {
   $dependent = $form['#conditional_fields'][reset($element['#array_parents'])];
 
@@ -340,7 +353,7 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
         if (($result && $state == 'required' && $triggered) || (!$result && $state == '!required' && !$triggered)) {
           $return = TRUE;
           $key_exists = NULL;
-          $input_state = drupal_array_get_nested_value($form_state['values'], $dependent['#parents'], $key_exists);
+          $input_state = NestedArray::getValue($form_state['values'], $dependent['#parents'], $key_exists);
           if ($key_exists) {
             // Remove the 'value' of the 'add more' button.
             unset($input_state['add_more']);
@@ -360,7 +373,7 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
                 $title = $dependent[0]['#title'];
               }
             }
-            form_error($element, t('!name field is required.', array('!name' => $title)));
+            $form_state->setError($element, t('!name field is required.', array('!name' => $title)));
           }
         }
       }
@@ -413,8 +426,11 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
 /**
  * Evaluate a set of dependencies for a dependent field.
  *
- * @param $dependent
+ * @param array $dependent
  *   The field form element in the current language.
+ *
+ * @return array|bool $evaluated_dependees.
+ *   Evaluated dependencies array.
  */
 function conditional_fields_evaluate_dependencies($dependent, $form, $form_state, $grouping = TRUE) {
   $dependencies = $form['#conditional_fields'][reset($dependent['field_parents'])]['dependees'];
@@ -471,6 +487,16 @@ function conditional_fields_evaluate_grouping($groups) {
   return $or && $and && $xor;
 }
 
+/**
+ * Validation callback for any form with conditional fields.
+ *
+ * This validation callback is added to all forms that contain fields with
+ * dependencies. It removes all validation errors from dependent fields whose
+ * dependencies are not triggered, which were collected at field-level
+ * validation in conditional_fields_dependent_validate().
+ *
+ * @see conditional_fields_dependent_validate()
+ */
 function conditional_fields_form_validate($form, FormStateInterface &$form_state) {
   if (empty($form_state->getValue('conditional_fields_untriggered_dependents'))) {
     return;
@@ -498,7 +524,8 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
     }
 
     // Save the changed array back in place.
-    // Do not use form_set_value() since it assumes that the values are located at
+    // Do not use form_set_value() since it assumes
+    // that the values are located at
     // $form_state['values'][ ... $element['#parents'] ... ], while the
     // documentation of hook_field_widget_form() states that field values are
     // $form_state['values'][ ... $element['#field_parents'] ... ].
@@ -527,8 +554,8 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
       $removed_messages[] = $error;
     }
 
-    // Reinstate remaining error messages (which, at this point, are messages that
-    // were originated outside of the validation process).
+    // Reinstate remaining error messages (which, at this point,
+    // are messages that were originated outside of the validation process).
     if (!empty($error_messages['error'])) {
       foreach (array_diff($error_messages['error'], $removed_messages) as $message) {
         drupal_set_message($message, 'error');
@@ -573,9 +600,9 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
       return (empty($values)) ? TRUE : FALSE;
     }
 
-    // The BooleanList widget provides an empty array as $dependency_values, thus
-    // checking this field requires a different handling in case of 'checked or
-    // '!checked' conditions, where $value has 0 or 1.
+    // The BooleanList widget provides an empty array as $dependency_values,
+    // thus checking this field requires a different handling in case of
+    // 'checked or '!checked' conditions, where $value has 0 or 1.
     if ($options['condition'] === 'checked' || $options['condition'] === '!checked') {
       $dependency_values = (int) ($options['condition'] === 'checked');
     }
