@@ -7,6 +7,7 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Field\WidgetBase;
 
 /**
  * Loads all dependencies from the database.
@@ -302,7 +303,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
   $form['#attached']['library'][] = 'conditional_fields/conditional_fields';
 
-  // @FIXME: on extra-effect we receive LogicError - can use JS in #attached.
+  // @FIXME: on extra-effect we receive LogicError - can't use JS in #attached.
   // Add effect settings to the form.
   if ($effects) {
     $form['#attached']['js'][] = array(
@@ -419,7 +420,7 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
   $fiel_state_values_count = count($form_state->getValue('conditional_fields_untriggered_dependents'));
   $form_state->setValue([
     'conditional_fields_untriggered_dependents',
-    $fiel_state_values_count
+    $fiel_state_values_count,
   ], $form_state_addition);
 }
 
@@ -519,7 +520,7 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
     }
 
     if (!empty($field['reset'])) {
-      $dependent_info = field_form_get_state($dependent['#field_parents'], $dependent['#field_name'], $dependent['#language'], $form_state);
+      $dependent_info = WidgetBase::getWidgetState($dependent['#field_parents'], $dependent['#field_name'], $form_state);
       $field_values_location[$dependent['#field_name']][$dependent['#language']] = field_get_default_value($dependent_info['instance']['entity_type'], NULL, $dependent_info['field'], $dependent_info['instance'], $dependent['#language']);
     }
 

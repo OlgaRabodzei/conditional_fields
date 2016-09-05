@@ -196,7 +196,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
       return $element;
     }
 
-    $field_name = $field['#parents'][0];
+    $field_name = reset($field['#array_parents']);
 
     // Attach dependent.
     if (isset($dependencies['dependents'][$field_name])) {
