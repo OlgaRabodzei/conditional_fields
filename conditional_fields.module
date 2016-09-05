@@ -168,7 +168,8 @@ function conditional_fields_element_info_alter(array &$types) {
  */
 function conditional_fields_element_after_build($element, &$form_state) {
   // Ensure that the element is a field.
-  if (isset($element['#title']) && isset($element['#parents'][0])) {
+  $first_parent = reset($element['#parents']);
+  if (isset($element['#title']) && isset($first_parent)) {
     $field = $element;
   }
   else {
@@ -178,13 +179,13 @@ function conditional_fields_element_after_build($element, &$form_state) {
   $form = &$form_state->getCompleteForm();
 
   // TODO - This IF is only for test and development. Will be deleted.
-  if ($form['#form_id'] == 'node_article_form' || $form['#form_id'] == 'node_article_edit_form') {
-    // Some fields do not have entity type and bundle properties.
-    // In this case we try to use the properties from the form.
-    // This is not an optimal solution, since in case of fields
-    // in entities within entities they might not correspond,
-    // and their dependencies will not be loaded.
-    $build_info = $form_state->getBuildInfo();
+  // Some fields do not have entity type and bundle properties.
+  // In this case we try to use the properties from the form.
+  // This is not an optimal solution, since in case of fields
+  // in entities within entities they might not correspond,
+  // and their dependencies will not be loaded.
+  $build_info = $form_state->getBuildInfo();
+  if (method_exists($build_info['callback_object'], 'getEntity')) {
     $entity = $build_info['callback_object']->getEntity();
     $bundle = $entity->getType();
     $entity_type = $entity->getEntityTypeId();
@@ -220,6 +221,7 @@ function conditional_fields_element_after_build($element, &$form_state) {
   }
 
   return $element;
+
 }
 
 /**
@@ -437,7 +439,6 @@ function _conditional_fields_element_add_property(&$element, $property, $value, 
  *
  * @return
  *   An array of behaviors.
- *
  */
 function conditional_fields_field_behaviors($op, $options) {
   global $user;
