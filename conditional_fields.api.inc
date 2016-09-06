@@ -8,6 +8,8 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Field\WidgetBase;
+use Drupal\Component\Utility\Unicode;
+use Drupal\field\Entity\FieldStorageConfig;
 
 /**
  * Loads all dependencies from the database.
@@ -79,8 +81,6 @@ function conditional_fields_states_handlers() {
  * to the form that handles validation of dependent fields.
  */
 function conditional_fields_form_after_build($form, FormStateInterface &$form_state) {
-  // TODO: 2) Check this func for attaching states.
-
   // Dependencies data is attached in conditional_fields_element_after_build().
   if (empty($form['#conditional_fields'])) {
     return $form;
@@ -178,7 +178,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
           }
           elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT) {
             // NOT behaves like OR with switched state.
-            $options['state'] = strpos($options['state'], '!') === 0 ? drupal_substr($options['state'], 1) : '!' . $options['state'];
+            $options['state'] = strpos($options['state'], '!') === 0 ? Unicode::substr($options['state'], 1) : '!' . $options['state'];
           }
 
           // OR, NOT and XOR conditions are obtained with a nested array.
@@ -354,24 +354,25 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
         if (($result && $state == 'required' && $triggered) || (!$result && $state == '!required' && !$triggered)) {
           $return = TRUE;
           $key_exists = NULL;
-          $input_state = NestedArray::getValue($form_state['values'], $dependent['#parents'], $key_exists);
-          if ($key_exists) {
+          $input_state = NestedArray::getValue($form_state->getValues(), $dependent['field_parents'], $key_exists);
+          if ($key_exists && isset($input_state['add_more'])) {
             // Remove the 'value' of the 'add more' button.
             unset($input_state['add_more']);
           }
           $input_state = (is_null($input_state)) ? array() : $input_state;
-          if (isset($dependent['#field_name'])) {
-            $field = field_info_field($dependent['#field_name']);
-            $input_state = _field_filter_items($field, $input_state);
+          if (isset($dependent['field_parents'][0])) {
+            $field = FieldStorageConfig::loadByName($form['#entity_type'], $dependent['field_parents'][0]);
+//            $input_state = _field_filter_items($field, $input_state);
           }
           if (empty($input_state)) {
             $title = '';
-            if (isset($dependent['#title'])) {
-              $title = $dependent['#title'];
+            $field_name = $field->getName();
+            if (isset($field_name)) {
+              $title = $field_name;
             }
             else {
-              if (isset($dependent[0]['#title'])) {
-                $title = $dependent[0]['#title'];
+              if (isset($dependent['field_parents'][0])) {
+                $title = $dependent['field_parents'][0];
               }
             }
             $form_state->setError($element, t('!name field is required.', array('!name' => $title)));
