@@ -2,6 +2,7 @@ conditional_fields:
   path: '/admin/content/conditional_field'
   defaults:
     _form: '\Drupal\conditional_fields\Form\ConditionalFieldForm'
+    _title: 'Conditional fields'
   requirements:
     _permission: 'add conditional fields'
 
