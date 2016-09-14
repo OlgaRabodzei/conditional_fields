@@ -2,15 +2,23 @@
 
 namespace Drupal\conditional_fields\Form;
 
-use Drupal\Core\Entity\ContentEntityForm;
+use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 
 /**
- * Form controller for Conditional field edit forms.
+ * Class ConditionalFieldForm.
  *
- * @ingroup conditional_fields
+ * @package Drupal\conditional_fields\Form
  */
-class ConditionalFieldForm extends ContentEntityForm {
+class ConditionalFieldForm extends FormBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'conditional_field_add_form';
+  }
 
   /**
    * {@inheritdoc}
@@ -18,13 +26,21 @@ class ConditionalFieldForm extends ContentEntityForm {
   public function buildForm(array $form, FormStateInterface $form_state) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
-    $form = parent::buildForm($form, $form_state);
-    $form['entity_type']['widget']['#ajax'] = [
-      'callback' => '::entityTypeCallback',
-      'wrapper' => 'entity-type-wrapper',
-    ];
+    $entity_type_options = \Drupal::entityTypeManager()->getDefinitions();
+    foreach ($entity_type_options as $key => $entity_type) {
+      $entity_type_options[$key] = $entity_type->getLabel();
+    }
 
-    $form['entity_type']['widget']['#options'] = $this->filterContentEntityTypes($form['entity_type']['widget']['#options']);
+    $form['entity_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select entity type'),
+      '#options' => $this->filterContentEntityTypes($entity_type_options),
+      '#ajax' => [
+        'callback' => '::entityTypeCallback',
+        'wrapper' => 'entity-type-wrapper',
+      ],
+      '#required' => TRUE,
+    ];
 
     $form['entity_type_wrapper'] = [
       '#type' => 'container',
@@ -35,14 +51,11 @@ class ConditionalFieldForm extends ContentEntityForm {
     if (!$form_state->hasValue('entity_type')) {
       return $form;
     }
-    $entity_type = reset($form_state->getValue('entity_type'));
-    if (!array_key_exists('value', $entity_type)) {
-      return $form;
-    }
-    $entity_type = $entity_type['value'];
+    $entity_type = $form_state->getValue('entity_type');
 
     // Get entity type bundles.
-    $entity_types_options = \Drupal::getContainer()->get('entity_type.bundle.info')
+    $entity_types_options = \Drupal::getContainer()
+      ->get('entity_type.bundle.info')
       ->getBundleInfo($entity_type);
     foreach ($entity_types_options as $key => $entity_types_def) {
       $entity_types_options[$key] = array_key_exists('label', $entity_types_def) ? $entity_types_def['label'] : $key;
@@ -71,24 +84,93 @@ class ConditionalFieldForm extends ContentEntityForm {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $table = $form_state->getValue('table');
+    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
+      parent::validateForm($form, $form_state);
+    }
+    $conditional_values = $table['add_new_dependency'];
+    // Check dependency.
+    if (array_key_exists('dependee', $conditional_values) &&
+      array_key_exists('dependent', $conditional_values) &&
+      $conditional_values['dependee'] == $conditional_values['dependent']
+    ) {
+      $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
+      $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
+    }
+
+    parent::validateForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $table = $form_state->getValue('table');
+    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
+      parent::submitForm($form, $form_state);
+    }
+
+    $field_name = '';
+    $form_state->set('plugin_settings_edit', $field_name);
+
+    $conditional_values = $table['add_new_dependency'];
+    // Copy values from table for submit.
+    $component_value = [];
+    $settings = [];
+    foreach ($conditional_values as $key => $value) {
+      if ($key == 'dependent') {
+        $field_name = $value;
+        continue;
+      }
+      if (in_array($key, ['entity_type', 'bundle', 'dependee'])) {
+        $component_value[$key] = $value;
+        continue;
+      }
+      $settings[$key] = $value;
+    }
+    $settings += conditional_fields_dependency_default_settings();
+    $component_value['settings'] = $settings;
+
+    $component_value['entity_type'] = $form_state->getValue('entity_type');
+    $component_value['bundle'] = $form_state->getValue('bundle');
+
+    $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
+      ->generate();
+
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $entity = entity_get_form_display($component_value['entity_type'], $component_value['bundle'], 'default');
+    $field = $entity->getComponent($field_name);
+    $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
+    $entity->setComponent($field_name, $field);
+    $entity->save();
+    $form_state->setRedirect(
+      'conditional_fields.edit_form', [
+        'entity_type' => $component_value['entity_type'],
+        'bundle' => $component_value['bundle'],
+        'field_name' => $field_name,
+        'uuid' => $uuid,
+      ]
+    );
+  }
+
+  /**
    * Builds table with conditional fields.
    */
   protected function buildTable(array $form, FormStateInterface $form_state, $entity_type, $bundle_name = NULL) {
-    $form['table'] = array(
+    $form['table'] = [
       '#type' => 'table',
       '#entity_type' => $entity_type,
       '#bundle_name' => $bundle_name,
-      '#header' => array(
-        t('Dependent'),
-        t('Dependees'),
-        array('data' => t('Description'), 'colspan' => 2),
-        // array('data' => t('Operations'), 'colspan' => 2),
-      ),
-      '#attributes' => array(
-        'class' => array('conditional-fields-overview'),
-      ),
-      'dependencies' => array(),
-    );
+      '#header' => [
+        $this->t('Dependent'),
+        $this->t('Dependees'),
+        ['data' => $this->t('Description'), 'colspan' => 2],
+        ['data' => $this->t('Operations'), 'colspan' => 2],
+      ],
+    ];
 
     // Build list of available fields.
     $fields = array();
@@ -100,83 +182,104 @@ class ConditionalFieldForm extends ContentEntityForm {
 
     asort($fields);
 
+    /* Existing conditions. */
+
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $form_display_entity = entity_get_form_display($entity_type, $bundle_name, 'default');
+    foreach ($fields as $field_name => $label) {
+      $field = $form_display_entity->getComponent($field_name);
+      if (empty($field['third_party_settings']['conditional_fields'])) {
+        continue;
+      }
+      // Create row for existing field's conditions.
+      foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $condition) {
+        $form['table'][] = [
+          'dependent' => ['#markup' => $field_name],
+          'dependee' => ['#markup' => $condition['dependee']],
+          'state' => ['#markup' => $condition['settings']['state']],
+          'condition' => ['#markup' => $condition['settings']['condition']],
+          'actions' => [
+            '#type' => 'operations',
+            '#links' => [
+              'edit' => [
+                'title' => $this->t('Edit'),
+                'url' => Url::fromRoute('conditional_fields.edit_form', [
+                  'entity_type' => $condition['entity_type'],
+                  'bundle' => $condition['bundle'],
+                  'field_name' => $field_name,
+                  'uuid' => $uuid,
+                ]),
+              ],
+              'delete' => [
+                'title' => $this->t('Delete'),
+                'url' => Url::fromRoute('conditional_fields.delete_form', [
+                  'entity_type' => $condition['entity_type'],
+                  'bundle' => $condition['bundle'],
+                  'field_name' => $field_name,
+                  'uuid' => $uuid,
+                ]),
+              ],
+            ],
+          ],
+        ];
+      }
+    }
+
+    /* Row for creating new condition. */
+
     // Build list of states.
     $states = conditional_fields_states();
 
     // Build list of conditions.
     $conditions = [];
     foreach (conditional_fields_conditions() as $condition => $label) {
-      $conditions[$condition] = $condition == 'value' ? t('has value...') : t('is !label', array('!label' => $label));
+      $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is !label', ['!label' => $label]);
     }
 
     // Add new dependency row.
-    $form['table']['add_new_dependency'] = array(
-      'dependent' => array(
+    $form['table']['add_new_dependency'] = [
+      'dependent' => [
         '#type' => 'select',
-        '#title' => t('Dependent'),
+        '#title' => $this->t('Dependent'),
         '#title_display' => 'invisible',
-        '#description' => t('Dependent'),
+        '#description' => $this->t('Dependent'),
         '#options' => $fields,
-        '#prefix' => '<div class="add-new-placeholder">' . t('Add new dependency') . '</div>',
+        '#prefix' => '<div class="add-new-placeholder">' . $this->t('Add new dependency') . '</div>',
         '#required' => TRUE,
-      ),
-      'dependee' => array(
+      ],
+      'dependee' => [
         '#type' => 'select',
-        '#title' => t('Dependee'),
+        '#title' => $this->t('Dependee'),
         '#title_display' => 'invisible',
-        '#description' => t('Dependee'),
+        '#description' => $this->t('Dependee'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
         '#required' => TRUE,
-      ),
-      'state' => array(
+      ],
+      'state' => [
         '#type' => 'select',
-        '#title' => t('State'),
+        '#title' => $this->t('State'),
         '#title_display' => 'invisible',
         '#options' => $states,
         '#default_value' => 'visible',
-        '#prefix' => t('The dependent field is') . '&nbsp;<span class="description-select">',
-        '#suffix' => '</span>&nbsp;' . t('when the dependee'),
-      ),
-      'condition' => array(
+        '#prefix' => $this->t('The dependent field is'),
+      ],
+      'condition' => [
         '#type' => 'select',
-        '#title' => t('Condition'),
+        '#title' => $this->t('Condition'),
         '#title_display' => 'invisible',
         '#options' => $conditions,
         '#default_value' => 'value',
-        '#prefix' => '&nbsp;<span class="description-select">',
-        '#suffix' => '</span>',
-      ),
-      /*'actions' => array(
-        'submit' => array(
+        '#prefix' => $this->t('when the dependee'),
+      ],
+      'actions' => [
+        'submit' => [
           '#type' => 'submit',
-          '#value' => t('Add dependency'),
-        ),
-      ),*/
-    );
+          '#value' => $this->t('Add dependency'),
+        ],
+      ],
+    ];
     return $form['table'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function save(array $form, FormStateInterface $form_state) {
-    $entity = $this->entity;
-    $status = parent::save($form, $form_state);
-
-    switch ($status) {
-      case SAVED_NEW:
-        drupal_set_message($this->t('Created the %label Conditional field.', [
-          '%label' => $entity->label(),
-        ]));
-        break;
-
-      default:
-        drupal_set_message($this->t('Saved the %label Conditional field.', [
-          '%label' => $entity->label(),
-        ]));
-    }
-    $form_state->setRedirect('entity.conditional_field.canonical', ['conditional_field' => $entity->id()]);
   }
 
   /**
@@ -210,56 +313,15 @@ class ConditionalFieldForm extends ContentEntityForm {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    $table = $form_state->getValue('table');
-    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
-      return parent::validateForm($form, $form_state);
-    }
-    $conditional_values = $table['add_new_dependency'];
-    // Check dependency.
-    if (array_key_exists('dependee', $conditional_values) &&
-      array_key_exists('dependent', $conditional_values) &&
-      $conditional_values['dependee'] == $conditional_values['dependent']
-    ) {
-      $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
-      $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
-    }
-
-    return parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $table = $form_state->getValue('table');
-    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
-      return parent::submitForm($form, $form_state);
-    }
-
-    $conditional_values = $table['add_new_dependency'];
-    // Copy values from table for submit.
-    $options = [];
-    foreach ($conditional_values as $key => $value) {
-      if (in_array($key, ['entity_type', 'bundle', 'dependee', 'dependent'])) {
-        $form_state->setValue($key, $value);
-      }
-      $options[$key] = $value;
-    }
-    $options += conditional_fields_dependency_default_options();
-    $form_state->setValue('options', $options);
-    parent::submitForm($form, $form_state);
-  }
-
-  /**
    * Filter ContentEntity entity_types out of all entity_types.
    *
    * @param array $entity_types
    *   List of all EntityTypes available.
+   *
+   * @return array $entity_types
+   *   Filtered list of available EntityTypes.
    */
-  protected function filterContentEntityTypes(array $entity_types) {
+  protected function filterContentEntityTypes(array $entity_types = []) {
     $entity_type_manager = \Drupal::entityTypeManager();
     foreach ($entity_types as $entity_type_id => $entity_type_label) {
       if ('_none' == $entity_type_id) {

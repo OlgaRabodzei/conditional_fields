@@ -1,38 +1,8 @@
-add conditional field entities:
-  title: 'Create new Conditional field entities'
+add conditional fields:
+  title: 'Create new Conditional field'
 
-administer conditional field entities:
-  title: 'Administer Conditional field entities'
-  description: 'Allow to access the administration form to configure Conditional field entities.'
-  restrict access: true
+edit conditional fields:
+  title: 'Edit Conditional fields'
 
-delete conditional field entities:
-  title: 'Delete Conditional field entities'
-
-edit conditional field entities:
-  title: 'Edit Conditional field entities'
-
-view published conditional field entities:
-  title: 'View published Conditional field entities'
-
-view unpublished conditional field entities:
-  title: 'View unpublished Conditional field entities'
-add conditional field entities:
-  title: 'Create new Conditional field entities'
-
-administer conditional field entities:
-  title: 'Administer Conditional field entities'
-  description: 'Allow to access the administration form to configure Conditional field entities.'
-  restrict access: true
-
-delete conditional field entities:
-  title: 'Delete Conditional field entities'
-
-edit conditional field entities:
-  title: 'Edit Conditional field entities'
-
-view published conditional field entities:
-  title: 'View published Conditional field entities'
-
-view unpublished conditional field entities:
-  title: 'View unpublished Conditional field entities'
+delete conditional fields:
+  title: 'Delete Conditional fields'
