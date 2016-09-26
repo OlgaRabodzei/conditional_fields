@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
 
 /**
  * Dependency is triggered if the dependee has a certain value.
@@ -187,34 +188,36 @@ function conditional_fields_element_after_build($element, &$form_state) {
   $build_info = $form_state->getBuildInfo();
   if (method_exists($build_info['callback_object'], 'getEntity')) {
     $entity = $build_info['callback_object']->getEntity();
-    $bundle = $entity->getType();
-    $entity_type = $entity->getEntityTypeId();
+    if (method_exists($entity, 'getType')) {
+      $bundle = $entity->getType();
+      $entity_type = $entity->getEntityTypeId();
 
-    $dependencies = conditional_fields_load_dependencies($entity_type, $bundle);
+      $dependencies = conditional_fields_load_dependencies($entity_type, $bundle);
 
-    if (!$dependencies) {
-      return $element;
-    }
+      if (!$dependencies) {
+        return $element;
+      }
 
-    $field_name = reset($field['#array_parents']);
+      $field_name = reset($field['#array_parents']);
 
-    // Attach dependent.
-    if (isset($dependencies['dependents'][$field_name])) {
-      foreach ($dependencies['dependents'][$field_name] as $id => $dependency) {
-        if (!isset($form['#conditional_fields'][$field_name]['dependees'][$id])) {
-          conditional_fields_attach_dependency($form, array('#field_name' => $dependency['dependee']), $field, $dependency['options'], $id);
+      // Attach dependent.
+      if (isset($dependencies['dependents'][$field_name])) {
+        foreach ($dependencies['dependents'][$field_name] as $id => $dependency) {
+          if (!isset($form['#conditional_fields'][$field_name]['dependees'][$id])) {
+            conditional_fields_attach_dependency($form, array('#field_name' => $dependency['dependee']), $field, $dependency['options'], $id);
+          }
         }
       }
-    }
 
-    // Attach dependee.
-    // TODO: collect information about every element of the dependee widget, not
-    // just the first encountered. This bottom-up approach would allow us to
-    // define per-element sets of dependency values.
-    if (isset($dependencies['dependees'][$field_name])) {
-      foreach ($dependencies['dependees'][$field_name] as $id => $dependency) {
-        if (!isset($form['#conditional_fields'][$field_name]['dependents'][$id])) {
-          conditional_fields_attach_dependency($form, $field, array('#field_name' => $dependency['dependent']), $dependency['options'], $id);
+      // Attach dependee.
+      // TODO: collect information about every element of the dependee widget, not
+      // just the first encountered. This bottom-up approach would allow us to
+      // define per-element sets of dependency values.
+      if (isset($dependencies['dependees'][$field_name])) {
+        foreach ($dependencies['dependees'][$field_name] as $id => $dependency) {
+          if (!isset($form['#conditional_fields'][$field_name]['dependents'][$id])) {
+            conditional_fields_attach_dependency($form, $field, array('#field_name' => $dependency['dependent']), $dependency['options'], $id);
+          }
         }
       }
     }
