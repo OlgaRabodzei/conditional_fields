@@ -141,7 +141,13 @@ class ConditionalFieldForm extends FormBase {
       ->generate();
 
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
-    $entity = entity_get_form_display($component_value['entity_type'], $component_value['bundle'], 'default');
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($component_value['entity_type'] . '.' . $component_value['bundle'] . '.' . 'default');
+    if (!$entity) {
+      return;
+    }
+
     $field = $entity->getComponent($field_name);
     $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
     $entity->setComponent($field_name, $field);
@@ -184,8 +190,14 @@ class ConditionalFieldForm extends FormBase {
 
     /* Existing conditions. */
 
-    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
-    $form_display_entity = entity_get_form_display($entity_type, $bundle_name, 'default');
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display_entity */
+    $form_display_entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($entity_type . '.' . $bundle_name . '.' . 'default');
+    if (!$form_display_entity) {
+      return $form['table'];
+    }
+
     foreach ($fields as $field_name => $label) {
       $field = $form_display_entity->getComponent($field_name);
       if (empty($field['third_party_settings']['conditional_fields'])) {

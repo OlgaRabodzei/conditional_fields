@@ -242,7 +242,14 @@ function conditional_fields_load_dependencies($entity_type, $bundle) {
     }
 
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
-    $entity = entity_get_form_display($entity_type, $bundle, 'default');
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($entity_type . '.' . $bundle . '.' . 'default');
+
+    if (!$entity) {
+      return $dependencies;
+    }
+
     $fields = $entity->getComponents();
     foreach ($fields as $field_name => $field) {
       if (empty($field['third_party_settings']['conditional_fields'])) {

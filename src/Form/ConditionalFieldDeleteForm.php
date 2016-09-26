@@ -48,7 +48,13 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
     if (empty($this->entity_type) || empty($this->bundle) || empty($this->field_name) || empty($this->uuid)) {
       return;
     }
-    $entity = entity_get_form_display($this->entity_type, $this->bundle, 'default');
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($this->entity_type . '.' . $this->bundle . '.' . 'default');
+    if (!$entity) {
+      return;
+    }
+
     $field = $entity->getComponent($this->field_name);
     unset($field['third_party_settings']['conditional_fields'][$this->uuid]);
     $entity->setComponent($this->field_name, $field);
