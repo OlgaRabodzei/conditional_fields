@@ -30,7 +30,13 @@ class ConditionalFieldEditForm extends FormBase {
       return $form;
     }
 
-    $form_display_entity = entity_get_form_display($entity_type, $bundle, 'default');
+    $form_display_entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($entity_type . '.' . $bundle . '.' . 'default');
+    if (!$form_display_entity) {
+      return $form;
+    }
+
     $field = $form_display_entity->getComponent($field_name);
 
     if (empty($field['third_party_settings']['conditional_fields'][$uuid])) {
@@ -220,7 +226,13 @@ class ConditionalFieldEditForm extends FormBase {
     // TODO: Inprogress
     $values = $form_state->cleanValues()->getValues();
 
-    $entity = entity_get_form_display($values['entity_type'], $values['bundle'], 'default');
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($values['entity_type'] . '.' . $values['bundle'] . '.' . 'default');
+    if (!$entity) {
+      return;
+    }
+
     $field = $entity->getComponent($values['field_name']);
     $new_settings = $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'];
 
