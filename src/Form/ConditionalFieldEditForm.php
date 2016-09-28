@@ -110,6 +110,15 @@ class ConditionalFieldEditForm extends FormBase {
 
     // TODO: Build a dummy field widget to use as form field in single value selection
     // option.
+    $entity_type_def = \Drupal::entityTypeManager()->getDefinition($entity_type);
+    $storage = \Drupal::entityTypeManager()->getStorage($entity_type);
+    $values = [];
+    if ($bundle_key = $entity_type_def->getKey('bundle')) {
+      $values[$bundle_key] = $bundle;
+    }
+    $dummy_entity = $storage->create($values);
+    $dummy_entity_form = \Drupal::service('entity.form_builder')->getForm($dummy_entity, 'default', []);
+    $dummy_field = $dummy_entity_form[$condition['dependee']];
 
     $form['value'] = [
       '#type' => 'fieldset',
@@ -124,7 +133,7 @@ class ConditionalFieldEditForm extends FormBase {
         ],
       ],
       '#tree' => TRUE,
-      // 'field' => $dummy_field,
+      'field' => $dummy_field,
     ];
 
     $form['values'] = [
