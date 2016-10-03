@@ -140,3 +140,17 @@ Drupal.behaviors.conditionalFields = {
 };
 
 })(jQuery);
+
+// Need to do it after window finishes loading and CKeditors were
+// applied to the textareas.
+jQuery(window).load(function() {
+    jQuery(document).find('.form-textarea-wrapper textarea').each(function() {
+        var $textarea = jQuery(this);
+        if(CKEDITOR.instances[$textarea.attr('id')] != undefined) {
+            CKEDITOR.instances[$textarea.attr('id')].on('change', function () {
+                CKEDITOR.instances[$textarea.attr('id')].updateElement();
+                $textarea.trigger('keyup');
+            });
+        }
+    });
+});
