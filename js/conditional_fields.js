@@ -139,4 +139,22 @@ Drupal.behaviors.conditionalFields = {
   }
 };
 
+Drupal.behaviors.ckeditorTextareaFix = {
+    attach: function(context, settings) {
+        if(CKEDITOR) {
+            CKEDITOR.on('instanceReady', function () {
+                $(context).find('.form-textarea-wrapper textarea').each(function () {
+                    var $textarea = jQuery(this);
+                    if (CKEDITOR.instances[$textarea.attr('id')] != undefined) {
+                        CKEDITOR.instances[$textarea.attr('id')].on('change', function () {
+                            CKEDITOR.instances[$textarea.attr('id')].updateElement();
+                            $textarea.trigger('keyup');
+                        });
+                    }
+                });
+            });
+        }
+    }
+};
+
 })(jQuery);
