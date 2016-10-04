@@ -255,7 +255,11 @@ class ConditionalFieldEditForm extends FormBase {
     $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'] = $new_settings;
     $entity->setComponent($values['field_name'], $field);
     $entity->save();
-    $form_state->setRedirect('conditional_fields');
+    $form_state->setRedirect('conditional_fields.conditions_list', [
+      'entity_type' => $values['entity_type'],
+      'bundle' => $values['bundle'],
+    ]);
+
   }
 
   /**
@@ -271,7 +275,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#title' => $this->t('Form state'),
       '#description' => $this->t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
       '#options' => conditional_fields_states(),
-      '#default_value' => array_key_exists('state', $condition) ? $condition['state'] : 0,
+      '#default_value' => array_key_exists('state', $settings) ? $settings['state'] : 0,
       '#required' => TRUE,
       '#ajax' => [
         'callback' => '::ajaxAdminStateCallback',
@@ -280,7 +284,7 @@ class ConditionalFieldEditForm extends FormBase {
     ];
 
     $effects = $effects_options = [];
-    $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $condition['state'];
+    $selected_state = $form_state->getValue('state') ?: $condition['settings']['state'];
     foreach (conditional_fields_effects() as $effect_name => $effect) {
       if (in_array($selected_state, $effect['states'])) {
         $effects[$effect_name] = $effect['label'];
@@ -473,7 +477,7 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Ajax callback for effects list.
    */
-  protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
+  public function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
   }
 
