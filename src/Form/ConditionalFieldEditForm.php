@@ -110,6 +110,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     // TODO: Build a dummy field widget to use as form field in single value selection
     // option.
+    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition);
 
     $form['value'] = [
       '#type' => 'fieldset',
@@ -124,14 +125,13 @@ class ConditionalFieldEditForm extends FormBase {
         ],
       ],
       '#tree' => TRUE,
-      // 'field' => $dummy_field,
+      'field' => $dummy_field,
     ];
 
     $form['values'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Set of values'),
       '#description' => $this->t('The values of the dependee %field that trigger the dependency.', ['%field' => $label]) . '<br>' . $this->t('Enter one value per line. Note: if the dependee has allowed values, these are actually the keys, not the labels, of those values.'),
-      '#default_value' => array_key_exists('values', $settings) ? implode("\n", $settings['values']) : '',
       '#states' => [
         'visible' => [
           ':input[name="values_set"]' => [
@@ -147,6 +147,16 @@ class ConditionalFieldEditForm extends FormBase {
         ],
       ],
     ];
+
+    if (!empty($settings['values']) && is_array($settings['values'])) {
+      $form['values']['#default_value'] = implode("\n", $settings['values']);
+    }
+    elseif (!empty($settings['values']) && is_string($settings['values'])) {
+      $form['values']['#default_value'] = $settings['values'];
+    }
+    else {
+      $form['values']['#default_value'] = '';
+    }
 
     $form['regex'] = [
       '#type' => 'textfield',
@@ -208,12 +218,12 @@ class ConditionalFieldEditForm extends FormBase {
           CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
           CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
         ]) &&
-        Unicode::strlen(trim($form_state->getValue('values')) == 0)
+        Unicode::strlen(trim($form_state->getValue('values')) === 0)
       ) {
-        $form_state->setErrorByName('values', $this->t('!name field is required.', ['!name' => $this->t('Set of values')]));
+        $form_state->setErrorByName('values', $this->t('@name field is required.', ['@name' => $this->t('Set of values')]));
       }
       elseif ($form_state->getValue('values_set') == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && Unicode::strlen(trim($form_state->getValue('regex'))) == 0) {
-        $form_state->setErrorByName('regex', $this->t('!name field is required.', ['!name' => $this->t('Regular expression')]));
+        $form_state->setErrorByName('regex', $this->t('@name field is required.', ['@name' => $this->t('Regular expression')]));
       }
     }
     parent::validateForm($form, $form_state);
@@ -280,8 +290,13 @@ class ConditionalFieldEditForm extends FormBase {
     ];
 
     $effects = $effects_options = [];
-    $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $condition['state'];
+    if (!empty($form_state->hasValue('state')) || !empty($condition['state'])) {
+      $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $condition['state'];
+    }
     foreach (conditional_fields_effects() as $effect_name => $effect) {
+      if (empty($selected_state)) {
+        continue;
+      }
       if (in_array($selected_state, $effect['states'])) {
         $effects[$effect_name] = $effect['label'];
         if (isset($effect['options'])) {
@@ -475,6 +490,25 @@ class ConditionalFieldEditForm extends FormBase {
    */
   protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
+  }
+
+  /**
+   * Creates dummy field instance.
+   */
+  protected function getDummyField($entity_type, $bundle, $condition) {
+    $entity_type_def = \Drupal::entityTypeManager()
+      ->getDefinition($entity_type);
+    $storage = \Drupal::entityTypeManager()->getStorage($entity_type);
+    $values = [];
+    if ($bundle_key = $entity_type_def->getKey('bundle')) {
+      $values[$bundle_key] = $bundle;
+    }
+    $dummy_entity = $storage->create($values);
+    $dummy_entity_form = \Drupal::service('entity.form_builder')
+      ->getForm($dummy_entity, 'default', []);
+    $dummy_field = $dummy_entity_form[$condition['dependee']];
+
+    return $dummy_field;
   }
 
 }
