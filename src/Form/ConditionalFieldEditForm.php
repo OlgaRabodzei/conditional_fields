@@ -294,12 +294,13 @@ class ConditionalFieldEditForm extends FormBase {
       $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $condition['state'];
     }
     foreach (conditional_fields_effects() as $effect_name => $effect) {
-      if (!empty($selected_state)) {
-        if (in_array($selected_state, $effect['states'])) {
-          $effects[$effect_name] = $effect['label'];
-          if (isset($effect['options'])) {
-            $effects_options[$effect_name] = $effect['options'];
-          }
+      if (empty($selected_state)) {
+        continue;
+      }
+      if (in_array($selected_state, $effect['states'])) {
+        $effects[$effect_name] = $effect['label'];
+        if (isset($effect['options'])) {
+          $effects_options[$effect_name] = $effect['options'];
         }
       }
     }
