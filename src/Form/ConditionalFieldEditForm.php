@@ -32,7 +32,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     $form_display_entity = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
-      ->load($entity_type . '.' . $bundle . '.' . 'default');
+      ->load("$entity_type.$bundle.default");
     if (!$form_display_entity) {
       return $form;
     }
@@ -223,37 +223,48 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Inprogress
+    // TODO: Inprogress.
     $values = $form_state->cleanValues()->getValues();
 
-    $entity = \Drupal::entityTypeManager()
-      ->getStorage('entity_form_display')
-      ->load($values['entity_type'] . '.' . $values['bundle'] . '.' . 'default');
+    $uuid = $values['uuid'];
+    $entity_type = $values['entity_type'];
+    $bundle = $values['bundle'];
+
+    /** @var EntityFormDisplay $entity */
+    $entity = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load("$entity_type.$bundle.default");
     if (!$entity) {
       return;
     }
 
     $field = $entity->getComponent($values['field_name']);
-    $new_settings = $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'];
+
+    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+
+    $exclude_fields = [
+      'entity_type',
+      'bundle',
+      'field_name',
+      'uuid',
+      // FIXME: provide saving for parameters below.
+      'element_edit_roles',
+      'element_view_roles',
+    ];
 
     foreach ($values as $key => $value) {
-      if (in_array($key, [
-          'entity_type',
-          'bundle',
-          'field_name',
-          'uuid',
-          // FIXME: provide saving for parameters below.
-          'element_edit_roles',
-          'element_view_roles',
-        ]) || empty($value)
-      ) {
+      if (in_array($key, $exclude_fields) || empty($value)) {
         continue;
       }
-      $new_settings[$key] = $value;
+      else {
+        $settings[$key] = $value;
+      }
     }
 
-    $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'] = $new_settings;
+    if ($settings['effect'] == 'show') {
+      $settings['effect_options'] = [];
+    }
+
     $entity->setComponent($values['field_name'], $field);
+
     $entity->save();
     $form_state->setRedirect('conditional_fields.conditions_list', [
       'entity_type' => $values['entity_type'],
