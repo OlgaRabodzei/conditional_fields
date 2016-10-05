@@ -17,68 +17,26 @@ class ConditionalFieldForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'conditional_field_add_form';
+    return 'conditional_field_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
-    $entity_type_options = \Drupal::entityTypeManager()->getDefinitions();
-    foreach ($entity_type_options as $key => $entity_type) {
-      $entity_type_options[$key] = $entity_type->getLabel();
-    }
-
     $form['entity_type'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Select entity type'),
-      '#options' => $this->filterContentEntityTypes($entity_type_options),
-      '#ajax' => [
-        'callback' => '::entityTypeCallback',
-        'wrapper' => 'entity-type-wrapper',
-      ],
-      '#required' => TRUE,
+      '#type' => 'hidden',
+      '#value' => $entity_type,
     ];
 
-    $form['entity_type_wrapper'] = [
-      '#type' => 'container',
-      '#attributes' => ['id' => 'entity-type-wrapper'],
+    $form['bundle'] = [
+      '#type' => 'hidden',
+      '#value' => $bundle,
     ];
 
-    // Get entity type value.
-    if (!$form_state->hasValue('entity_type')) {
-      return $form;
-    }
-    $entity_type = $form_state->getValue('entity_type');
-
-    // Get entity type bundles.
-    $entity_types_options = \Drupal::getContainer()
-      ->get('entity_type.bundle.info')
-      ->getBundleInfo($entity_type);
-    foreach ($entity_types_options as $key => $entity_types_def) {
-      $entity_types_options[$key] = array_key_exists('label', $entity_types_def) ? $entity_types_def['label'] : $key;
-    }
-
-    $form['entity_type_wrapper']['bundle'] = [
-      '#title' => $this->t('Bundle name'),
-      '#type' => 'select',
-      '#options' => $entity_types_options,
-      '#required' => TRUE,
-      '#ajax' => [
-        'callback' => '::conditionalFieldsCallback',
-        'wrapper' => 'conditional-fields-wrapper',
-      ],
-    ];
-
-    $form['entity_type_wrapper']['conditional_fields_wrapper'] = [
-      '#type' => 'container',
-      '#attributes' => ['id' => 'conditional-fields-wrapper'],
-    ];
-    if ($bundle_name = $form_state->getValue('bundle')) {
-      $form['entity_type_wrapper']['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle_name);
-    }
+    $form['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle);
 
     return $form;
   }
@@ -193,7 +151,8 @@ class ConditionalFieldForm extends FormBase {
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display_entity */
     $form_display_entity = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
-      ->load($entity_type . '.' . $bundle_name . '.' . 'default');
+      ->load("$entity_type.$bundle_name.default");
+
     if (!$form_display_entity) {
       return $form['table'];
     }
@@ -245,7 +204,8 @@ class ConditionalFieldForm extends FormBase {
     // Build list of conditions.
     $conditions = [];
     foreach (conditional_fields_conditions() as $condition => $label) {
-      $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is !label', ['!label' => $label]);
+      $label = (string) $label;
+      $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is @label', ['@label' => (string) $label]);
     }
 
     // Add new dependency row.
@@ -292,61 +252,6 @@ class ConditionalFieldForm extends FormBase {
       ],
     ];
     return $form['table'];
-  }
-
-  /**
-   * Implements callback for Ajax event on entity bundle selection.
-   *
-   * @param array $form
-   *   From render array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Current state of form.
-   *
-   * @return array
-   *   Fields section of the form.
-   */
-  public function conditionalFieldsCallback(array &$form, FormStateInterface $form_state) {
-    return $form['entity_type_wrapper']['conditional_fields_wrapper'];
-  }
-
-  /**
-   * Implements callback for Ajax event on entity type selection.
-   *
-   * @param array $form
-   *   From render array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Current state of form.
-   *
-   * @return array
-   *   Fields section of the form.
-   */
-  public function entityTypeCallback(array &$form, FormStateInterface $form_state) {
-    return $form['entity_type_wrapper'];
-  }
-
-  /**
-   * Filter ContentEntity entity_types out of all entity_types.
-   *
-   * @param array $entity_types
-   *   List of all EntityTypes available.
-   *
-   * @return array $entity_types
-   *   Filtered list of available EntityTypes.
-   */
-  protected function filterContentEntityTypes(array $entity_types = []) {
-    $entity_type_manager = \Drupal::entityTypeManager();
-    foreach ($entity_types as $entity_type_id => $entity_type_label) {
-      if ('_none' == $entity_type_id) {
-        continue;
-      }
-      if (!($entity_type_manager->getStorage($entity_type_id)
-        ->getEntityType()
-        ->isSubclassOf('\Drupal\Core\Entity\ContentEntityInterface'))
-      ) {
-        unset($entity_types[$entity_type_id]);
-      }
-    }
-    return $entity_types;
   }
 
 }

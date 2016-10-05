@@ -49,8 +49,6 @@ conditional_fields.settings:
       type: string
     effect_options:
       type: sequence
-      sequence:
-        type: string
     element_view: # Not sure
       type: sequence
       sequence:

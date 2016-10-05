@@ -32,7 +32,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     $form_display_entity = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
-      ->load($entity_type . '.' . $bundle . '.' . 'default');
+      ->load("$entity_type.$bundle.default");
     if (!$form_display_entity) {
       return $form;
     }
@@ -233,39 +233,54 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Inprogress
+    // TODO: Inprogress.
     $values = $form_state->cleanValues()->getValues();
 
-    $entity = \Drupal::entityTypeManager()
-      ->getStorage('entity_form_display')
-      ->load($values['entity_type'] . '.' . $values['bundle'] . '.' . 'default');
+    $uuid = $values['uuid'];
+    $entity_type = $values['entity_type'];
+    $bundle = $values['bundle'];
+
+    /** @var EntityFormDisplay $entity */
+    $entity = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load("$entity_type.$bundle.default");
     if (!$entity) {
       return;
     }
 
     $field = $entity->getComponent($values['field_name']);
-    $new_settings = $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'];
+
+    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+
+    $exclude_fields = [
+      'entity_type',
+      'bundle',
+      'field_name',
+      'uuid',
+      // FIXME: provide saving for parameters below.
+      'element_edit_roles',
+      'element_view_roles',
+    ];
 
     foreach ($values as $key => $value) {
-      if (in_array($key, [
-          'entity_type',
-          'bundle',
-          'field_name',
-          'uuid',
-          // FIXME: provide saving for parameters below.
-          'element_edit_roles',
-          'element_view_roles',
-        ]) || empty($value)
-      ) {
+      if (in_array($key, $exclude_fields) || empty($value)) {
         continue;
       }
-      $new_settings[$key] = $value;
+      else {
+        $settings[$key] = $value;
+      }
     }
 
-    $field['third_party_settings']['conditional_fields'][$values['uuid']]['settings'] = $new_settings;
+    if ($settings['effect'] == 'show') {
+      $settings['effect_options'] = [];
+    }
+
     $entity->setComponent($values['field_name'], $field);
+
     $entity->save();
-    $form_state->setRedirect('conditional_fields');
+    $form_state->setRedirect('conditional_fields.conditions_list', [
+      'entity_type' => $values['entity_type'],
+      'bundle' => $values['bundle'],
+    ]);
+
   }
 
   /**
@@ -281,7 +296,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#title' => $this->t('Form state'),
       '#description' => $this->t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
       '#options' => conditional_fields_states(),
-      '#default_value' => array_key_exists('state', $condition) ? $condition['state'] : 0,
+      '#default_value' => array_key_exists('state', $settings) ? $settings['state'] : 0,
       '#required' => TRUE,
       '#ajax' => [
         'callback' => '::ajaxAdminStateCallback',
@@ -290,9 +305,7 @@ class ConditionalFieldEditForm extends FormBase {
     ];
 
     $effects = $effects_options = [];
-    if (!empty($form_state->hasValue('state')) || !empty($condition['state'])) {
-      $selected_state = $form_state->hasValue('state') ? $form_state->getValue('state') : $condition['state'];
-    }
+    $selected_state = $form_state->getValue('state') ?: $condition['settings']['state'];
     foreach (conditional_fields_effects() as $effect_name => $effect) {
       if (empty($selected_state)) {
         continue;
@@ -488,7 +501,7 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Ajax callback for effects list.
    */
-  protected function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
+  public function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
   }
 
