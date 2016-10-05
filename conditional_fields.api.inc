@@ -302,18 +302,11 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
   }
 
   $form['#attached']['library'][] = 'conditional_fields/conditional_fields';
-
-  // @FIXME: on extra-effect we receive LogicError - can't use JS in #attached.
   // Add effect settings to the form.
   if ($effects) {
-    $form['#attached']['js'][] = array(
-      'data' => array(
-        'conditionalFields' => array(
-          'effects' => $effects,
-        ),
-      ),
-      'type' => 'setting',
-    );
+    $form['#attached']['drupalSettings']['conditionalFields'] = [
+      'effects' => $effects,
+    ];
   }
 
   // Validation callback to manage dependent fields validation.
