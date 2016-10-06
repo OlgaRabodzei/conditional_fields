@@ -123,6 +123,12 @@ class ConditionalFieldEditForm extends FormBase {
           ],
           ':input[name="condition"]' => ['value' => 'value'],
         ],
+        'required' => [
+          ':input[name="values_set"]' => [
+            'value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
+          ],
+          ':input[name="condition"]' => ['value' => 'value'],
+        ],
       ],
       '#tree' => TRUE,
       'field' => $dummy_field,
@@ -143,6 +149,12 @@ class ConditionalFieldEditForm extends FormBase {
           ':input[name="condition"]' => ['value' => 'value'],
         ],
         'required' => [
+          ':input[name="values_set"]' => [
+            ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND],
+            ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR],
+            ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR],
+            ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT],
+          ],
           ':input[name="condition"]' => ['value' => 'value'],
         ],
       ],
