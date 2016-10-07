@@ -532,7 +532,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     // Set current value.
     if ($default_value) {
-      $dummy_entity->set($field, $default_value);
+      $dummy_entity->set($field_name, $default_value);
     }
 
     $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
@@ -552,6 +552,7 @@ class ConditionalFieldEditForm extends FormBase {
       // $form_state->setValue($field_name, $user_input[$field_name]);
       $form_state_new->setUserInput([$field_name => $user_input[$field_name]]);
       $form_state_new->setProgrammed(TRUE);
+      $form_state_new->setValidationComplete(TRUE);
     }
 
     $dummy_entity_form = $form_builder_service->buildForm($form_object, $form_state_new);
