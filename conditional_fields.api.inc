@@ -109,6 +109,13 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       }
 
       $dependee_info = $form['#conditional_fields'][$dependee];
+
+      end($dependee_info['parents']);
+      $unset = key($dependee_info['parents']);
+      if (is_int($dependee_info['parents'][$unset]) && $dependee_info['parents'][$unset] > 0) {
+        unset($dependee_info['parents'][$unset]);
+      }
+
       $dependee_form_field = NestedArray::getValue($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
