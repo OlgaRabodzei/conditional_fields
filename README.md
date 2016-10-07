@@ -8,7 +8,7 @@ Sorted by priority (descending)
 - [ ] Values input mode: set of values (AND) (in progress)
 - [x] Values input mode: set of values (OR)
 - [ ] Values input mode: set of values (XOR)
-- [ ] Values input mode: set of values (NOT)
+- [x] Values input mode: set of values (NOT)
 - [x] Tabs menu
 - [ ] Add all conditions (js)
 - [ ] Add all states (js)
