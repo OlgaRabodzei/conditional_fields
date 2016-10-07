@@ -3,6 +3,7 @@
 namespace Drupal\conditional_fields\Form;
 
 use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\Unicode;
 
@@ -108,9 +109,8 @@ class ConditionalFieldEditForm extends FormBase {
       ],
     ];
 
-    // TODO: Build a dummy field widget to use as form field in single value selection
-    // option.
-    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition);
+    // @TODO: Please add a default_value as last param.
+    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state);
 
     $form['value'] = [
       '#type' => 'fieldset',
@@ -130,7 +130,7 @@ class ConditionalFieldEditForm extends FormBase {
           ':input[name="condition"]' => ['value' => 'value'],
         ],
       ],
-      '#tree' => TRUE,
+      '#tree' => FALSE,
       'field' => $dummy_field,
     ];
 
@@ -520,18 +520,44 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Creates dummy field instance.
    */
-  protected function getDummyField($entity_type, $bundle, $condition) {
-    $entity_type_def = \Drupal::entityTypeManager()
-      ->getDefinition($entity_type);
-    $storage = \Drupal::entityTypeManager()->getStorage($entity_type);
-    $values = [];
-    if ($bundle_key = $entity_type_def->getKey('bundle')) {
-      $values[$bundle_key] = $bundle;
+  protected function getDummyField($entity_type, $bundle, $condition, FormStateInterface $form_state, $default_value = NULL) {
+    $field_name = $condition['dependee'];
+    $dummy_field = [];
+
+    $entityTypeManager = \Drupal::entityTypeManager();
+    $dummy_entity = $entityTypeManager->getStorage($entity_type)->create([
+      'uid' => \Drupal::currentUser()->id(),
+      'type' => $bundle,
+    ]);
+
+    // Set current value.
+    if ($default_value) {
+      $dummy_entity->set($field, $default_value);
     }
-    $dummy_entity = $storage->create($values);
-    $dummy_entity_form = \Drupal::service('entity.form_builder')
-      ->getForm($dummy_entity, 'default', []);
-    $dummy_field = $dummy_entity_form[$condition['dependee']];
+
+    $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
+    $form_object->setEntity($dummy_entity);
+
+    $form_builder_service = \Drupal::service('form_builder');
+    $form_state_additions = [];
+    $form_state_new = (new FormState())->setFormState($form_state_additions);
+
+    if ($form_state->isMethodType("POST")) {
+      $form_state_new->setRequestMethod("POST");
+    }
+
+    // Set Submitted value.
+    $user_input = $form_state->getUserInput();
+    if (isset($user_input[$field_name])) {
+      // $form_state->setValue($field_name, $user_input[$field_name]);
+      $form_state_new->setUserInput([$field_name => $user_input[$field_name]]);
+      $form_state_new->setProgrammed(TRUE);
+    }
+
+    $dummy_entity_form = $form_builder_service->buildForm($form_object, $form_state_new);
+    if (isset($dummy_entity_form[$field_name])) {
+      $dummy_field = $dummy_entity_form[$field_name];
+    }
 
     return $dummy_field;
   }
