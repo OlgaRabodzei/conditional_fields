@@ -170,14 +170,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
           $values_array = explode("\r\n", $options['values']);
-          if (is_array($values_array)) {
-            foreach ($values_array as $value) {
-              $values[] = array('value' => $value);
-            }
-          }
-          else {
-            $values = $options['values'];
-          }
+          $values[$options['condition']] = count($values_array) == 1 ? $values_array[0] : $values_array;
         }
         else {
           if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR) {
@@ -190,8 +183,14 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
           }
 
           // OR, NOT and XOR conditions are obtained with a nested array.
-          foreach ($options['values'] as $value) {
-            $values[] = array($options['condition'] => $value);
+          $values_array = explode("\r\n", $options['values']);
+          if (is_array($values_array)) {
+            foreach ($values_array as $value) {
+              $values[] = array('value' => $value);
+            }
+          }
+          else {
+            $values = $options['values'];
           }
         }
 
