@@ -157,4 +157,25 @@ Drupal.behaviors.ckeditorTextareaFix = {
     }
 };
 
+Drupal.behaviors.autocompleteChooseTrigger = {
+    attach: function(context, settings) {
+        $(context).find('.form-autocomplete').each(function() {
+            var $input = $(this);
+            $(this).on('input', function() {
+                console.log($input);
+                $(context).ajaxComplete(function() {
+                    $(context).find('.ui-autocomplete li').each(function() {
+                        $(this).on('click', function() {
+                            // Timeout need for input to get the value from the autocomplete.
+                            setTimeout(function() {
+                                $input.trigger("keyup");
+                            }, 1);
+                        });
+                    });
+                });
+            });
+        });
+    }
+};
+
 })(jQuery);

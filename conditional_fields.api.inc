@@ -169,7 +169,15 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
           $values[$options['condition']] = $options['value'];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
-          $values[$options['condition']] = count($options['values']) == 1 ? $options['values'][0] : $options['values'];
+          $values_array = explode("\r\n", $options['values']);
+          if (is_array($values_array)) {
+            foreach ($values_array as $value) {
+              $values[] = array('value' => $value);
+            }
+          }
+          else {
+            $values = $options['values'];
+          }
         }
         else {
           if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR) {

@@ -179,7 +179,6 @@ function conditional_fields_element_after_build($element, &$form_state) {
 
   $form = &$form_state->getCompleteForm();
 
-  // TODO - This IF is only for test and development. Will be deleted.
   // Some fields do not have entity type and bundle properties.
   // In this case we try to use the properties from the form.
   // This is not an optimal solution, since in case of fields
