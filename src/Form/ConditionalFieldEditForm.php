@@ -311,8 +311,7 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Builds Edit Context Settings block.
    */
-  public
-  function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
+  public function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $label = array_key_exists('dependee', $condition) ? $condition['dependee'] : '?';
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
