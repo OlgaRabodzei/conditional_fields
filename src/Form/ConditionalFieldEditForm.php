@@ -110,7 +110,7 @@ class ConditionalFieldEditForm extends FormBase {
     ];
 
     // @TODO: Please add a default_value as last param.
-    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state);
+    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
 
     $form['value'] = [
       '#type' => 'fieldset',
