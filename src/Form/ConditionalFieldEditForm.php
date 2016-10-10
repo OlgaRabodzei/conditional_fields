@@ -109,8 +109,17 @@ class ConditionalFieldEditForm extends FormBase {
       ],
     ];
 
-    // @TODO: Please add a default_value as last param.
-    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state);
+    if (is_array($settings[$label])) {
+      if (is_int(key($settings[$label]))) {
+        $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
+      }
+      else {
+        $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, reset($settings[$label]));
+      }
+    }
+    else {
+      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state);
+    }
 
     $form['value'] = [
       '#type' => 'fieldset',
@@ -253,7 +262,9 @@ class ConditionalFieldEditForm extends FormBase {
     $bundle = $values['bundle'];
 
     /** @var EntityFormDisplay $entity */
-    $entity = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load("$entity_type.$bundle.default");
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load("$entity_type.$bundle.default");
     if (!$entity) {
       return;
     }
