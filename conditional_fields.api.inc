@@ -109,6 +109,13 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       }
 
       $dependee_info = $form['#conditional_fields'][$dependee];
+
+      end($dependee_info['parents']);
+      $unset = key($dependee_info['parents']);
+      if (is_int($dependee_info['parents'][$unset]) && $dependee_info['parents'][$unset] > 0) {
+        unset($dependee_info['parents'][$unset]);
+      }
+
       $dependee_form_field = NestedArray::getValue($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
@@ -195,7 +202,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         }
 
         $state = array($options['state'] => array($options['selector'] => $values));
-        $dependee_form_state = isset($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $dependee_form_field['#language']) ? field_form_get_state($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $dependee_form_field['#language'], $form_state) : NULL;
+        $dependee_form_state = isset($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $form_state) ? \Drupal\Core\Field\WidgetBase::getWidgetState($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $form_state) : NULL;
 
         // Execute special handler for fields that need further processing.
         // The handler has no return value. Modify the $state parameter by
@@ -220,10 +227,11 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
       // Add the $state into the correct logic group in $states.
       foreach ($state as $key => $constraints) {
-        foreach ($constraints as $selector => $constraint) {
-          // Add the constraint in an array to avoid overwriting other
-          // dependencies' states with the same selector.
-          $states[$key][$options['grouping']][$selector][] = $constraint;
+        if (empty($states[$key][$options['grouping']])) {
+          $states[$key][$options['grouping']] = $constraints;
+        }
+        else {
+          $states[$key][$options['grouping']] = array_merge($states[$key][$options['grouping']], $constraints);
         }
       }
 

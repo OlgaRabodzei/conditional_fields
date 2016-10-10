@@ -103,7 +103,8 @@ function conditional_fields_states_handler_checkboxes($field, $field_info, $opti
       $checkboxes_selectors[] = 'xor';
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
     case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
-      foreach ($options['values'] as $value) {
+      $values_array = explode("\r\n", $options['values']);
+      foreach ($values_array as $value) {
         $checkboxes_selectors[] = [conditional_fields_field_selector($field[$value]) => ['checked' => TRUE]];
       }
       break;
