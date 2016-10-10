@@ -7,7 +7,7 @@ Sorted by priority (descending)
 - [ ] Values input mode: regular expression
 - [ ] Values input mode: set of values (AND) (in progress)
 - [x] Values input mode: set of values (OR)
-- [ ] Values input mode: set of values (XOR)
+- [x] Values input mode: set of values (XOR)
 - [x] Values input mode: set of values (NOT)
 - [x] Tabs menu
 - [ ] Add all conditions (js)
@@ -34,3 +34,7 @@ Sorted by priority (descending)
 - [ ] enabled/disabled
 - [ ] checked/unchecked
 - [ ] expanded/collapsed
+
+# Known issues
+- [ ] XOR: saving data from hidden field if it was filled. (discuss it)
+- [ ] filter available fields for creating conditions
