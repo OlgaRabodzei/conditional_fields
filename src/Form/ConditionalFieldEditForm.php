@@ -109,11 +109,11 @@ class ConditionalFieldEditForm extends FormBase {
       ],
     ];
 
-    if (is_int(key(reset($settings[$label])))) {
-      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, reset($settings[$label]));
+    if (is_int(key($settings[$label]))) {
+      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
     }
     else {
-      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
+      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, reset($settings[$label]));
     }
 
     $form['value'] = [
