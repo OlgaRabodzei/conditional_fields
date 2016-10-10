@@ -231,8 +231,7 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public
-  function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state) {
     if ($form_state->getValue('condition') == 'value') {
       if (in_array($form_state->getValue('values_set'), [
           CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
