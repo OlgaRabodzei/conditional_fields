@@ -109,11 +109,16 @@ class ConditionalFieldEditForm extends FormBase {
       ],
     ];
 
-    if (is_int(key($settings[$label]))) {
-      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
+    if (is_array($settings[$label])) {
+      if (is_int(key($settings[$label]))) {
+        $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
+      }
+      else {
+        $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, reset($settings[$label]));
+      }
     }
     else {
-      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, reset($settings[$label]));
+      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state);
     }
 
     $form['value'] = [
@@ -226,7 +231,8 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public
+  function validateForm(array &$form, FormStateInterface $form_state) {
     if ($form_state->getValue('condition') == 'value') {
       if (in_array($form_state->getValue('values_set'), [
           CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
@@ -248,7 +254,8 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public
+  function submitForm(array &$form, FormStateInterface $form_state) {
     // TODO: Inprogress.
     $values = $form_state->cleanValues()->getValues();
 
@@ -304,7 +311,8 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Builds Edit Context Settings block.
    */
-  public function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
+  public
+  function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $label = array_key_exists('dependee', $condition) ? $condition['dependee'] : '?';
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
@@ -467,7 +475,8 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Builds View Context Settings block.
    */
-  public function buildViewContextSettings(array $form, FormStateInterface $form_state, $condition) {
+  public
+  function buildViewContextSettings(array $form, FormStateInterface $form_state, $condition) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
@@ -519,14 +528,16 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * Ajax callback for effects list.
    */
-  public function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
+  public
+  function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
   }
 
   /**
    * Creates dummy field instance.
    */
-  protected function getDummyField($entity_type, $bundle, $condition, FormStateInterface $form_state, $default_value = NULL) {
+  protected
+  function getDummyField($entity_type, $bundle, $condition, FormStateInterface $form_state, $default_value = NULL) {
     $field_name = $condition['dependee'];
     $dummy_field = [];
 

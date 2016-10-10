@@ -202,7 +202,8 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         }
 
         $state = array($options['state'] => array($options['selector'] => $values));
-        $dependee_form_state = isset($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $form_state) ? \Drupal\Core\Field\WidgetBase::getWidgetState($dependee_form_field['#field_parents'], $dependee_form_field['#field_name'], $form_state) : NULL;
+        $field_name = explode('[', $dependee_form_field['#name']);
+        $dependee_form_state = isset($dependee_form_field['#field_parents'], $field_name[0], $form_state) ? WidgetBase::getWidgetState($dependee_form_field['#field_parents'], $field_name[0], $form_state) : NULL;
 
         // Execute special handler for fields that need further processing.
         // The handler has no return value. Modify the $state parameter by

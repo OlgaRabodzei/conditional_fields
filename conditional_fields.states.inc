@@ -121,8 +121,8 @@ function conditional_fields_states_handler_text($field, $field_info, $options, &
   // TODO: support multiple values.
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
     // Cast as array to handle the exception of autocomplete text fields.
-    $value = (array) $state[$options['state']][$options['selector']]['value'][0];
-    $state[$options['state']][$options['selector']]['value'] = array_shift($value);
+    $value = (array) $options[$field_info['array_parents'][0]];
+    $state[$options['state']][$options['selector']] = array_shift($value);
   }
 }
 
