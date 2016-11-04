@@ -32,9 +32,7 @@ conditional_fields.settings:
     grouping:
       type: string
     values_set:
-      type: sequence
-      sequence:
-        type: string
+      type: integer
     value:
       type: string
     values:
