@@ -3,16 +3,16 @@
 namespace Drupal\Tests\conditional_fields\Functional;
 
 /**
- * Tests BrowserTestBase functionality.
+ * Tests ConditionalField config forms functionality.
  *
  * @group conditional_fields
  */
 class ConfigConditionalFieldTest extends ConditionalFieldBase {
 
   /**
-   * Tests basic Configuration test.
+   * Tests creating Conditional Field Config.
    */
-  public function testGoTo() {
+  public function testCreateConfig() {
     $admin_account = $this->drupalCreateUser([
       'view conditional fields',
       'edit conditional fields',
@@ -37,7 +37,7 @@ class ConfigConditionalFieldTest extends ConditionalFieldBase {
     $this->assertSession()->pageTextContains('Article');
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->drupalGet('admin/structure/conditional_fields/node/article', array('query' => array('XDEBUG_SESSION_START' => 'phpstorm')));
+    $this->drupalGet('admin/structure/conditional_fields/node/article');
     $this->assertSession()->statusCodeEquals(200);
 
     $edit = [
@@ -48,6 +48,10 @@ class ConfigConditionalFieldTest extends ConditionalFieldBase {
     ];
     $this->submitForm($edit, 'Add dependency');
     $this->assertSession()->statusCodeEquals(200);
+
+    // Check that configuration is saved.
+    $this->drupalGet('admin/structure/conditional_fields/node/article');
+    $this->assertSession()->pageTextContains('body title visible !empty');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
