@@ -5,7 +5,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
 
 /**
- * Test the colorbox formatter.
+ * Test Conditional Fields States.
  *
  * @group conditional_fields
  */
