@@ -77,7 +77,7 @@ class ConditionalFieldForm extends FormBase {
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
     $component_value = [];
-    $settings = [];
+    $settings = conditional_fields_dependency_default_settings();
     foreach ($conditional_values as $key => $value) {
       if ($key == 'dependent') {
         $field_name = $value;
@@ -87,9 +87,12 @@ class ConditionalFieldForm extends FormBase {
         $component_value[$key] = $value;
         continue;
       }
+      // @TODO: it seems reasonable 
+      // to only set values allowed by field schema,
+      // @see conditional_fields.schema.yml
       $settings[$key] = $value;
     }
-    $settings += conditional_fields_dependency_default_settings();
+    unset($settings['actions']);
     $component_value['settings'] = $settings;
 
     $component_value['entity_type'] = $form_state->getValue('entity_type');

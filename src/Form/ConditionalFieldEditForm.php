@@ -45,6 +45,7 @@ class ConditionalFieldEditForm extends FormBase {
     }
     $condition = $field['third_party_settings']['conditional_fields'][$uuid];
     $settings = $condition['settings'];
+    // @TODO: it's not label but machine_name.
     $label = $condition['dependee'];
 
     $form['submit'] = [
@@ -109,7 +110,8 @@ class ConditionalFieldEditForm extends FormBase {
       ],
     ];
 
-    if (is_array($settings[$label])) {
+    // @TODO: refactor this code.
+    if (isset($settings[$label]) && is_array($settings[$label])) {
       if (is_int(key($settings[$label]))) {
         $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
       }

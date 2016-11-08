@@ -125,7 +125,10 @@ function conditional_fields_dependency_default_settings() {
     'condition' => 'value',
     'grouping' => 'AND',
     'values_set' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-    'value' => array(),
+    // !Important, the param default value MUST match to schema declaration,
+    // @see conditional_fields.schema.yml
+    // 'value' => array(),
+    'value' => '',
     'values' => array(),
     'value_form' => array(),
     'effect' => 'show',
