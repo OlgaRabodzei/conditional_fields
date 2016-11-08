@@ -3,6 +3,7 @@ Drupal 8 Conditional Fields
 
 # TODO
 Sorted by priority (descending)
+- [ ] Use services instead of global functions
 - [ ] Values input mode: widget (in progress)
 - [ ] Values input mode: regular expression
 - [ ] Values input mode: set of values (AND) (in progress)
