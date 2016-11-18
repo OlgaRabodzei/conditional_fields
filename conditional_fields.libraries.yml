@@ -5,3 +5,9 @@ conditional_fields:
   dependencies:
     - core/jquery
     - core/ckeditor
+
+admin:
+  version: "8.x-1.x"
+  css:
+    component:
+      css/conditional_fields.admin.css: {}
