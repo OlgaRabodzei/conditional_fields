@@ -171,12 +171,23 @@ function conditional_fields_element_info_alter(array &$types) {
  * - Field dependencies data.
  */
 function conditional_fields_element_after_build($element, &$form_state) {
-  // Ensure that the element is a field.
-  $first_parent = reset($element['#parents']);
-  if (isset($element['#title']) && isset($first_parent)) {
-    $field = $element;
+  if (!isset($element['#title']) && !isset($element['widget']['#title'])) {
+    return $element;
+  }
+
+  // A container with a field widget.
+  // Element::children() is probably a better fit.
+  if (isset($element['widget']['#title'])) {
+    $field = $element['widget'];
   }
   else {
+    $field = $element;
+  }
+
+  $first_parent = reset($field['#parents']);
+
+  // No parents, so bail out.
+  if (!isset($first_parent)) {
     return $element;
   }
 
@@ -201,7 +212,6 @@ function conditional_fields_element_after_build($element, &$form_state) {
       }
 
       $field_name = reset($field['#array_parents']);
-
       // Attach dependent.
       if (isset($dependencies['dependents'][$field_name])) {
         foreach ($dependencies['dependents'][$field_name] as $id => $dependency) {
