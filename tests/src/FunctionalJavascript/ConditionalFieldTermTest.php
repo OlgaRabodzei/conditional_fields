@@ -70,11 +70,12 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->submitForm($edit, 'Add dependency');
     $this->assertSession()->statusCodeEquals(200);
 
+    // Change a condition's values set and the value.
+    $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
     // Random term id to check necessary value.
     $term_id = mt_rand(1, $this->termsCount);
-
-    $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
     $this->changeField('#edit-values', $term_id);
+    // Submit the form.
     $this->getSession()
       ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
@@ -93,11 +94,11 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     // Change a select value set to show the body.
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id, $term_id);
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
-    $this->createScreenshot('/var/www/drupal8.local/sites/simpletest/scr1BodyVis.jpg');
+//    $this->createScreenshot('sites/simpletest/scr1BodyVis.jpg');
     // Change a select value set to hide the body again.
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id);
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
-    $this->createScreenshot('/var/www/drupal8.local/sites/simpletest/scr2BodyHid.jpg');
+//    $this->createScreenshot('sites/simpletest/scr2BodyHid.jpg');
   }
 
   /**
@@ -116,19 +117,19 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->termsCount = mt_rand(2, 5);
     for ($i = 1; $i <= $this->termsCount; $i++) {
       $termName = $this->getRandomGenerator()->word(8);
-      Term::create(array(
-        'parent' => array(),
+      Term::create([
+        'parent' => [],
         'name' => $termName,
         'vid' => $this->taxonomyName,
-      ))->save();
+      ])->save();
     }
     // Add a custom field with taxonomy terms to 'Article'.
     // The field label is a machine name of created vocabulary.
-    $handler_settings = array(
+    $handler_settings = [
       'target_bundles' => [
         $vocabulary->id() => $vocabulary->id(),
       ],
-    );
+    ];
     $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
     entity_get_form_display('node', 'article', 'default')
       ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
