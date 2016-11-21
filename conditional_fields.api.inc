@@ -173,7 +173,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
           $values[$options['condition']] = $options['value_form'];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
-          $values[$options['condition']] = $options['value'];
+          $values[$options['condition']] = ['regex' => $options['regex'] ];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
           $values_array = explode("\r\n", $options['values']);
@@ -348,6 +348,10 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
  * @see conditional_fields_form_validate()
  */
 function conditional_fields_dependent_validate($element, FormStateInterface &$form_state, $form) {
+  if (!isset($form['#conditional_fields'])) {
+    return;
+  }
+
   $dependent = $form['#conditional_fields'][reset($element['#array_parents'])];
 
   // Check if this field's dependencies were triggered.
@@ -594,6 +598,8 @@ function conditional_fields_form_field_get_values($element, FormStateInterface $
  * @param $context
  *   'edit' if $values are extracted from $form_state or 'view' if
  *   $values are extracted from an entity.
+ *
+ * @return bool
  */
 function conditional_fields_evaluate_dependency($context, $values, $options) {
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
@@ -705,7 +711,7 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
   // Regular expression method.
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
     foreach ($reference_values as $reference_value) {
-      if (!preg_match('/' . $options['value']['RegExp'] . '/', $reference_value)) {
+      if (!preg_match('/' . $options['regex'] . '/', $reference_value)) {
         return FALSE;
       }
     }

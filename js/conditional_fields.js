@@ -162,7 +162,6 @@ Drupal.behaviors.autocompleteChooseTrigger = {
         $(context).find('.form-autocomplete').each(function() {
             var $input = $(this);
             $(this).on('input', function() {
-                console.log($input);
                 $(context).ajaxComplete(function() {
                     $(context).find('.ui-autocomplete li').each(function() {
                         $(this).on('click', function() {
@@ -176,6 +175,26 @@ Drupal.behaviors.autocompleteChooseTrigger = {
             });
         });
     }
+};
+
+/**
+ * Adds RegEx support
+ * https://www.drupal.org/node/1340616
+ */
+Drupal.behaviors.statesModification = {
+  weight: -10,
+  attach: function (context, settings) {
+    if (Drupal.states) {
+      Drupal.states.Dependent.comparisons.Object = function (reference, value) {
+        if ('regex' in reference) {
+          return (new RegExp(reference.regex, reference.flags)).test(value);
+        }
+        else {
+          return reference.indexOf(value) !== false;
+        }
+      }
+    }
+  }
 };
 
 })(jQuery);
