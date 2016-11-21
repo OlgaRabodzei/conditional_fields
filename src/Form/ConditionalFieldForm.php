@@ -221,6 +221,7 @@ class ConditionalFieldForm extends FormBase {
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">' . $this->t('Add new dependency') . '</div>',
         '#required' => TRUE,
+        '#attributes' => ['class' => ['conditional-fields-selector']],
       ],
       'dependee' => [
         '#type' => 'select',
@@ -230,6 +231,7 @@ class ConditionalFieldForm extends FormBase {
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
         '#required' => TRUE,
+        '#attributes' => ['class' => ['conditional-fields-selector']],
       ],
       'state' => [
         '#type' => 'select',
@@ -254,6 +256,9 @@ class ConditionalFieldForm extends FormBase {
         ],
       ],
     ];
+
+    $form['table']['#attached']['library'][] = 'conditional_fields/admin';
+
     return $form['table'];
   }
 
