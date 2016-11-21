@@ -1,0 +1,8 @@
+name: Conditional Fields
+type: module
+description: Define dependencies between fields based on their states and values.
+core: 8.x
+package: Fields
+dependencies:
+  - field
+  - field_ui

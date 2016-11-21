@@ -1,0 +1,35 @@
+conditional_fields:
+  path: '/admin/structure/conditional_fields'
+  defaults:
+    _controller: '\Drupal\conditional_fields\Controller\ConditionalFieldController::entityTypeList'
+    _title: 'Conditional fields'
+  requirements:
+    _permission: 'view conditional fields'
+
+conditional_fields.bundle_list:
+  path: '/admin/structure/conditional_fields/{entity_type}'
+  defaults:
+    _controller: '\Drupal\conditional_fields\Controller\ConditionalFieldController::bundleList'
+  requirements:
+    _permission: 'view conditional fields'
+
+conditional_fields.conditions_list:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}'
+  defaults:
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldForm'
+  requirements:
+    _permission: 'view conditional fields'
+
+conditional_fields.edit_form:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/edit'
+  defaults:
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldEditForm'
+  requirements:
+    _permission: 'edit conditional fields'
+
+conditional_fields.delete_form:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/delete'
+  defaults:
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldDeleteForm'
+  requirements:
+    _permission: 'delete conditional fields'
