@@ -5,7 +5,7 @@ Drupal 8 Conditional Fields
 Sorted by priority (descending)
 - [ ] Use services instead of global functions
 - [ ] Values input mode: widget (in progress)
-- [ ] Values input mode: regular expression
+- [x] Values input mode: regular expression
 - [ ] Values input mode: set of values (AND) (in progress)
 - [x] Values input mode: set of values (OR)
 - [x] Values input mode: set of values (XOR)
@@ -33,7 +33,7 @@ Sorted by priority (descending)
 - [x] required/optional
 - [ ] filled with a value/emptied
 - [ ] enabled/disabled
-- [ ] checked/unchecked
+- [x] checked/unchecked
 - [ ] expanded/collapsed
 
 # Known issues
