@@ -77,4 +77,11 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
     $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('keyup').trigger('change');");
   }
 
+  /**
+   * Helper to change Field value with Javascript.
+   */
+  protected function changeSelect($selector, $value = '') {
+    $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('click').trigger('change');");
+  }
+
 }
