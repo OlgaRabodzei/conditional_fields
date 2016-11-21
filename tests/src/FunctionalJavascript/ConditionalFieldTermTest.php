@@ -31,30 +31,17 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
   protected $termsCount;
 
   /**
-   * The name of a field to be created for testing.
-   *
-   * @var string
-   */
-  protected $fieldName;
-
-  /**
-   * Tests creating Conditional Field.
-   *
-   * Condition: Visible if value = the 1-st term of custom vocabulary.
+   * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
   public function testCreateConfig() {
-    $admin_account = $this->drupalCreateUser([
+    $user = $this->drupalCreateUser([
+      'administer nodes',
       'view conditional fields',
       'edit conditional fields',
       'delete conditional fields',
-      'administer nodes',
-      'administer node fields',
-      'administer node form display',
       'create article content',
-      'edit any article content',
-      'administer taxonomy',
     ]);
-    $this->drupalLogin($admin_account);
+    $this->drupalLogin($user);
 
     // Visit a ConditionalFields configuration page that requires login.
     $this->drupalGet('admin/structure/conditional_fields');
@@ -74,22 +61,20 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->drupalGet('admin/structure/conditional_fields/node/article');
     $this->assertSession()->statusCodeEquals(200);
 
-    // Add a new field condition.
-    $dependency = [
+    $edit = [
       'table[add_new_dependency][dependent]' => 'body',
-      'table[add_new_dependency][dependee]' => $this->fieldName,
+      'table[add_new_dependency][dependee]' => 'field_' . $this->taxonomyName,
       'table[add_new_dependency][state]' => 'visible',
       'table[add_new_dependency][condition]' => 'value',
     ];
-    $this->submitForm($dependency, 'Add dependency');
+    $this->submitForm($edit, 'Add dependency');
     $this->assertSession()->statusCodeEquals(200);
 
-    // Change a condition's values set and the value.
-    $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
     // Random term id to check necessary value.
     $term_id = mt_rand(1, $this->termsCount);
+
+    $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
     $this->changeField('#edit-values', $term_id);
-    // Submit the form.
     $this->getSession()
       ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
@@ -99,7 +84,7 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->assertSession()
       ->pageTextContains('body field_' . $this->taxonomyName . ' visible value');
 
-    // Check if the field condition works.
+    // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
     $this->assertSession()->statusCodeEquals(200);
 
@@ -131,23 +116,22 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->termsCount = mt_rand(2, 5);
     for ($i = 1; $i <= $this->termsCount; $i++) {
       $termName = $this->getRandomGenerator()->word(8);
-      Term::create([
-        'parent' => [],
+      Term::create(array(
+        'parent' => array(),
         'name' => $termName,
         'vid' => $this->taxonomyName,
-      ])->save();
+      ))->save();
     }
     // Add a custom field with taxonomy terms to 'Article'.
     // The field label is a machine name of created vocabulary.
-    $handler_settings = [
+    $handler_settings = array(
       'target_bundles' => [
-        $this->taxonomyName,
+        $vocabulary->id() => $vocabulary->id(),
       ],
-    ];
-    $this->fieldName = 'field_' . $this->taxonomyName;
-    $this->createEntityReferenceField('node', 'article', $this->fieldName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
+    );
+    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
     entity_get_form_display('node', 'article', 'default')
-      ->setComponent($this->fieldName, ['type' => 'options_buttons'])
+      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
       ->save();
   }
 
