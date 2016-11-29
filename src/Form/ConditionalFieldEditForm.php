@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 
 /**
  * Class ConditionalFieldEditForm.
@@ -537,9 +538,12 @@ class ConditionalFieldEditForm extends FormBase {
     $dummy_field = [];
 
     $entityTypeManager = \Drupal::entityTypeManager();
-    $dummy_entity = $entityTypeManager->getStorage($entity_type)->create([
+    $storage = $entityTypeManager->getStorage($entity_type);
+    $bundle_key = $storage->getEntityType()->getKey('bundle');
+
+    $dummy_entity = $storage->create([
       'uid' => \Drupal::currentUser()->id(),
-      'type' => $bundle,
+      $bundle_key => $bundle,
     ]);
 
     // Set current value.
@@ -547,8 +551,14 @@ class ConditionalFieldEditForm extends FormBase {
       $dummy_entity->set($field_name, $default_value);
     }
 
-    $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
-    $form_object->setEntity($dummy_entity);
+    try {
+      $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
+      $form_object->setEntity($dummy_entity);
+    }
+    catch (InvalidPluginDefinitionException $e) {
+      // TODO May be it would be better to return markup?
+      return NULL;
+    }
 
     $form_builder_service = \Drupal::service('form_builder');
     $form_state_additions = [];
