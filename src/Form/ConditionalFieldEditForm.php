@@ -82,7 +82,6 @@ class ConditionalFieldEditForm extends FormBase {
       '#title' => $this->t('Condition'),
       '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
       '#options' => conditional_fields_conditions(),
-      //$checkboxes),
       '#default_value' => array_key_exists('condition', $settings) ? $settings['condition'] : '',
       '#required' => TRUE,
     ];
@@ -235,13 +234,14 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    $allowed_values_set = [
+      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
+      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
+      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
+      CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
+    ];
     if ($form_state->getValue('condition') == 'value') {
-      if (in_array($form_state->getValue('values_set'), [
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
-        ]) &&
+      if (in_array($form_state->getValue('values_set'), $allowed_values_set) &&
         Unicode::strlen(trim($form_state->getValue('values')) === 0)
       ) {
         $form_state->setErrorByName('values', $this->t('@name field is required.', ['@name' => $this->t('Set of values')]));
@@ -552,7 +552,11 @@ class ConditionalFieldEditForm extends FormBase {
     }
 
     try {
-      $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
+      // Be able to add new and edit existing conditional fields on entities,
+      // where "edit" form class is not defined.
+      $handlers = $entityTypeManager->getDefinition($entity_type)->getHandlerClasses();
+      $operation = isset($handlers['form']['edit']) ? 'edit' : 'default';
+      $form_object = $entityTypeManager->getFormObject($entity_type, $operation);
       $form_object->setEntity($dummy_entity);
     }
     catch (InvalidPluginDefinitionException $e) {
@@ -572,7 +576,7 @@ class ConditionalFieldEditForm extends FormBase {
     // Set Submitted value.
     $user_input = $form_state->getUserInput();
     if (isset($user_input[$field_name])) {
-      // $form_state->setValue($field_name, $user_input[$field_name]);
+      // Set field value.
       $form_state_new->setUserInput([$field_name => $user_input[$field_name]]);
       $form_state_new->setProgrammed(TRUE);
       $form_state_new->setValidationComplete(TRUE);
