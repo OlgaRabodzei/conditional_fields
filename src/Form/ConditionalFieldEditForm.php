@@ -188,7 +188,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#description' => $this->t('The dependency is triggered when all the values of the dependee %field match the regular expression. The expression should be valid both in PHP and in Javascript. Do not include delimiters.', ['%field' => $label]) . '<br>' . $this->t('Note: If the dependee has allowed values, these are actually the keys, not the labels, of those values.'),
       '#maxlength' => 2048,
       '#size' => 120,
-      '#default_value' => $settings['regex'] ?? '',
+      '#default_value' => isset($settings['regex']) ? $settings['regex'] : '',
       '#states' => [
         'visible' => [
           ':input[name="values_set"]' => ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX],
