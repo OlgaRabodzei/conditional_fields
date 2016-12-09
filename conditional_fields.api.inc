@@ -173,7 +173,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
           $values[$options['condition']] = $options['value_form'];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
-          $values[$options['condition']] = ['regex' => $options['regex'] ];
+          $values[$options['condition']] = ['regex' => $options['regex']];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
           $values_array = explode("\r\n", $options['values']);
@@ -716,6 +716,10 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
       }
     }
     return TRUE;
+  }
+
+  if (!empty($options['values']) && is_string($options['values'])) {
+    $options['values'] = explode("\r\n", $options['values']);
   }
 
   switch ($options['values_set']) {
