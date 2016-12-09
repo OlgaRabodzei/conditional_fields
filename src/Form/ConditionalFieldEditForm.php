@@ -556,7 +556,8 @@ class ConditionalFieldEditForm extends FormBase {
       $form_object->setEntity($dummy_entity);
     }
     catch (InvalidPluginDefinitionException $e) {
-      // TODO May be it would be better to return markup?
+      watchdog_exception('conditional_fields', $exception);
+      // @TODO May be it make sense to return markup?
       return NULL;
     }
 
