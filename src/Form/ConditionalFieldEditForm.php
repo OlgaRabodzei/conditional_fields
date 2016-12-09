@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 
 /**
  * Class ConditionalFieldEditForm.
@@ -187,7 +188,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#description' => $this->t('The dependency is triggered when all the values of the dependee %field match the regular expression. The expression should be valid both in PHP and in Javascript. Do not include delimiters.', ['%field' => $label]) . '<br>' . $this->t('Note: If the dependee has allowed values, these are actually the keys, not the labels, of those values.'),
       '#maxlength' => 2048,
       '#size' => 120,
-      '#default_value' => $settings['regex'] ?? '',
+      '#default_value' => isset($settings['regex']) ? $settings['regex'] : '',
       '#states' => [
         'visible' => [
           ':input[name="values_set"]' => ['value' => (string) CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX],
@@ -537,9 +538,12 @@ class ConditionalFieldEditForm extends FormBase {
     $dummy_field = [];
 
     $entityTypeManager = \Drupal::entityTypeManager();
-    $dummy_entity = $entityTypeManager->getStorage($entity_type)->create([
+    $storage = $entityTypeManager->getStorage($entity_type);
+    $bundle_key = $storage->getEntityType()->getKey('bundle');
+
+    $dummy_entity = $storage->create([
       'uid' => \Drupal::currentUser()->id(),
-      'type' => $bundle,
+      $bundle_key => $bundle,
     ]);
 
     // Set current value.
@@ -547,8 +551,15 @@ class ConditionalFieldEditForm extends FormBase {
       $dummy_entity->set($field_name, $default_value);
     }
 
-    $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
-    $form_object->setEntity($dummy_entity);
+    try {
+      $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
+      $form_object->setEntity($dummy_entity);
+    }
+    catch (InvalidPluginDefinitionException $e) {
+      watchdog_exception('conditional_fields', $exception);
+      // @TODO May be it make sense to return markup?
+      return NULL;
+    }
 
     $form_builder_service = \Drupal::service('form_builder');
     $form_state_additions = [];
