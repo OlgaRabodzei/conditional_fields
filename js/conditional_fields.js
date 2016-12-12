@@ -63,6 +63,37 @@
 // };
 
 /**
+ * Handles an autocompleteselect event.
+ *
+ * Override the autocomplete method to add a custom event.
+ *
+ * @param {jQuery.Event} event
+ *   The event triggered.
+ * @param {object} ui
+ *   The jQuery UI settings object.
+ *
+ * @return {bool}
+ *   Returns false to indicate the event status.
+ */
+ Drupal.autocomplete.options.select = function selectHandler(event, ui) {
+   var terms = Drupal.autocomplete.splitValues(event.target.value);
+   // Remove the current input.
+   terms.pop();
+   // Add the selected item.
+   if (ui.item.value.search(',') > 0) {
+     terms.push('"' + ui.item.value + '"');
+   }
+   else {
+     terms.push(ui.item.value);
+   }
+   event.target.value = terms.join(', ');
+   // Fire custom event that other controllers can listen to.
+   jQuery(event.target).trigger('autocomplete-select');
+   // Return false to tell jQuery UI that we've filled in the value already.
+     return false;
+   };
+
+/**
  * New and existing states enhanced with configurable options.
  * Event names of states with effects have the following structure:
  * state:stateName-effectName.
@@ -158,20 +189,13 @@ Drupal.behaviors.ckeditorTextareaFix = {
 };
 
 Drupal.behaviors.autocompleteChooseTrigger = {
-    attach: function(context, settings) {
-        $(context).find('.form-autocomplete').each(function() {
+    attach: function (context, settings) {
+        $(context).find('.form-autocomplete').each(function () {
             var $input = $(this);
-            $(this).on('input', function() {
-                $(context).ajaxComplete(function() {
-                    $(context).find('.ui-autocomplete li').each(function() {
-                        $(this).on('click', function() {
-                            // Timeout need for input to get the value from the autocomplete.
-                            setTimeout(function() {
-                                $input.trigger("keyup");
-                            }, 1);
-                        });
-                    });
-                });
+            $(this).on('autocomplete-select', function (event, node) {
+                setTimeout(function () {
+                    $input.trigger("keyup");
+                }, 1);
             });
         });
     }
