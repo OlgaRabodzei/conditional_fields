@@ -132,8 +132,8 @@ class ConditionalFieldForm extends FormBase {
       '#entity_type' => $entity_type,
       '#bundle_name' => $bundle_name,
       '#header' => [
-        $this->t('Dependent'),
-        $this->t('Dependees'),
+        $this->t('Target field'),
+        $this->t('Controlled by'),
         ['data' => $this->t('Description'), 'colspan' => 2],
         ['data' => $this->t('Operations'), 'colspan' => 2],
       ],
