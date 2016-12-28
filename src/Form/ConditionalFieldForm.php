@@ -132,8 +132,8 @@ class ConditionalFieldForm extends FormBase {
       '#entity_type' => $entity_type,
       '#bundle_name' => $bundle_name,
       '#header' => [
-        $this->t('Dependent'),
-        $this->t('Dependees'),
+        $this->t('Target field'),
+        $this->t('Controlled by'),
         ['data' => $this->t('Description'), 'colspan' => 2],
         ['data' => $this->t('Operations'), 'colspan' => 2],
       ],
@@ -215,9 +215,9 @@ class ConditionalFieldForm extends FormBase {
     $form['table']['add_new_dependency'] = [
       'dependent' => [
         '#type' => 'select',
-        '#title' => $this->t('Dependent'),
+        '#title' => $this->t('Target field'),
         '#title_display' => 'invisible',
-        '#description' => $this->t('Dependent'),
+        '#description' => $this->t('Target field'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">' . $this->t('Add new dependency') . '</div>',
         '#required' => TRUE,
@@ -225,9 +225,9 @@ class ConditionalFieldForm extends FormBase {
       ],
       'dependee' => [
         '#type' => 'select',
-        '#title' => $this->t('Dependee'),
+        '#title' => $this->t('Controlled by'),
         '#title_display' => 'invisible',
-        '#description' => $this->t('Dependee'),
+        '#description' => $this->t('Controlled by'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
         '#required' => TRUE,
