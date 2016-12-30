@@ -123,7 +123,8 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         $values = array();
 
         if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
-          $values[$options['condition']] = $options['value_form'];
+          // @TODO: Provide state conditions per each field value.
+          $values = $options['value_form'];
         }
         elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
           $values[$options['condition']] = ['regex' => $options['regex']];
