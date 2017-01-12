@@ -302,9 +302,8 @@ class ConditionalFieldEditForm extends FormBase {
       }
 
       $entity->setComponent($field_name, $field);
-
-      $entity->save();
     }
+    $entity->save();
 
     $form_state->setRedirect('conditional_fields.conditions_list', [
       'entity_type' => $values['entity_type'],
