@@ -69,7 +69,6 @@ class ConditionalFieldForm extends FormBase {
     if ($field->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
       $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field->getLabel() . ' (' . $field->getName() . ')', '!state' => $all_states[$state])));
     }
-    $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
 
     parent::validateForm($form, $form_state);
   }
