@@ -23,8 +23,12 @@ class ConditionalFieldForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $from_tab = FALSE) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
+
+    if ($entity_type == 'types') {
+      $entity_type = 'node';
+    }
 
     $form['entity_type'] = [
       '#type' => 'hidden',
@@ -36,109 +40,20 @@ class ConditionalFieldForm extends FormBase {
       '#value' => $bundle,
     ];
 
-    $form['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle);
+    $form['from_tab'] = [
+      '#type' => 'hidden',
+      '#value' => $from_tab,
+    ];
+
+    $form['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle, $from_tab);
 
     return $form;
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    $table = $form_state->getValue('table');
-    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
-      parent::validateForm($form, $form_state);
-    }
-    $conditional_values = $table['add_new_dependency'];
-    // Check dependency.
-    if (array_key_exists('dependee', $conditional_values) &&
-      array_key_exists('dependent', $conditional_values) &&
-      $conditional_values['dependee'] == $conditional_values['dependent']
-    ) {
-      $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
-      $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
-    }
-    // Validate required field should be visible.
-    $entity_type = $form_state->getValue('entity_type');
-    $bundle = $form_state->getValue('bundle');
-    $state = isset($conditional_values['state']) ? $conditional_values['state'] : NULL;
-    $instances = \Drupal::getContainer()->get('entity_field.manager')
-      ->getFieldDefinitions($entity_type, $bundle);
-    $field = $instances[$conditional_values['dependent']];
-    $all_states = conditional_fields_states();
-    if ($field->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
-      $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field->getLabel() . ' (' . $field->getName() . ')', '!state' => $all_states[$state])));
-    }
-    $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
-
-    parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $table = $form_state->getValue('table');
-    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
-      parent::submitForm($form, $form_state);
-    }
-
-    $field_name = '';
-    $form_state->set('plugin_settings_edit', $field_name);
-
-    $conditional_values = $table['add_new_dependency'];
-    // Copy values from table for submit.
-    $component_value = [];
-    $settings = conditional_fields_dependency_default_settings();
-    foreach ($conditional_values as $key => $value) {
-      if ($key == 'dependent') {
-        $field_name = $value;
-        continue;
-      }
-      if (in_array($key, ['entity_type', 'bundle', 'dependee'])) {
-        $component_value[$key] = $value;
-        continue;
-      }
-      // @TODO: it seems reasonable 
-      // to only set values allowed by field schema,
-      // @see conditional_fields.schema.yml
-      $settings[$key] = $value;
-    }
-    unset($settings['actions']);
-    $component_value['settings'] = $settings;
-
-    $component_value['entity_type'] = $form_state->getValue('entity_type');
-    $component_value['bundle'] = $form_state->getValue('bundle');
-
-    $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
-      ->generate();
-
-    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
-    $entity = \Drupal::entityTypeManager()
-      ->getStorage('entity_form_display')
-      ->load($component_value['entity_type'] . '.' . $component_value['bundle'] . '.' . 'default');
-    if (!$entity) {
-      return;
-    }
-
-    $field = $entity->getComponent($field_name);
-    $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
-    $entity->setComponent($field_name, $field);
-    $entity->save();
-    $form_state->setRedirect(
-      'conditional_fields.edit_form', [
-        'entity_type' => $component_value['entity_type'],
-        'bundle' => $component_value['bundle'],
-        'field_name' => $field_name,
-        'uuid' => $uuid,
-      ]
-    );
-  }
-
-  /**
    * Builds table with conditional fields.
    */
-  protected function buildTable(array $form, FormStateInterface $form_state, $entity_type, $bundle_name = NULL) {
+  protected function buildTable(array $form, FormStateInterface $form_state, $entity_type, $bundle_name = NULL, $from_tab) {
     $form['table'] = [
       '#type' => 'table',
       '#entity_type' => $entity_type,
@@ -177,8 +92,22 @@ class ConditionalFieldForm extends FormBase {
       if (empty($field['third_party_settings']['conditional_fields'])) {
         continue;
       }
+      $edit_path = 'conditional_fields.edit_form';
+      $delete_path = 'conditional_fields.delete_form';
       // Create row for existing field's conditions.
       foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $condition) {
+        $parameters = [
+          'entity_type' => $condition['entity_type'],
+          'bundle' => $condition['bundle'],
+          'field_name' => $field_name,
+          'uuid' => $uuid,
+        ];
+        if ($from_tab) {
+          $edit_path = $edit_path . '.from_tab';
+          $delete_path = $delete_path . '.from_tab';
+          $parameters['from_tab'] = $from_tab;
+        }
+
         $form['table'][] = [
           'dependent' => ['#markup' => $field_name],
           'dependee' => ['#markup' => $condition['dependee']],
@@ -189,21 +118,11 @@ class ConditionalFieldForm extends FormBase {
             '#links' => [
               'edit' => [
                 'title' => $this->t('Edit'),
-                'url' => Url::fromRoute('conditional_fields.edit_form', [
-                  'entity_type' => $condition['entity_type'],
-                  'bundle' => $condition['bundle'],
-                  'field_name' => $field_name,
-                  'uuid' => $uuid,
-                ]),
+                'url' => Url::fromRoute($edit_path, $parameters),
               ],
               'delete' => [
                 'title' => $this->t('Delete'),
-                'url' => Url::fromRoute('conditional_fields.delete_form', [
-                  'entity_type' => $condition['entity_type'],
-                  'bundle' => $condition['bundle'],
-                  'field_name' => $field_name,
-                  'uuid' => $uuid,
-                ]),
+                'url' => Url::fromRoute($delete_path, $parameters),
               ],
             ],
           ],
@@ -272,6 +191,115 @@ class ConditionalFieldForm extends FormBase {
     $form['table']['#attached']['library'][] = 'conditional_fields/admin';
 
     return $form['table'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $table = $form_state->getValue('table');
+    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
+      parent::validateForm($form, $form_state);
+    }
+    $conditional_values = $table['add_new_dependency'];
+    // Check dependency.
+    if (array_key_exists('dependee', $conditional_values) &&
+      array_key_exists('dependent', $conditional_values) &&
+      $conditional_values['dependee'] == $conditional_values['dependent']
+    ) {
+      $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
+      $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
+    }
+    // Validate required field should be visible.
+    $entity_type = $form_state->getValue('entity_type');
+    $bundle = $form_state->getValue('bundle');
+    $state = isset($conditional_values['state']) ? $conditional_values['state'] : NULL;
+    $instances = \Drupal::getContainer()->get('entity_field.manager')
+      ->getFieldDefinitions($entity_type, $bundle);
+    $field = $instances[$conditional_values['dependent']];
+    $all_states = conditional_fields_states();
+    if ($field->isRequired() && in_array($state, [
+        '!visible',
+        'disabled',
+        '!required'
+      ])
+    ) {
+      $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array(
+        '!field' => $field->getLabel() . ' (' . $field->getName() . ')',
+        '!state' => $all_states[$state]
+      )));
+    }
+//    $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
+
+    parent::validateForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $table = $form_state->getValue('table');
+    if (empty($table['add_new_dependency']) || !is_array($table['add_new_dependency'])) {
+      parent::submitForm($form, $form_state);
+    }
+
+    $field_name = '';
+    $form_state->set('plugin_settings_edit', $field_name);
+
+    $conditional_values = $table['add_new_dependency'];
+    // Copy values from table for submit.
+    $component_value = [];
+    $settings = conditional_fields_dependency_default_settings();
+    foreach ($conditional_values as $key => $value) {
+      if ($key == 'dependent') {
+        $field_name = $value;
+        continue;
+      }
+      if (in_array($key, ['entity_type', 'bundle', 'dependee'])) {
+        $component_value[$key] = $value;
+        continue;
+      }
+      // @TODO: it seems reasonable
+      // to only set values allowed by field schema,
+      // @see conditional_fields.schema.yml
+      $settings[$key] = $value;
+    }
+    unset($settings['actions']);
+    $component_value['settings'] = $settings;
+
+    $component_value['entity_type'] = $form_state->getValue('entity_type');
+    $component_value['bundle'] = $form_state->getValue('bundle');
+
+    $from_tab = $form_state->getValue('from_tab');
+
+    $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
+      ->generate();
+
+    /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load($component_value['entity_type'] . '.' . $component_value['bundle'] . '.' . 'default');
+    if (!$entity) {
+      return;
+    }
+
+    $field = $entity->getComponent($field_name);
+    $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
+    $entity->setComponent($field_name, $field);
+    $entity->save();
+
+    $path = 'conditional_fields.edit_form';
+    $parameters = [
+      'entity_type' => $component_value['entity_type'],
+      'bundle' => $component_value['bundle'],
+      'field_name' => $field_name,
+      'uuid' => $uuid,
+    ];
+    if ($from_tab) {
+      $path = $path . '.from_tab';
+      $parameters['from_tab'] = $from_tab;
+    }
+    $form_state->setRedirect($path, $parameters);
   }
 
 }

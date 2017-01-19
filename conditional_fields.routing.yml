@@ -33,3 +33,24 @@ conditional_fields.delete_form:
     _form: '\Drupal\conditional_fields\Form\ConditionalFieldDeleteForm'
   requirements:
     _permission: 'delete conditional fields'
+
+conditional_fields.tab:
+  path: '/admin/structure/types/manage/{node_type}/conditionals'
+  defaults:
+    _controller: '\Drupal\conditional_fields\Controller\ConditionalFieldController::provideArguments'
+  requirements:
+    _permission: 'view conditional fields'
+
+conditional_fields.edit_form.from_tab:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/{from_tab}/edit'
+  defaults:
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldEditForm'
+  requirements:
+    _permission: 'edit conditional fields'
+
+conditional_fields.delete_form.from_tab:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/{from_tab}/delete'
+  defaults:
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldDeleteForm'
+  requirements:
+    _permission: 'delete conditional fields'
