@@ -17,7 +17,6 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
   private $bundle;
   private $field_name;
   private $uuid;
-  private $from_tab;
 
   /**
    * {@inheritdoc}
@@ -25,6 +24,16 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
   public function getQuestion() {
     return $this->t('Are you sure you want to delete the %field_name condition?', [
       '%field_name' => $this->field_name,
+    ]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCancelUrl() {
+    return Url::fromRoute('conditional_fields.conditions_list', [
+      'entity_type' => $this->entity_type,
+      'bundle' => $this->bundle,
     ]);
   }
 
@@ -59,29 +68,11 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getCancelUrl() {
-    if ($this->from_tab) {
-      return Url::fromRoute('conditional_fields.tab', [
-        'node_type' => $this->bundle,
-      ]);
-    }
-    else {
-      return Url::fromRoute('conditional_fields.conditions_list', [
-        'entity_type' => $this->entity_type,
-        'bundle' => $this->bundle,
-      ]);
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL, $from_tab = FALSE) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL) {
     $this->entity_type = $entity_type;
     $this->bundle = $bundle;
     $this->field_name = $field_name;
     $this->uuid = $uuid;
-    $this->from_tab = $from_tab;
 
     return parent::buildForm($form, $form_state);
   }

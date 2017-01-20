@@ -41,16 +41,16 @@ conditional_fields.tab:
   requirements:
     _permission: 'view conditional fields'
 
-conditional_fields.edit_form.from_tab:
-  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/{from_tab}/edit'
+conditional_fields.edit_form.tab:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/tab/edit'
   defaults:
-    _form: '\Drupal\conditional_fields\Form\ConditionalFieldEditForm'
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldEditFormTab'
   requirements:
     _permission: 'edit conditional fields'
 
-conditional_fields.delete_form.from_tab:
-  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/{from_tab}/delete'
+conditional_fields.delete_form.tab:
+  path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/tab/delete'
   defaults:
-    _form: '\Drupal\conditional_fields\Form\ConditionalFieldDeleteForm'
+    _form: '\Drupal\conditional_fields\Form\ConditionalFieldDeleteFormTab'
   requirements:
     _permission: 'delete conditional fields'

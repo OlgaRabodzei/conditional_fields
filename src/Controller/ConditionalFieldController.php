@@ -35,22 +35,6 @@ class ConditionalFieldController extends ControllerBase {
   }
 
   /**
-   * Get list of available EntityTypes.
-   */
-  protected function getEntityTypes() {
-    $entityTypes = [];
-
-    foreach (\Drupal::entityTypeManager()
-               ->getDefinitions() as $key => $entityType) {
-      if ($entityType instanceof ContentEntityType) {
-        $entityTypes[$key] = $entityType;
-      }
-    }
-
-    return $entityTypes;
-  }
-
-  /**
    * Show bundle list of current entity type.
    *
    * @return array
@@ -59,9 +43,7 @@ class ConditionalFieldController extends ControllerBase {
   public function bundleList($entity_type) {
     $output = [];
 
-    $bundles = \Drupal::getContainer()
-      ->get('entity_type.bundle.info')
-      ->getBundleInfo($entity_type);
+    $bundles = \Drupal::getContainer()->get('entity_type.bundle.info')->getBundleInfo($entity_type);
 
     if ($bundles) {
       $output['#theme'] = 'admin_block_content';
@@ -91,11 +73,28 @@ class ConditionalFieldController extends ControllerBase {
   }
 
   /**
-   * Provide arguments for ConditionalFieldForm.
+   * Get list of available EntityTypes.
+   */
+  protected function getEntityTypes() {
+    $entityTypes = [];
+
+    foreach (\Drupal::entityTypeManager()->getDefinitions() as $key => $entityType) {
+      if ($entityType instanceof ContentEntityType) {
+        $entityTypes[$key] = $entityType;
+      }
+    }
+
+    return $entityTypes;
+  }
+
+  /**
+   * Provide arguments for ConditionalFieldFormTab.
    */
   public function provideArguments($node_type) {
     $form = \Drupal::formBuilder()
-      ->getForm('Drupal\conditional_fields\Form\ConditionalFieldForm', 'node', $node_type, TRUE);
+      ->getForm('Drupal\conditional_fields\Form\ConditionalFieldFormTab', 'node', $node_type);
+
     return $form;
   }
+
 }

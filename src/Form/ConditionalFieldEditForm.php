@@ -16,6 +16,8 @@ use Drupal\Core\Render\Element;
  */
 class ConditionalFieldEditForm extends FormBase {
 
+  protected $redirectPath = 'conditional_fields.conditions_list';
+
   /**
    * {@inheritdoc}
    */
@@ -26,7 +28,7 @@ class ConditionalFieldEditForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL, $from_tab = FALSE) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     if (empty($entity_type) || empty($bundle) || empty($field_name) || empty($uuid)) {
@@ -76,10 +78,6 @@ class ConditionalFieldEditForm extends FormBase {
       '#type' => 'textfield',
       '#value' => $uuid,
       '#access' => FALSE,
-    ];
-    $form['from_tab'] = [
-      '#type' => 'hidden',
-      '#value' => $from_tab,
     ];
 
     $form['condition'] = [
@@ -237,73 +235,83 @@ class ConditionalFieldEditForm extends FormBase {
   }
 
   /**
-   * Creates dummy field instance.
+   * {@inheritdoc}
    */
-  protected function getDummyField($entity_type, $bundle, $condition, FormStateInterface $form_state, $default_value = NULL) {
-    $field_name = $condition['dependee'];
-    $dummy_field = [];
-
-    $entityTypeManager = \Drupal::entityTypeManager();
-    $storage = $entityTypeManager->getStorage($entity_type);
-    $bundle_key = $storage->getEntityType()->getKey('bundle');
-
-    $dummy_entity = $storage->create([
-      'uid' => \Drupal::currentUser()->id(),
-      $bundle_key => $bundle,
-    ]);
-
-    // Set current value.
-    if ($default_value) {
-      $dummy_entity->set($field_name, $default_value);
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    if ($form_state->getValue('condition') == 'value') {
+      if (in_array($form_state->getValue('values_set'), [
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
+          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
+        ]) &&
+        Unicode::strlen(trim($form_state->getValue('values')) === 0)
+      ) {
+        $form_state->setErrorByName('values', $this->t('@name field is required.', ['@name' => $this->t('Set of values')]));
+      }
+      elseif ($form_state->getValue('values_set') == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && Unicode::strlen(trim($form_state->getValue('regex'))) == 0) {
+        $form_state->setErrorByName('regex', $this->t('@name field is required.', ['@name' => $this->t('Regular expression')]));
+      }
     }
-
-    try {
-      $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
-      $form_object->setEntity($dummy_entity);
-    } catch (InvalidPluginDefinitionException $e) {
-      watchdog_exception('conditional_fields', $e);
-      // @TODO May be it make sense to return markup?
-      return NULL;
-    }
-
-    $form_builder_service = \Drupal::service('form_builder');
-    $form_state_additions = [];
-    $form_state_new = (new FormState())->setFormState($form_state_additions);
-
-    if ($form_state->isMethodType("POST")) {
-      $form_state_new->setRequestMethod("POST");
-    }
-
-    // Set Submitted value.
-    $user_input = $form_state->getUserInput();
-    if (isset($user_input[$field_name])) {
-      // $form_state->setValue($field_name, $user_input[$field_name]);
-      $form_state_new->setUserInput([$field_name => $user_input[$field_name]]);
-      $form_state_new->setProgrammed(TRUE);
-      $form_state_new->setValidationComplete(TRUE);
-    }
-
-    $dummy_entity_form = $form_builder_service->buildForm($form_object, $form_state_new);
-    if (isset($dummy_entity_form[$field_name])) {
-      $dummy_field = $dummy_entity_form[$field_name];
-      // Unset required for dummy field in case field will be hidden.
-      $this->setFieldProperty($dummy_field, '#required', FALSE);
-    }
-
-    return $dummy_field;
+    parent::validateForm($form, $form_state);
   }
 
   /**
-   * Set render array property and all child elements.
+   * {@inheritdoc}
    */
-  protected function setFieldProperty(&$field, $property, $value) {
-    $elements = Element::children($field);
-    if (isset($elements) && count($elements) > 0) {
-      foreach ($elements as $element) {
-        $field[$element][$property] = $value;
-        $this->setFieldProperty($field[$element], $property, $value);
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    // TODO: Inprogress.
+    $values = $form_state->cleanValues()->getValues();
+    $uuid = $values['uuid'];
+    $entity_type = $values['entity_type'];
+    $bundle = $values['bundle'];
+
+    /** @var EntityFormDisplay $entity */
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage('entity_form_display')
+      ->load("$entity_type.$bundle.default");
+    if (!$entity) {
+      return;
+    }
+
+    $field = $entity->getComponent($values['field_name']);
+
+    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+
+    $exclude_fields = [
+      'entity_type',
+      'bundle',
+      'field_name',
+      'uuid',
+      // FIXME: provide saving for parameters below.
+      'element_edit_roles',
+      'element_view_roles',
+    ];
+
+    foreach ($values as $key => $value) {
+      if (in_array($key, $exclude_fields) || empty($value)) {
+        continue;
+      }
+      else {
+        $settings[$key] = $value;
       }
     }
+
+    if ($settings['effect'] == 'show') {
+      $settings['effect_options'] = [];
+    }
+
+    $entity->setComponent($values['field_name'], $field);
+
+    $entity->save();
+
+    $parameters = [
+      'entity_type' => $values['entity_type'],
+      'bundle' => $values['bundle'],
+    ];
+
+    $form_state->setRedirect($this->redirectPath, $parameters);
+
   }
 
   /**
@@ -522,96 +530,80 @@ class ConditionalFieldEditForm extends FormBase {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    if ($form_state->getValue('condition') == 'value') {
-      if (in_array($form_state->getValue('values_set'), [
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR,
-          CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
-        ]) &&
-        Unicode::strlen(trim($form_state->getValue('values')) === 0)
-      ) {
-        $form_state->setErrorByName('values', $this->t('@name field is required.', ['@name' => $this->t('Set of values')]));
-      }
-      elseif ($form_state->getValue('values_set') == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX && Unicode::strlen(trim($form_state->getValue('regex'))) == 0) {
-        $form_state->setErrorByName('regex', $this->t('@name field is required.', ['@name' => $this->t('Regular expression')]));
-      }
-    }
-    parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Inprogress.
-    $values = $form_state->cleanValues()->getValues();
-    $uuid = $values['uuid'];
-    $entity_type = $values['entity_type'];
-    $bundle = $values['bundle'];
-    $from_tab = $values['from_tab'];
-
-    /** @var EntityFormDisplay $entity */
-    $entity = \Drupal::entityTypeManager()
-      ->getStorage('entity_form_display')
-      ->load("$entity_type.$bundle.default");
-    if (!$entity) {
-      return;
-    }
-
-    $field = $entity->getComponent($values['field_name']);
-
-    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
-
-    $exclude_fields = [
-      'entity_type',
-      'bundle',
-      'field_name',
-      'uuid',
-      // FIXME: provide saving for parameters below.
-      'element_edit_roles',
-      'element_view_roles',
-    ];
-
-    foreach ($values as $key => $value) {
-      if (in_array($key, $exclude_fields) || empty($value)) {
-        continue;
-      }
-      else {
-        $settings[$key] = $value;
-      }
-    }
-
-    if ($settings['effect'] == 'show') {
-      $settings['effect_options'] = [];
-    }
-
-    $entity->setComponent($values['field_name'], $field);
-
-    $entity->save();
-
-    if ($from_tab) {
-      $form_state->setRedirect('conditional_fields.tab', [
-        'node_type' => $values['bundle'],
-      ]);
-    }
-    else {
-      $form_state->setRedirect('conditional_fields.conditions_list', [
-        'entity_type' => $values['entity_type'],
-        'bundle' => $values['bundle'],
-      ]);
-    }
-
-  }
-
-  /**
    * Ajax callback for effects list.
    */
   public function ajaxAdminStateCallback(array $form, FormStateInterface $form_state) {
     return $form['entity_edit']['effects_wrapper'];
+  }
+
+  /**
+   * Creates dummy field instance.
+   */
+  protected function getDummyField($entity_type, $bundle, $condition, FormStateInterface $form_state, $default_value = NULL) {
+    $field_name = $condition['dependee'];
+    $dummy_field = [];
+
+    $entityTypeManager = \Drupal::entityTypeManager();
+    $storage = $entityTypeManager->getStorage($entity_type);
+    $bundle_key = $storage->getEntityType()->getKey('bundle');
+
+    $dummy_entity = $storage->create([
+      'uid' => \Drupal::currentUser()->id(),
+      $bundle_key => $bundle,
+    ]);
+
+    // Set current value.
+    if ($default_value) {
+      $dummy_entity->set($field_name, $default_value);
+    }
+
+    try {
+      $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
+      $form_object->setEntity($dummy_entity);
+    } catch (InvalidPluginDefinitionException $e) {
+      watchdog_exception('conditional_fields', $e);
+      // @TODO May be it make sense to return markup?
+      return NULL;
+    }
+
+    $form_builder_service = \Drupal::service('form_builder');
+    $form_state_additions = [];
+    $form_state_new = (new FormState())->setFormState($form_state_additions);
+
+    if ($form_state->isMethodType("POST")) {
+      $form_state_new->setRequestMethod("POST");
+    }
+
+    // Set Submitted value.
+    $user_input = $form_state->getUserInput();
+    if (isset($user_input[$field_name])) {
+      // $form_state->setValue($field_name, $user_input[$field_name]);
+      $form_state_new->setUserInput([$field_name => $user_input[$field_name]]);
+      $form_state_new->setProgrammed(TRUE);
+      $form_state_new->setValidationComplete(TRUE);
+    }
+
+    $dummy_entity_form = $form_builder_service->buildForm($form_object, $form_state_new);
+    if (isset($dummy_entity_form[$field_name])) {
+      $dummy_field = $dummy_entity_form[$field_name];
+      // Unset required for dummy field in case field will be hidden.
+      $this->setFieldProperty($dummy_field, '#required', FALSE);
+    }
+
+    return $dummy_field;
+  }
+
+  /**
+   * Set render array property and all child elements.
+   */
+  protected function setFieldProperty(&$field, $property, $value) {
+    $elements = Element::children($field);
+    if (isset($elements) && count($elements) > 0) {
+      foreach ($elements as $element) {
+        $field[$element][$property] = $value;
+        $this->setFieldProperty($field[$element], $property, $value);
+      }
+    }
   }
 
 }

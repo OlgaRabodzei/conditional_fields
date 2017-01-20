@@ -13,6 +13,10 @@ use Drupal\Core\Url;
  */
 class ConditionalFieldForm extends FormBase {
 
+  protected $editPath = 'conditional_fields.edit_form';
+
+  protected $deletePath = 'conditional_fields.delete_form';
+
   /**
    * {@inheritdoc}
    */
@@ -23,12 +27,8 @@ class ConditionalFieldForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $from_tab = FALSE) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL) {
     module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
-
-    if ($entity_type == 'types') {
-      $entity_type = 'node';
-    }
 
     $form['entity_type'] = [
       '#type' => 'hidden',
@@ -40,13 +40,7 @@ class ConditionalFieldForm extends FormBase {
       '#value' => $bundle,
     ];
 
-
-    $form['from_tab'] = [
-      '#type' => 'hidden',
-      '#value' => $from_tab,
-    ];
-
-    $form['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle, $from_tab);
+    $form['conditional_fields_wrapper']['table'] = $this->buildTable($form, $form_state, $entity_type, $bundle);
 
     return $form;
   }
@@ -127,8 +121,6 @@ class ConditionalFieldForm extends FormBase {
     $component_value['entity_type'] = $form_state->getValue('entity_type');
     $component_value['bundle'] = $form_state->getValue('bundle');
 
-    $from_tab = $form_state->getValue('from_tab');
-
     $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
       ->generate();
 
@@ -145,25 +137,21 @@ class ConditionalFieldForm extends FormBase {
     $entity->setComponent($field_name, $field);
     $entity->save();
 
-    $path = 'conditional_fields.edit_form';
     $parameters = [
       'entity_type' => $component_value['entity_type'],
       'bundle' => $component_value['bundle'],
       'field_name' => $field_name,
       'uuid' => $uuid,
     ];
-    if ($from_tab) {
-      $path = $path . '.from_tab';
-      $parameters['from_tab'] = $from_tab;
-    }
-    $form_state->setRedirect($path, $parameters);
+
+    $form_state->setRedirect($this->editPath, $parameters);
   }
 
 
   /**
    * Builds table with conditional fields.
    */
-  protected function buildTable(array $form, FormStateInterface $form_state, $entity_type, $bundle_name = NULL, $from_tab) {
+  protected function buildTable(array $form, FormStateInterface $form_state, $entity_type, $bundle_name = NULL) {
     $form['table'] = [
       '#type' => 'table',
       '#entity_type' => $entity_type,
@@ -202,8 +190,6 @@ class ConditionalFieldForm extends FormBase {
       if (empty($field['third_party_settings']['conditional_fields'])) {
         continue;
       }
-      $edit_path = 'conditional_fields.edit_form';
-      $delete_path = 'conditional_fields.delete_form';
       // Create row for existing field's conditions.
       foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $condition) {
         $parameters = [
@@ -212,11 +198,6 @@ class ConditionalFieldForm extends FormBase {
           'field_name' => $field_name,
           'uuid' => $uuid,
         ];
-        if ($from_tab) {
-          $edit_path = $edit_path . '.from_tab';
-          $delete_path = $delete_path . '.from_tab';
-          $parameters['from_tab'] = $from_tab;
-        }
 
         $form['table'][] = [
           'dependent' => ['#markup' => $field_name],
@@ -228,11 +209,11 @@ class ConditionalFieldForm extends FormBase {
             '#links' => [
               'edit' => [
                 'title' => $this->t('Edit'),
-                'url' => Url::fromRoute($edit_path, $parameters),
+                'url' => Url::fromRoute($this->editPath, $parameters),
               ],
               'delete' => [
                 'title' => $this->t('Delete'),
-                'url' => Url::fromRoute($delete_path, $parameters),
+                'url' => Url::fromRoute($this->deletePath, $parameters),
               ],
             ],
           ],
