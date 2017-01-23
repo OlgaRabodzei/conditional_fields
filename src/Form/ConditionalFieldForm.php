@@ -55,23 +55,23 @@ class ConditionalFieldForm extends FormBase {
       array_key_exists('dependent', $conditional_values)
     ) {
       $dependent = $conditional_values['dependent'];
+      $state = isset($conditional_values['state']) ? $conditional_values['state'] : NULL;
+      $all_states = conditional_fields_states();
+      $entity_type = $form_state->getValue('entity_type');
+      $bundle = $form_state->getValue('bundle');
+      $instances = \Drupal::getContainer()->get('entity_field.manager')
+        ->getFieldDefinitions($entity_type, $bundle);
       foreach ($dependent as $field) {
         if ($conditional_values['dependee'] == $field) {
           $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
           $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
         }
+        // Validate required field should be visible.
+        $field_instance = $instances[$field];
+        if ($field_instance->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
+          $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field_instance->getLabel() . ' (' . $field_instance->getName() . ')', '!state' => $all_states[$state])));
+        }
       }
-    }
-    // Validate required field should be visible.
-    $entity_type = $form_state->getValue('entity_type');
-    $bundle = $form_state->getValue('bundle');
-    $state = isset($conditional_values['state']) ? $conditional_values['state'] : NULL;
-    $instances = \Drupal::getContainer()->get('entity_field.manager')
-      ->getFieldDefinitions($entity_type, $bundle);
-    $field = $instances[$conditional_values['dependent']];
-    $all_states = conditional_fields_states();
-    if ($field->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
-      $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field->getLabel() . ' (' . $field->getName() . ')', '!state' => $all_states[$state])));
     }
 
     parent::validateForm($form, $form_state);
@@ -86,8 +86,8 @@ class ConditionalFieldForm extends FormBase {
       parent::submitForm($form, $form_state);
     }
 
-    $field_name = '';
-    $form_state->set('plugin_settings_edit', $field_name);
+    $field_names = [];
+    $form_state->set('plugin_settings_edit', NULL);
 
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
@@ -128,8 +128,8 @@ class ConditionalFieldForm extends FormBase {
       $field = $entity->getComponent($field_name);
       $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
       $entity->setComponent($field_name, $field);
-      $entity->save();
     }
+    $entity->save();
     $form_state->setRedirect(
       'conditional_fields.edit_form', [
         'entity_type' => $component_value['entity_type'],
