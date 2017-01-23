@@ -8,6 +8,8 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Core\Render\Element;
+use Drupal\conditional_fields\Conditions;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ConditionalFieldEditForm.
@@ -15,6 +17,29 @@ use Drupal\Core\Render\Element;
  * @package Drupal\conditional_fields\Form
  */
 class ConditionalFieldEditForm extends FormBase {
+
+  /**
+   * @var Conditions $list
+   */
+  protected $list;
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(Conditions $list) {
+    $this->list = $list;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('conditional_fields.conditions')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -27,7 +52,6 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     if (empty($entity_type) || empty($bundle) || empty($field_name) || empty($uuid)) {
       return $form;
@@ -82,7 +106,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#type' => 'select',
       '#title' => $this->t('Condition'),
       '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
-      '#options' => conditional_fields_conditions(),
+      '#options' => $this->list->conditionalFieldsConditions(),
       //$checkboxes),
       '#default_value' => array_key_exists('condition', $settings) ? $settings['condition'] : '',
       '#required' => TRUE,
@@ -313,7 +337,6 @@ class ConditionalFieldEditForm extends FormBase {
    * Builds Edit Context Settings block.
    */
   public function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $label = array_key_exists('dependee', $condition) ? $condition['dependee'] : '?';
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
@@ -321,7 +344,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#type' => 'select',
       '#title' => $this->t('Form state'),
       '#description' => $this->t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
-      '#options' => conditional_fields_states(),
+      '#options' => $this->list->conditionalFieldsStates(),
       '#default_value' => array_key_exists('state', $settings) ? $settings['state'] : 0,
       '#required' => TRUE,
       '#ajax' => [
@@ -332,7 +355,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     $effects = $effects_options = [];
     $selected_state = $form_state->getValue('state') ?: $condition['settings']['state'];
-    foreach (conditional_fields_effects() as $effect_name => $effect) {
+    foreach ($this->list->conditionalFieldsEffects() as $effect_name => $effect) {
       if (empty($selected_state)) {
         continue;
       }
@@ -415,7 +438,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#default_value' => array_key_exists('element_edit_per_role', $settings) ? $settings['element_edit_per_role'] : FALSE,
     ];
 
-    $behaviors = conditional_fields_behaviors();
+    $behaviors = $this->list->conditionalFieldsBehaviors();
 
     $form['element_edit'] = [
       '#type' => 'checkboxes',
@@ -476,7 +499,6 @@ class ConditionalFieldEditForm extends FormBase {
    * Builds View Context Settings block.
    */
   public function buildViewContextSettings(array $form, FormStateInterface $form_state, $condition) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
     $form['element_view_per_role'] = [
@@ -486,7 +508,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#default_value' => array_key_exists('element_view_per_role', $settings) ? $settings['element_view_per_role'] : 0,
     ];
 
-    $behaviors = conditional_fields_behaviors();
+    $behaviors = $this->list->conditionalFieldsBehaviors();
 
     $form['element_view'] = [
       '#type' => 'checkboxes',

@@ -5,6 +5,8 @@ namespace Drupal\conditional_fields\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\conditional_fields\Conditions;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ConditionalFieldForm.
@@ -12,6 +14,29 @@ use Drupal\Core\Url;
  * @package Drupal\conditional_fields\Form
  */
 class ConditionalFieldForm extends FormBase {
+
+  /**
+   * @var Conditions $list
+   */
+  protected $list;
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(Conditions $list) {
+    $this->list = $list;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('conditional_fields.conditions')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -24,7 +49,6 @@ class ConditionalFieldForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     $form['entity_type'] = [
       '#type' => 'hidden',
@@ -65,9 +89,17 @@ class ConditionalFieldForm extends FormBase {
     $instances = \Drupal::getContainer()->get('entity_field.manager')
       ->getFieldDefinitions($entity_type, $bundle);
     $field = $instances[$conditional_values['dependent']];
-    $all_states = conditional_fields_states();
-    if ($field->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
-      $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field->getLabel() . ' (' . $field->getName() . ')', '!state' => $all_states[$state])));
+    $all_states = $this->list->conditionalFieldsStates();
+    if ($field->isRequired() && in_array($state, [
+        '!visible',
+        'disabled',
+        '!required'
+      ])
+    ) {
+      $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array(
+        '!field' => $field->getLabel() . ' (' . $field->getName() . ')',
+        '!state' => $all_states[$state]
+      )));
     }
 
     parent::validateForm($form, $form_state);
@@ -88,7 +120,7 @@ class ConditionalFieldForm extends FormBase {
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
     $component_value = [];
-    $settings = conditional_fields_dependency_default_settings();
+    $settings = $this->list->conditionalFieldsDependencyDefaultSettings();
     foreach ($conditional_values as $key => $value) {
       if ($key == 'dependent') {
         $field_name = $value;
@@ -98,7 +130,7 @@ class ConditionalFieldForm extends FormBase {
         $component_value[$key] = $value;
         continue;
       }
-      // @TODO: it seems reasonable 
+      // @TODO: it seems reasonable
       // to only set values allowed by field schema,
       // @see conditional_fields.schema.yml
       $settings[$key] = $value;
@@ -213,11 +245,11 @@ class ConditionalFieldForm extends FormBase {
     /* Row for creating new condition. */
 
     // Build list of states.
-    $states = conditional_fields_states();
+    $states = $this->list->conditionalFieldsStates();
 
     // Build list of conditions.
     $conditions = [];
-    foreach (conditional_fields_conditions() as $condition => $label) {
+    foreach ($this->list->conditionalFieldsConditions() as $condition => $label) {
       $label = (string) $label;
       $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is @label', ['@label' => (string) $label]);
     }
