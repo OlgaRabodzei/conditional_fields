@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Core\Render\Element;
 
 /**
  * Class ConditionalFieldEditForm.
@@ -585,9 +586,24 @@ class ConditionalFieldEditForm extends FormBase {
     $dummy_entity_form = $form_builder_service->buildForm($form_object, $form_state_new);
     if (isset($dummy_entity_form[$field_name])) {
       $dummy_field = $dummy_entity_form[$field_name];
+      // Unset required for dummy field in case field will be hidden.
+      $this->setFieldProperty($dummy_field, '#required', FALSE);
     }
 
     return $dummy_field;
+  }
+
+  /**
+   * Set render array property and all child elements.
+   */
+  protected function setFieldProperty(&$field, $property, $value) {
+    $elements = Element::children($field);
+    if (isset($elements) && count($elements) > 0) {
+      foreach ($elements as $element) {
+        $field[$element][$property] = $value;
+        $this->setFieldProperty($field[$element], $property, $value);
+      }
+    }
   }
 
 }

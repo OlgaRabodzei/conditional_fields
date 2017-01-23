@@ -388,7 +388,7 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
                 $title = $dependent['field_parents'][0];
               }
             }
-            $form_state->setError($element, t('!name field is required.', array('!name' => $title)));
+            $form_state->setError($element, t('@name field is required.', array('@name' => $title)));
           }
         }
       }
