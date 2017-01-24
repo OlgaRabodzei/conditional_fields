@@ -39,8 +39,9 @@ class ConditionalFieldEditForm extends FormBase {
     if (!$form_display_entity) {
       return $form;
     }
-
-    $field = $form_display_entity->getComponent($field_name);
+    // Retrieve first field from the list.
+    $field = count(explode('-', $field_name)) > 0 ? explode('-', $field_name)[0] : $field_name;
+    $field = $form_display_entity->getComponent($field);
 
     if (empty($field['third_party_settings']['conditional_fields'][$uuid])) {
       return $form;
@@ -272,36 +273,39 @@ class ConditionalFieldEditForm extends FormBase {
       return;
     }
 
-    $field = $entity->getComponent($values['field_name']);
+    $field_names = explode('-', $values['field_name']);
+    foreach ($field_names as $field_name) {
+      $field = $entity->getComponent($field_name);
 
-    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+      $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
 
-    $exclude_fields = [
-      'entity_type',
-      'bundle',
-      'field_name',
-      'uuid',
-      // FIXME: provide saving for parameters below.
-      'element_edit_roles',
-      'element_view_roles',
-    ];
+      $exclude_fields = [
+        'entity_type',
+        'bundle',
+        'field_name',
+        'uuid',
+        // FIXME: provide saving for parameters below.
+        'element_edit_roles',
+        'element_view_roles',
+      ];
 
-    foreach ($values as $key => $value) {
-      if (in_array($key, $exclude_fields) || empty($value)) {
-        continue;
+      foreach ($values as $key => $value) {
+        if (in_array($key, $exclude_fields) || empty($value)) {
+          continue;
+        }
+        else {
+          $settings[$key] = $value;
+        }
       }
-      else {
-        $settings[$key] = $value;
+
+      if ($settings['effect'] == 'show') {
+        $settings['effect_options'] = [];
       }
+
+      $entity->setComponent($field_name, $field);
     }
-
-    if ($settings['effect'] == 'show') {
-      $settings['effect_options'] = [];
-    }
-
-    $entity->setComponent($values['field_name'], $field);
-
     $entity->save();
+
     $form_state->setRedirect('conditional_fields.conditions_list', [
       'entity_type' => $values['entity_type'],
       'bundle' => $values['bundle'],
