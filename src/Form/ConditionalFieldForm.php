@@ -84,7 +84,7 @@ class ConditionalFieldForm extends FormBase {
     ) {
       $dependent = $conditional_values['dependent'];
       $state = isset($conditional_values['state']) ? $conditional_values['state'] : NULL;
-      $all_states = conditional_fields_states();
+      $all_states = $this->list->conditionalFieldsStates();
       $entity_type = $form_state->getValue('entity_type');
       $bundle = $form_state->getValue('bundle');
       $instances = \Drupal::getContainer()->get('entity_field.manager')
