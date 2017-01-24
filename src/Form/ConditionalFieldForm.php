@@ -5,6 +5,8 @@ namespace Drupal\conditional_fields\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\conditional_fields\Conditions;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ConditionalFieldForm.
@@ -18,6 +20,29 @@ class ConditionalFieldForm extends FormBase {
   protected $deletePath = 'conditional_fields.delete_form';
 
   /**
+   * @var Conditions $list
+   */
+  protected $list;
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(Conditions $list) {
+    $this->list = $list;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('conditional_fields.conditions')
+    );
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -28,7 +53,6 @@ class ConditionalFieldForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     $form['entity_type'] = [
       '#type' => 'hidden',
@@ -96,7 +120,7 @@ class ConditionalFieldForm extends FormBase {
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
     $component_value = [];
-    $settings = conditional_fields_dependency_default_settings();
+    $settings = $this->list->conditionalFieldsDependencyDefaultSettings();
     foreach ($conditional_values as $key => $value) {
       if ($key == 'dependent') {
         $field_names = $value;
@@ -222,11 +246,11 @@ class ConditionalFieldForm extends FormBase {
     /* Row for creating new condition. */
 
     // Build list of states.
-    $states = conditional_fields_states();
+    $states = $this->list->conditionalFieldsStates();
 
     // Build list of conditions.
     $conditions = [];
-    foreach (conditional_fields_conditions() as $condition => $label) {
+    foreach ($this->list->conditionalFieldsConditions() as $condition => $label) {
       $label = (string) $label;
       $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is @label', ['@label' => (string) $label]);
     }
