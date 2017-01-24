@@ -16,6 +16,8 @@ use Drupal\Core\Render\Element;
  */
 class ConditionalFieldEditForm extends FormBase {
 
+  protected $redirectPath = 'conditional_fields.conditions_list';
+
   /**
    * {@inheritdoc}
    */
@@ -306,10 +308,12 @@ class ConditionalFieldEditForm extends FormBase {
     }
     $entity->save();
 
-    $form_state->setRedirect('conditional_fields.conditions_list', [
+    $parameters = [
       'entity_type' => $values['entity_type'],
       'bundle' => $values['bundle'],
-    ]);
+    ];
+
+    $form_state->setRedirect($this->redirectPath, $parameters);
 
   }
 
@@ -559,8 +563,7 @@ class ConditionalFieldEditForm extends FormBase {
     try {
       $form_object = $entityTypeManager->getFormObject($entity_type, 'edit');
       $form_object->setEntity($dummy_entity);
-    }
-    catch (InvalidPluginDefinitionException $e) {
+    } catch (InvalidPluginDefinitionException $e) {
       watchdog_exception('conditional_fields', $e);
       // @TODO May be it make sense to return markup?
       return NULL;

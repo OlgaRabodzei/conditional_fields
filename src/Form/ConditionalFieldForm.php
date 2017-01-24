@@ -13,6 +13,10 @@ use Drupal\Core\Url;
  */
 class ConditionalFieldForm extends FormBase {
 
+  protected $editPath = 'conditional_fields.edit_form';
+
+  protected $deletePath = 'conditional_fields.delete_form';
+
   /**
    * {@inheritdoc}
    */
@@ -102,7 +106,7 @@ class ConditionalFieldForm extends FormBase {
         $component_value[$key] = $value;
         continue;
       }
-      // @TODO: it seems reasonable 
+      // @TODO: it seems reasonable
       // to only set values allowed by field schema,
       // @see conditional_fields.schema.yml
       $settings[$key] = $value;
@@ -130,15 +134,17 @@ class ConditionalFieldForm extends FormBase {
       $entity->setComponent($field_name, $field);
     }
     $entity->save();
-    $form_state->setRedirect(
-      'conditional_fields.edit_form', [
-        'entity_type' => $component_value['entity_type'],
-        'bundle' => $component_value['bundle'],
-        'field_name' => implode('-', $field_names),
-        'uuid' => $uuid,
-      ]
-    );
+    $parameters = [
+      'entity_type' => $component_value['entity_type'],
+      'bundle' => $component_value['bundle'],
+      'field_name' => $field_name,
+      'uuid' => $uuid,
+    ];
+
+    $form_state->setRedirect($this->editPath, $parameters);
+
   }
+
 
   /**
    * Builds table with conditional fields.
@@ -184,6 +190,13 @@ class ConditionalFieldForm extends FormBase {
       }
       // Create row for existing field's conditions.
       foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $condition) {
+        $parameters = [
+          'entity_type' => $condition['entity_type'],
+          'bundle' => $condition['bundle'],
+          'field_name' => $field_name,
+          'uuid' => $uuid,
+        ];
+
         $form['table'][] = [
           'dependent' => ['#markup' => $field_name],
           'dependee' => ['#markup' => $condition['dependee']],
@@ -194,21 +207,11 @@ class ConditionalFieldForm extends FormBase {
             '#links' => [
               'edit' => [
                 'title' => $this->t('Edit'),
-                'url' => Url::fromRoute('conditional_fields.edit_form', [
-                  'entity_type' => $condition['entity_type'],
-                  'bundle' => $condition['bundle'],
-                  'field_name' => $field_name,
-                  'uuid' => $uuid,
-                ]),
+                'url' => Url::fromRoute($this->editPath, $parameters),
               ],
               'delete' => [
                 'title' => $this->t('Delete'),
-                'url' => Url::fromRoute('conditional_fields.delete_form', [
-                  'entity_type' => $condition['entity_type'],
-                  'bundle' => $condition['bundle'],
-                  'field_name' => $field_name,
-                  'uuid' => $uuid,
-                ]),
+                'url' => Url::fromRoute($this->deletePath, $parameters),
               ],
             ],
           ],
