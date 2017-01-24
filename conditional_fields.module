@@ -7,6 +7,7 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Url;
 
 /**
  * Dependency is triggered if the dependee has a certain value.
@@ -117,40 +118,18 @@ function conditional_fields_theme() {
 }
 
 /**
- * Provides default options for a dependency.
+ * Implements hook_entity_operation().
  */
-function conditional_fields_dependency_default_settings() {
-  return array(
-    'state' => 'visible',
-    'condition' => 'value',
-    'grouping' => 'AND',
-    'values_set' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-    // !Important, the param default value MUST match to schema declaration,
-    // @see conditional_fields.schema.yml
-    // 'value' => array(),
-    'value' => '',
-    'values' => array(),
-    'value_form' => array(),
-    'effect' => 'show',
-    'effect_options' => array(),
-    'element_view' => array(
-      CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE,
-      CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN,
-      CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => 0,
-      CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => 0,
-      CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => 0,
-    ),
-    'element_view_per_role' => 0,
-    'element_view_roles' => array(),
-    'element_edit' => array(
-      CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN,
-      CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => 0,
-      CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => 0,
-    ),
-    'element_edit_per_role' => 0,
-    'element_edit_roles' => array(),
-    'selector' => '',
-  );
+function conditional_fields_entity_operation(EntityInterface $entity) {
+  $operations = array();
+  if ($entity->getEntityTypeId()=='node_type') {
+    $operations['dependencies'] = array(
+      'title' => t('Dependencies'),
+      'url' => Url::fromRoute('conditional_fields.tab', [$entity->getEntityTypeId() => $entity->id()]),
+      'weight' => 29,
+    );
+  }
+  return $operations;
 }
 
 /**
@@ -311,9 +290,9 @@ function conditional_fields_load_dependencies($entity_type, $bundle) {
  * @param $options
  *   An array of dependency options with the following key/value pairs:
  *   - state: The state applied to the dependent when the dependency is
- *     triggered. See conditional_fields_states() for available states.
+ *     triggered. See conditionalFieldsStates() for available states.
  *   - condition: The condition for the dependency to be triggered. See
- *     conditional_fields_conditions() for available conditions.
+ *     conditionalFieldsConditions() for available conditions.
  *   - values_set: One of the following constants:
  *     - CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET: Dependency is
  *       triggered if the dependee has a certain value defined in 'value'.
@@ -336,12 +315,12 @@ function conditional_fields_load_dependencies($entity_type, $bundle) {
  *     field values as found in $form_state['input']['value']['field'] when the
  *     form is submitted.
  *   - effect: The jQuery effect associated to the state change. See
- *     conditional_fields_effects() for available effects and options.
+ *     conditionalFieldsEffects() for available effects and options.
  *   - effect_options: The options for the active effect.
  *   - element_view: An associative array of field view behaviors with
  *     CONDITIONAL_FIELDS_FIELD_VIEW_* constants as keys and the same constants
  *     as values for enabled behaviors and 0 for disabled behaviors.
- *     See conditional_fields_behaviors() for descriptions.
+ *     See conditionalFieldsBehaviors() for descriptions.
  *   - element_view_per_role: Set to 1 to activate field view settings per role.
  *   - element_view_roles: An associative array of field view settings per role
  *     where the keys are role ids and the values are arrays with the same
@@ -349,7 +328,7 @@ function conditional_fields_load_dependencies($entity_type, $bundle) {
  *   - element_edit: An associative array of field edit behaviors with
  *     CONDITIONAL_FIELDS_FIELD_EDIT_* constants as keys and the same constants
  *     as values for enabled behaviors and 0 for disabled behaviors.
- *     See conditional_fields_behaviors() for descriptions.
+ *     See conditionalFieldsBehaviors() for descriptions.
  *   - element_edit_per_role: Set to 1 to activate field edit settings per role.
  *   - element_edit_roles: An associative array of field edit settings per role
  *     where the keys are role ids and the values are arrays with the same

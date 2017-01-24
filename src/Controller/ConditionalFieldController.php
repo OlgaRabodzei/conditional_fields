@@ -87,4 +87,14 @@ class ConditionalFieldController extends ControllerBase {
     return $entityTypes;
   }
 
+  /**
+   * Provide arguments for ConditionalFieldFormTab.
+   */
+  public function provideArguments($node_type) {
+    $form = \Drupal::formBuilder()
+      ->getForm('Drupal\conditional_fields\Form\ConditionalFieldFormTab', 'node', $node_type);
+
+    return $form;
+  }
+
 }

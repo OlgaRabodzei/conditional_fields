@@ -1,0 +1,3 @@
+services:
+  conditional_fields.conditions:
+    class: Drupal\conditional_fields\Conditions

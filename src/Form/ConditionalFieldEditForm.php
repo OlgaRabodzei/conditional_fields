@@ -7,6 +7,9 @@ use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Core\Render\Element;
+use Drupal\conditional_fields\Conditions;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ConditionalFieldEditForm.
@@ -14,6 +17,31 @@ use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
  * @package Drupal\conditional_fields\Form
  */
 class ConditionalFieldEditForm extends FormBase {
+
+  protected $redirectPath = 'conditional_fields.conditions_list';
+
+  /**
+   * @var Conditions $list
+   */
+  protected $list;
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(Conditions $list) {
+    $this->list = $list;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('conditional_fields.conditions')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -26,7 +54,6 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     if (empty($entity_type) || empty($bundle) || empty($field_name) || empty($uuid)) {
       return $form;
@@ -38,8 +65,9 @@ class ConditionalFieldEditForm extends FormBase {
     if (!$form_display_entity) {
       return $form;
     }
-
-    $field = $form_display_entity->getComponent($field_name);
+    // Retrieve first field from the list.
+    $field = count(explode('-', $field_name)) > 0 ? explode('-', $field_name)[0] : $field_name;
+    $field = $form_display_entity->getComponent($field);
 
     if (empty($field['third_party_settings']['conditional_fields'][$uuid])) {
       return $form;
@@ -81,7 +109,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#type' => 'select',
       '#title' => $this->t('Condition'),
       '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
-      '#options' => conditional_fields_conditions(),
+      '#options' => $this->list->conditionalFieldsConditions(),
       '#default_value' => array_key_exists('condition', $settings) ? $settings['condition'] : '',
       '#required' => TRUE,
     ];
@@ -271,40 +299,45 @@ class ConditionalFieldEditForm extends FormBase {
       return;
     }
 
-    $field = $entity->getComponent($values['field_name']);
+    $field_names = explode('-', $values['field_name']);
+    foreach ($field_names as $field_name) {
+      $field = $entity->getComponent($field_name);
 
-    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+      $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
 
-    $exclude_fields = [
-      'entity_type',
-      'bundle',
-      'field_name',
-      'uuid',
-      // FIXME: provide saving for parameters below.
-      'element_edit_roles',
-      'element_view_roles',
-    ];
+      $exclude_fields = [
+        'entity_type',
+        'bundle',
+        'field_name',
+        'uuid',
+        // FIXME: provide saving for parameters below.
+        'element_edit_roles',
+        'element_view_roles',
+      ];
 
-    foreach ($values as $key => $value) {
-      if (in_array($key, $exclude_fields) || empty($value)) {
-        continue;
+      foreach ($values as $key => $value) {
+        if (in_array($key, $exclude_fields) || empty($value)) {
+          continue;
+        }
+        else {
+          $settings[$key] = $value;
+        }
       }
-      else {
-        $settings[$key] = $value;
+
+      if ($settings['effect'] == 'show') {
+        $settings['effect_options'] = [];
       }
+
+      $entity->setComponent($field_name, $field);
     }
-
-    if ($settings['effect'] == 'show') {
-      $settings['effect_options'] = [];
-    }
-
-    $entity->setComponent($values['field_name'], $field);
-
     $entity->save();
-    $form_state->setRedirect('conditional_fields.conditions_list', [
+
+    $parameters = [
       'entity_type' => $values['entity_type'],
       'bundle' => $values['bundle'],
-    ]);
+    ];
+
+    $form_state->setRedirect($this->redirectPath, $parameters);
 
   }
 
@@ -312,7 +345,6 @@ class ConditionalFieldEditForm extends FormBase {
    * Builds Edit Context Settings block.
    */
   public function buildEditContextSettings(array $form, FormStateInterface $form_state, $condition) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $label = array_key_exists('dependee', $condition) ? $condition['dependee'] : '?';
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
@@ -320,7 +352,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#type' => 'select',
       '#title' => $this->t('Form state'),
       '#description' => $this->t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
-      '#options' => conditional_fields_states(),
+      '#options' => $this->list->conditionalFieldsStates(),
       '#default_value' => array_key_exists('state', $settings) ? $settings['state'] : 0,
       '#required' => TRUE,
       '#ajax' => [
@@ -331,7 +363,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     $effects = $effects_options = [];
     $selected_state = $form_state->getValue('state') ?: $condition['settings']['state'];
-    foreach (conditional_fields_effects() as $effect_name => $effect) {
+    foreach ($this->list->conditionalFieldsEffects() as $effect_name => $effect) {
       if (empty($selected_state)) {
         continue;
       }
@@ -414,7 +446,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#default_value' => array_key_exists('element_edit_per_role', $settings) ? $settings['element_edit_per_role'] : FALSE,
     ];
 
-    $behaviors = conditional_fields_behaviors();
+    $behaviors = $this->list->conditionalFieldsBehaviors();
 
     $form['element_edit'] = [
       '#type' => 'checkboxes',
@@ -475,7 +507,6 @@ class ConditionalFieldEditForm extends FormBase {
    * Builds View Context Settings block.
    */
   public function buildViewContextSettings(array $form, FormStateInterface $form_state, $condition) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
     $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
 
     $form['element_view_per_role'] = [
@@ -485,7 +516,7 @@ class ConditionalFieldEditForm extends FormBase {
       '#default_value' => array_key_exists('element_view_per_role', $settings) ? $settings['element_view_per_role'] : 0,
     ];
 
-    $behaviors = conditional_fields_behaviors();
+    $behaviors = $this->list->conditionalFieldsBehaviors();
 
     $form['element_view'] = [
       '#type' => 'checkboxes',
@@ -558,9 +589,8 @@ class ConditionalFieldEditForm extends FormBase {
       $operation = isset($handlers['form']['edit']) ? 'edit' : 'default';
       $form_object = $entityTypeManager->getFormObject($entity_type, $operation);
       $form_object->setEntity($dummy_entity);
-    }
-    catch (InvalidPluginDefinitionException $e) {
-      watchdog_exception('conditional_fields', $exception);
+    } catch (InvalidPluginDefinitionException $e) {
+      watchdog_exception('conditional_fields', $e);
       // @TODO May be it make sense to return markup?
       return NULL;
     }
@@ -585,9 +615,24 @@ class ConditionalFieldEditForm extends FormBase {
     $dummy_entity_form = $form_builder_service->buildForm($form_object, $form_state_new);
     if (isset($dummy_entity_form[$field_name])) {
       $dummy_field = $dummy_entity_form[$field_name];
+      // Unset required for dummy field in case field will be hidden.
+      $this->setFieldProperty($dummy_field, '#required', FALSE);
     }
 
     return $dummy_field;
+  }
+
+  /**
+   * Set render array property and all child elements.
+   */
+  protected function setFieldProperty(&$field, $property, $value) {
+    $elements = Element::children($field);
+    if (isset($elements) && count($elements) > 0) {
+      foreach ($elements as $element) {
+        $field[$element][$property] = $value;
+        $this->setFieldProperty($field[$element], $property, $value);
+      }
+    }
   }
 
 }

@@ -5,6 +5,8 @@ namespace Drupal\conditional_fields\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\conditional_fields\Conditions;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ConditionalFieldForm.
@@ -12,6 +14,33 @@ use Drupal\Core\Url;
  * @package Drupal\conditional_fields\Form
  */
 class ConditionalFieldForm extends FormBase {
+
+  protected $editPath = 'conditional_fields.edit_form';
+
+  protected $deletePath = 'conditional_fields.delete_form';
+
+  /**
+   * @var Conditions $list
+   */
+  protected $list;
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(Conditions $list) {
+    $this->list = $list;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    // Instantiates this form class.
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('conditional_fields.conditions')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -24,7 +53,6 @@ class ConditionalFieldForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL) {
-    module_load_include('inc', 'conditional_fields', 'conditional_fields.conditions');
 
     $form['entity_type'] = [
       '#type' => 'hidden',
@@ -52,11 +80,26 @@ class ConditionalFieldForm extends FormBase {
     $conditional_values = $table['add_new_dependency'];
     // Check dependency.
     if (array_key_exists('dependee', $conditional_values) &&
-      array_key_exists('dependent', $conditional_values) &&
-      $conditional_values['dependee'] == $conditional_values['dependent']
+      array_key_exists('dependent', $conditional_values)
     ) {
-      $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
-      $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
+      $dependent = $conditional_values['dependent'];
+      $state = isset($conditional_values['state']) ? $conditional_values['state'] : NULL;
+      $all_states = $this->list->conditionalFieldsStates();
+      $entity_type = $form_state->getValue('entity_type');
+      $bundle = $form_state->getValue('bundle');
+      $instances = \Drupal::getContainer()->get('entity_field.manager')
+        ->getFieldDefinitions($entity_type, $bundle);
+      foreach ($dependent as $field) {
+        if ($conditional_values['dependee'] == $field) {
+          $form_state->setErrorByName('dependee', $this->t('You should select two different fields.'));
+          $form_state->setErrorByName('dependent', $this->t('You should select two different fields.'));
+        }
+        // Validate required field should be visible.
+        $field_instance = $instances[$field];
+        if ($field_instance->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
+          $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field_instance->getLabel() . ' (' . $field_instance->getName() . ')', '!state' => $all_states[$state])));
+        }
+      }
     }
 
     parent::validateForm($form, $form_state);
@@ -71,23 +114,23 @@ class ConditionalFieldForm extends FormBase {
       parent::submitForm($form, $form_state);
     }
 
-    $field_name = '';
-    $form_state->set('plugin_settings_edit', $field_name);
+    $field_names = [];
+    $form_state->set('plugin_settings_edit', NULL);
 
     $conditional_values = $table['add_new_dependency'];
     // Copy values from table for submit.
     $component_value = [];
-    $settings = conditional_fields_dependency_default_settings();
+    $settings = $this->list->conditionalFieldsDependencyDefaultSettings();
     foreach ($conditional_values as $key => $value) {
       if ($key == 'dependent') {
-        $field_name = $value;
+        $field_names = $value;
         continue;
       }
       if (in_array($key, ['entity_type', 'bundle', 'dependee'])) {
         $component_value[$key] = $value;
         continue;
       }
-      // @TODO: it seems reasonable 
+      // @TODO: it seems reasonable
       // to only set values allowed by field schema,
       // @see conditional_fields.schema.yml
       $settings[$key] = $value;
@@ -109,19 +152,23 @@ class ConditionalFieldForm extends FormBase {
       return;
     }
 
-    $field = $entity->getComponent($field_name);
-    $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
-    $entity->setComponent($field_name, $field);
+    foreach ($field_names as $field_name) {
+      $field = $entity->getComponent($field_name);
+      $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
+      $entity->setComponent($field_name, $field);
+    }
     $entity->save();
-    $form_state->setRedirect(
-      'conditional_fields.edit_form', [
-        'entity_type' => $component_value['entity_type'],
-        'bundle' => $component_value['bundle'],
-        'field_name' => $field_name,
-        'uuid' => $uuid,
-      ]
-    );
+    $parameters = [
+      'entity_type' => $component_value['entity_type'],
+      'bundle' => $component_value['bundle'],
+      'field_name' => $field_name,
+      'uuid' => $uuid,
+    ];
+
+    $form_state->setRedirect($this->editPath, $parameters);
+
   }
+
 
   /**
    * Builds table with conditional fields.
@@ -132,8 +179,8 @@ class ConditionalFieldForm extends FormBase {
       '#entity_type' => $entity_type,
       '#bundle_name' => $bundle_name,
       '#header' => [
-        $this->t('Dependent'),
-        $this->t('Dependees'),
+        $this->t('Target field'),
+        $this->t('Controlled by'),
         ['data' => $this->t('Description'), 'colspan' => 2],
         ['data' => $this->t('Operations'), 'colspan' => 2],
       ],
@@ -167,6 +214,13 @@ class ConditionalFieldForm extends FormBase {
       }
       // Create row for existing field's conditions.
       foreach ($field['third_party_settings']['conditional_fields'] as $uuid => $condition) {
+        $parameters = [
+          'entity_type' => $condition['entity_type'],
+          'bundle' => $condition['bundle'],
+          'field_name' => $field_name,
+          'uuid' => $uuid,
+        ];
+
         $form['table'][] = [
           'dependent' => ['#markup' => $field_name],
           'dependee' => ['#markup' => $condition['dependee']],
@@ -177,21 +231,11 @@ class ConditionalFieldForm extends FormBase {
             '#links' => [
               'edit' => [
                 'title' => $this->t('Edit'),
-                'url' => Url::fromRoute('conditional_fields.edit_form', [
-                  'entity_type' => $condition['entity_type'],
-                  'bundle' => $condition['bundle'],
-                  'field_name' => $field_name,
-                  'uuid' => $uuid,
-                ]),
+                'url' => Url::fromRoute($this->editPath, $parameters),
               ],
               'delete' => [
                 'title' => $this->t('Delete'),
-                'url' => Url::fromRoute('conditional_fields.delete_form', [
-                  'entity_type' => $condition['entity_type'],
-                  'bundle' => $condition['bundle'],
-                  'field_name' => $field_name,
-                  'uuid' => $uuid,
-                ]),
+                'url' => Url::fromRoute($this->deletePath, $parameters),
               ],
             ],
           ],
@@ -202,11 +246,11 @@ class ConditionalFieldForm extends FormBase {
     /* Row for creating new condition. */
 
     // Build list of states.
-    $states = conditional_fields_states();
+    $states = $this->list->conditionalFieldsStates();
 
     // Build list of conditions.
     $conditions = [];
-    foreach (conditional_fields_conditions() as $condition => $label) {
+    foreach ($this->list->conditionalFieldsConditions() as $condition => $label) {
       $label = (string) $label;
       $conditions[$condition] = $condition == 'value' ? $this->t('has value...') : $this->t('is @label', ['@label' => (string) $label]);
     }
@@ -215,9 +259,10 @@ class ConditionalFieldForm extends FormBase {
     $form['table']['add_new_dependency'] = [
       'dependent' => [
         '#type' => 'select',
-        '#title' => $this->t('Dependent'),
+        '#multiple' => TRUE,
+        '#title' => $this->t('Target field'),
         '#title_display' => 'invisible',
-        '#description' => $this->t('Dependent'),
+        '#description' => $this->t('Target field'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">' . $this->t('Add new dependency') . '</div>',
         '#required' => TRUE,
@@ -225,9 +270,9 @@ class ConditionalFieldForm extends FormBase {
       ],
       'dependee' => [
         '#type' => 'select',
-        '#title' => $this->t('Dependee'),
+        '#title' => $this->t('Controlled by'),
         '#title_display' => 'invisible',
-        '#description' => $this->t('Dependee'),
+        '#description' => $this->t('Controlled by'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
         '#required' => TRUE,

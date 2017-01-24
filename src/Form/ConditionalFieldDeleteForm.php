@@ -33,7 +33,7 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
   public function getCancelUrl() {
     return Url::fromRoute('conditional_fields.conditions_list', [
       'entity_type' => $this->entity_type,
-      'bundle' => $this->bundle
+      'bundle' => $this->bundle,
     ]);
   }
 
