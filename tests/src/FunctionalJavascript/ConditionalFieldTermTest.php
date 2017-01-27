@@ -62,7 +62,7 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->assertSession()->statusCodeEquals(200);
 
     $edit = [
-      'table[add_new_dependency][dependent]' => 'body',
+      'table[add_new_dependency][dependent][]' => 'body',
       'table[add_new_dependency][dependee]' => 'field_' . $this->taxonomyName,
       'table[add_new_dependency][state]' => 'visible',
       'table[add_new_dependency][condition]' => 'value',
