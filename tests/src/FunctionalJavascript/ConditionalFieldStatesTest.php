@@ -39,17 +39,7 @@ class ConditionalFieldStatesTest extends JavascriptTestBase {
     $this->assertSession()->pageTextContains('Article');
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->drupalGet('admin/structure/conditional_fields/node/article');
-    $this->assertSession()->statusCodeEquals(200);
-
-    $edit = [
-      'table[add_new_dependency][dependent]' => 'body',
-      'table[add_new_dependency][dependee]' => 'title',
-      'table[add_new_dependency][state]' => 'visible',
-      'table[add_new_dependency][condition]' => '!empty',
-    ];
-    $this->submitForm($edit, 'Add dependency');
-    $this->assertSession()->statusCodeEquals(200);
+    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'title', 'visible', '!empty');
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');

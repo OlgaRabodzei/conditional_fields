@@ -8,11 +8,11 @@ use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
 
 /**
- * Test Conditional Fields States.
+ * Test Conditional Fields Checkboxes Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldTermTest extends JavascriptTestBase {
+class ConditionalFieldCheckboxesTest extends JavascriptTestBase {
 
   use EntityReferenceTestTrait;
 
@@ -36,6 +36,7 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
   public function testCreateConfig() {
     $user = $this->drupalCreateUser([
       'administer nodes',
+      'administer content types',
       'view conditional fields',
       'edit conditional fields',
       'delete conditional fields',
@@ -44,33 +45,31 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     $this->drupalLogin($user);
 
     // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
+    $this->drupalGet('admin/structure/types');
     $this->assertSession()->statusCodeEquals(200);
 
     // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
+    $this->assertSession()->pageTextContains('Article Dependencies');
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
+    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value' );
 
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
-
-    // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'field_'.$this->taxonomyName, 'visible', 'value');
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
-    // Random term id to check necessary value.
-    $term_id = mt_rand(1, $this->termsCount);
-    $this->changeField('#edit-values', $term_id);
+    // Random term id to check necessary values.
+    $term_id_1 = mt_rand(1, $this->termsCount);
+    do {$term_id_2 = mt_rand(1, $this->termsCount);}
+    while ($term_id_2 == $term_id_1);
+    $values = $term_id_1.'\r\n'.$term_id_2;
+    $this->changeField('#edit-values', $values);
+
     // Submit the form.
     $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
+      ->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.
-    $this->drupalGet('admin/structure/conditional_fields/node/article');
+    $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()
       ->pageTextContains('body field_' . $this->taxonomyName . ' visible value');
 
@@ -81,13 +80,15 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     // Check that the field Body is not visible.
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
     // Change a select value set to show the body.
-    $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id, $term_id);
-    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
-//    $this->createScreenshot('sites/simpletest/scr1BodyVisTerm.jpg');
+    $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_1, $term_id_1);
+    $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_2, $term_id_2);
+    $this->createScreenshot('sites/simpletest/scr1BodyVisCheckboxes.jpg');
+    $this->waitUntilVisible('.field--name-body', 60, 'Article Body field is not visible');
     // Change a select value set to hide the body again.
-    $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id);
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
-//    $this->createScreenshot('sites/simpletest/scr2BodyHid.jpg');
+    $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_1, $term_id_1);
+    $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_2, $term_id_2);
+    $this->waitUntilHidden('.field--name-body', 60, 'Article Body field is visible');
+    $this->createScreenshot('sites/simpletest/scr2BodyHidCheckboxes.jpg');
   }
 
   /**
@@ -103,7 +104,7 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
     ]);
     $vocabulary->save();
     // Create a random taxonomy terms for vocabulary.
-    $this->termsCount = mt_rand(2, 5);
+    $this->termsCount = mt_rand(3, 6);
     for ($i = 1; $i <= $this->termsCount; $i++) {
       $termName = $this->getRandomGenerator()->word(8);
       Term::create([
@@ -119,7 +120,7 @@ class ConditionalFieldTermTest extends JavascriptTestBase {
         $vocabulary->id() => $vocabulary->id(),
       ],
     ];
-    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
+    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings, -1);
     entity_get_form_display('node', 'article', 'default')
       ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
       ->save();
