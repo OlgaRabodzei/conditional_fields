@@ -23,7 +23,7 @@ class HandlersManager extends DefaultPluginManager {
    *   The module handler to invoke the alter hook with.
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
-    parent::__construct('Plugin/Handlers', $namespaces, $module_handler, 'Drupal\conditional_fields\HandlerPluginInterface', 'Drupal\conditional_fields\Annotation\ConditionalFieldsHandler');
+    parent::__construct('Plugin/conditional_fields/handler', $namespaces, $module_handler, 'Drupal\conditional_fields\HandlerPluginInterface', 'Drupal\conditional_fields\Annotation\ConditionalFieldsHandler');
 
     $this->alterInfo('handler_info');
     $this->setCacheBackend($cache_backend, 'handler_plugins');
