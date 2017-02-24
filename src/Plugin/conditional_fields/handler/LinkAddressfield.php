@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\conditional_fields\Plugin\Handlers;
+namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\HandlerBase;
 
@@ -58,4 +58,5 @@ class LinkAddressfield extends HandlerBase {
 
     $state = [$options['state'] => $addressfield_selectors];
   }
+
 }

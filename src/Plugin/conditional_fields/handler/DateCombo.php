@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\conditional_fields\Plugin\Handlers;
+namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\HandlerBase;
 
@@ -59,4 +59,5 @@ class DateCombo extends HandlerBase {
 
     $state = [$options['state'] => $date_selectors];
   }
+
 }

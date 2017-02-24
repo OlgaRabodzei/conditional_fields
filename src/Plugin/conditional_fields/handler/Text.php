@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\conditional_fields\Plugin\Handlers;
+namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\HandlerBase;
 
@@ -30,4 +30,5 @@ class Text extends HandlerBase {
       $state[$options['state']][$options['selector']] = array_shift($value);
     }
   }
+
 }

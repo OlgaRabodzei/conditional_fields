@@ -11,6 +11,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
  * Manages discovery and instantiation of handler plugins.
  */
 class HandlersManager extends DefaultPluginManager {
+
   /**
    * Constructs a new \Drupal\conditional_fields\HandlersManager object.
    *

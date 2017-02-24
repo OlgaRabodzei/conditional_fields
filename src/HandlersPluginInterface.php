@@ -16,4 +16,5 @@ interface HandlersPluginInterface {
    * Executes states handler according to conditional fields settings.
    */
   public function statesHandler($field, $field_info, $options, &$state);
+
 }

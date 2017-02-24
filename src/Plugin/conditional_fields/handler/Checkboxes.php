@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\conditional_fields\Plugin\Handlers;
+namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\HandlerBase;
 
@@ -49,7 +49,7 @@ class Checkboxes extends HandlerBase {
             $checkboxes_selectors[conditional_fields_field_selector($field[$value])] = ['checked' => TRUE];
           }
         }
-        else{
+        else {
           $checkboxes_selectors[conditional_fields_field_selector($field[$options['values']])] = ['checked' => TRUE];
         }
         break;
@@ -67,4 +67,5 @@ class Checkboxes extends HandlerBase {
 
     $state = [$options['state'] => $checkboxes_selectors];
   }
+
 }

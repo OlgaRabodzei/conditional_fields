@@ -1,8 +1,6 @@
 <?php
 
-namespace Drupal\conditional_fields\Plugin\Handlers;
-
-use Drupal\conditional_fields\Plugin\Handlers\Text;
+namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 /**
  * Provides states handler for text areas.
@@ -16,4 +14,5 @@ class Textarea extends Text {
   protected $handler_conditions = [
     '#type' => 'textarea',
   ];
+
 }
