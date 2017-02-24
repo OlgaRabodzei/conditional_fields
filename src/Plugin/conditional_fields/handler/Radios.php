@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\conditional_fields\Plugin\Handlers;
+namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\HandlerBase;
 
@@ -28,9 +28,11 @@ class Radios extends HandlerBase {
         $select_states[$options['selector']] = [$options['condition'] => $options['value']];
         $state = [$options['state'] => $select_states];
         break;
+
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         if (is_array($values_array)) {
-          //will take the first value because there is no possibility to choose more with radio buttons
+          // Will take the first value
+          // because there is no possibility to choose more with radio buttons.
           $select_states[$options['selector']] = [$options['condition'] => $values_array[0]];
         }
         else {
@@ -64,4 +66,5 @@ class Radios extends HandlerBase {
         break;
     }
   }
+
 }
