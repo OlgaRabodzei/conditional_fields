@@ -5,7 +5,7 @@ namespace Drupal\conditional_fields;
 /**
  * Defines a base handler implementation that most handlers plugins will extend.
  */
-abstract class HandlerBase implements HandlersPluginInterface {
+abstract class ConditionalFieldsHandlerBase implements ConditionalFieldsHandlersPluginInterface {
 
   protected $handler_conditions;
 

@@ -2,7 +2,7 @@
 
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
-use Drupal\conditional_fields\HandlerBase;
+use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 
 /**
  * Provides states handler for radios.
@@ -11,7 +11,7 @@ use Drupal\conditional_fields\HandlerBase;
  *   id = "states_handler_radios",
  * )
  */
-class Radios extends HandlerBase {
+class Radios extends ConditionalFieldsHandlerBase {
 
   protected $handler_conditions = [
     '#type' => 'radios',

@@ -2,7 +2,7 @@
 
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
-use Drupal\conditional_fields\HandlerBase;
+use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 
 /**
  * Provides states handler for text fields.
@@ -11,7 +11,7 @@ use Drupal\conditional_fields\HandlerBase;
  *   id = "states_handler_text",
  * )
  */
-class Text extends HandlerBase {
+class Text extends ConditionalFieldsHandlerBase {
 
   protected $handler_conditions = [
     '#type' => 'textfield',

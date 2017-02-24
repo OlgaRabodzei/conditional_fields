@@ -2,7 +2,7 @@
 
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
-use Drupal\conditional_fields\HandlerBase;
+use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 
 /**
  * Provides states handler for multiple select lists.
@@ -16,7 +16,7 @@ use Drupal\conditional_fields\HandlerBase;
  *   id = "states_handler_select_multiple",
  * )
  */
-class SelectMultiple extends HandlerBase {
+class SelectMultiple extends ConditionalFieldsHandlerBase {
 
   protected $handler_conditions = [
     '#type' => 'select',

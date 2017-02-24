@@ -2,7 +2,7 @@
 
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
-use Drupal\conditional_fields\HandlerBase;
+use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 
 /**
  * Provides states handler for checkboxes.
@@ -11,7 +11,7 @@ use Drupal\conditional_fields\HandlerBase;
  *   id = "states_handler_checkboxes",
  * )
  */
-class Checkboxes extends HandlerBase {
+class Checkboxes extends ConditionalFieldsHandlerBase {
 
   protected $handler_conditions = [
     '#type' => 'checkboxes',

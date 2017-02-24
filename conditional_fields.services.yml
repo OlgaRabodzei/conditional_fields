@@ -2,5 +2,5 @@ services:
   conditional_fields.conditions:
     class: Drupal\conditional_fields\Conditions
   plugin.manager.conditional_fields_handlers:
-    class: Drupal\conditional_fields\HandlersManager
+    class: Drupal\conditional_fields\ConditionalFieldsHandlersManager
     parent: default_plugin_manager
