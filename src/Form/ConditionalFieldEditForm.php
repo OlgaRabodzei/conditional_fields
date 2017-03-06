@@ -108,7 +108,7 @@ class ConditionalFieldEditForm extends FormBase {
     $form['condition'] = [
       '#type' => 'select',
       '#title' => $this->t('Condition'),
-      '#description' => $this->t('The condition that should be met by the dependee %field to trigger the dependency.', ['%field' => $label]),
+      '#description' => $this->t('The condition that should be met by the control field %field to trigger the dependency.', ['%field' => $label]),
       '#options' => $this->list->conditionalFieldsConditions(),
       '#default_value' => array_key_exists('condition', $settings) ? $settings['condition'] : '',
       '#required' => TRUE,
@@ -231,7 +231,7 @@ class ConditionalFieldEditForm extends FormBase {
     $form['grouping'] = [
       '#type' => 'radios',
       '#title' => $this->t('Interaction with other dependencies'),
-      '#description' => $this->t('When this dependent has more than one dependee, how should this condition be evaluated against the others?') . '<br />' . $this->t('Note that sets will be grouped this way: (ANDs) AND (ORs) AND (XORs).'),
+      '#description' => $this->t('When this target field has more than one control field, how should this condition be evaluated against the others?') . '<br />' . $this->t('Note that sets will be grouped this way: (ANDs) AND (ORs) AND (XORs).'),
       '#options' => ['AND' => 'AND', 'OR' => 'OR', 'XOR' => 'XOR'],
       '#default_value' => array_key_exists('grouping', $settings) ? $settings['grouping'] : 'AND',
       '#required' => TRUE,
@@ -351,7 +351,7 @@ class ConditionalFieldEditForm extends FormBase {
     $form['state'] = [
       '#type' => 'select',
       '#title' => $this->t('Form state'),
-      '#description' => $this->t('The Javascript form state that is applied to the dependent field when the condition is met. Note: this has no effect on server-side logic and validation.'),
+      '#description' => $this->t('The Javascript form state that is applied to the target field when the condition is met. Note: this has no effect on server-side logic and validation.'),
       '#options' => $this->list->conditionalFieldsStates(),
       '#default_value' => array_key_exists('state', $settings) ? $settings['state'] : 0,
       '#required' => TRUE,
@@ -396,7 +396,7 @@ class ConditionalFieldEditForm extends FormBase {
       $form['effects_wrapper']['effect'] = [
         '#type' => 'select',
         '#title' => $this->t('Effect'),
-        '#description' => $this->t('The effect that is applied to the dependent when its state is changed.'),
+        '#description' => $this->t('The effect that is applied to the target field when its state is changed.'),
         '#options' => $effects,
         '#default_value' => $effect,
         '#states' => [
@@ -495,7 +495,7 @@ class ConditionalFieldEditForm extends FormBase {
 
     $form['dependency_advanced']['selector'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Custom jQuery selector for dependee'),
+      '#title' => $this->t('Custom jQuery selector for control field'),
       '#description' => $selector_description,
       '#default_value' => array_key_exists('selector', $settings) ? $settings['selector'] : '',
     ];
