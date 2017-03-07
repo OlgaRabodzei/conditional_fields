@@ -134,6 +134,8 @@ function conditional_fields_entity_operation(EntityInterface $entity) {
 
 /**
  * Implements hook_element_info_alter().
+ *
+ * @see conditional_fields_element_after_build()
  */
 function conditional_fields_element_info_alter(array &$types) {
   foreach ($types as $type => $info) {

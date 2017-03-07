@@ -166,9 +166,7 @@ class ConditionalFieldForm extends FormBase {
     ];
 
     $form_state->setRedirect($this->editPath, $parameters);
-
   }
-
 
   /**
    * Builds table with conditional fields.
