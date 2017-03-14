@@ -23,4 +23,9 @@ interface ConditionalFieldsHandlersPluginInterface {
    */
   public function statesHandler($field, $field_info, $options);
 
+  /**
+   * Executes states handler according to conditional fields settings.
+   */
+  public function defaultStateHandler($options);
+
 }

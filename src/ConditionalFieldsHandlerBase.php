@@ -13,7 +13,8 @@ abstract class ConditionalFieldsHandlerBase implements ConditionalFieldsHandlers
    * {@inheritdoc}
    */
   public function checkHandler($field) {
-    if (array_intersect_assoc($this->handler_conditions, $field) == $this->handler_conditions) {
+
+    if (isset($this->handler_conditions) && array_intersect_assoc($this->handler_conditions, $field) == $this->handler_conditions) {
       return TRUE;
     }
     return FALSE;
@@ -23,6 +24,12 @@ abstract class ConditionalFieldsHandlerBase implements ConditionalFieldsHandlers
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultStateHandler($options) {
   }
 
 }
