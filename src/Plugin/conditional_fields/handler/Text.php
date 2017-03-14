@@ -20,7 +20,7 @@ class Text extends ConditionalFieldsHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
     // Text fields values are keyed by cardinality, so we have to flatten them.
     // TODO: support multiple values.
     if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
@@ -28,6 +28,8 @@ class Text extends ConditionalFieldsHandlerBase {
       $_info = $field_info['array_parents'][0];
       $value = (array) $options[$_info];
       $state[$options['state']][$options['selector']] = array_shift($value);
+
+      return $state;
     }
   }
 

@@ -22,7 +22,7 @@ abstract class ConditionalFieldsHandlerBase implements ConditionalFieldsHandlers
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
   }
 
 }

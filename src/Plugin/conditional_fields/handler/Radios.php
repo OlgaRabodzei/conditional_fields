@@ -20,9 +20,10 @@ class Radios extends ConditionalFieldsHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
     $select_states = [];
     $values_array = explode("\r\n", $options['values']);
+    $state = [];
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $select_states[$options['selector']] = [$options['condition'] => $options['value']];
@@ -64,6 +65,9 @@ class Radios extends ConditionalFieldsHandlerBase {
 
         $state = [$options['state'] => $select_states];
         break;
+    }
+    if (!empty($state)) {
+      return $state;
     }
   }
 

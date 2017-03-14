@@ -20,7 +20,7 @@ class Checkbox extends ConditionalFieldsHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $checked = $options['value'][0]['value'] == $field['#on_value'] ? TRUE : FALSE;
@@ -44,6 +44,8 @@ class Checkbox extends ConditionalFieldsHandlerBase {
     }
 
     $state[$options['state']][$options['selector']] = array('checked' => $checked);
+
+    return $state;
   }
 
 }

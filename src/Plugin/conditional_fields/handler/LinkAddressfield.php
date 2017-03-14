@@ -20,7 +20,7 @@ class LinkAddressfield extends ConditionalFieldsHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
     if ($options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
       return;
     }
@@ -57,6 +57,8 @@ class LinkAddressfield extends ConditionalFieldsHandlerBase {
     }
 
     $state = [$options['state'] => $addressfield_selectors];
+
+    return $state;
   }
 
 }
