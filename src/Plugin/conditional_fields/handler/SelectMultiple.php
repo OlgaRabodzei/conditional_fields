@@ -38,7 +38,12 @@ class SelectMultiple extends ConditionalFieldsHandlerBase {
         }
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
-        $state[$options['state']][$options['selector']]['value'] = (array) $state[$options['state']][$options['selector']]['value'];
+        if (isset($state[$options['state']][$options['selector']]['value'])) {
+          $state[$options['state']][$options['selector']]['value'] = (array) $state[$options['state']][$options['selector']]['value'];
+        }
+        else {
+          $state[$options['state']][$options['selector']]['value'] = [];
+        }
         return;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
