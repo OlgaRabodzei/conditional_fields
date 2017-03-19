@@ -141,9 +141,6 @@ class ConditionalFieldForm extends FormBase {
     $component_value['entity_type'] = $form_state->getValue('entity_type');
     $component_value['bundle'] = $form_state->getValue('bundle');
 
-    $uuid = $form_state->hasValue('uuid') ? $form_state->getValue('uuid') : \Drupal::service('uuid')
-      ->generate();
-
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
     $entity = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
@@ -152,20 +149,32 @@ class ConditionalFieldForm extends FormBase {
       return;
     }
 
+    // Handle one to one condition creating with redirect to edit form.
+    if (count($field_names) == 1) {
+      $field_name = reset($field_names);
+      $uuid = $form_state->getValue('uuid', \Drupal::service('uuid')->generate());
+      $field = $entity->getComponent($field_name);
+      $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
+      $entity->setComponent($field_name, $field);
+      $entity->save();
+      $parameters = [
+        'entity_type' => $component_value['entity_type'],
+        'bundle' => $component_value['bundle'],
+        'field_name' => $field_name,
+        'uuid' => $uuid,
+      ];
+      $form_state->setRedirect($this->editPath, $parameters);
+      return;
+    }
+
+    // Handle many to one, in that case we always need new uuid.
     foreach ($field_names as $field_name) {
+      $uuid = \Drupal::service('uuid')->generate();
       $field = $entity->getComponent($field_name);
       $field['third_party_settings']['conditional_fields'][$uuid] = $component_value;
       $entity->setComponent($field_name, $field);
     }
     $entity->save();
-    $parameters = [
-      'entity_type' => $component_value['entity_type'],
-      'bundle' => $component_value['bundle'],
-      'field_name' => $field_name,
-      'uuid' => $uuid,
-    ];
-
-    $form_state->setRedirect($this->editPath, $parameters);
   }
 
   /**
