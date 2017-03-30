@@ -138,18 +138,7 @@ class ConditionalFieldEditForm extends FormBase {
       ],
     ];
 
-    // @TODO: refactor this code.
-    if (isset($settings[$label]) && is_array($settings[$label])) {
-      if (is_int(key($settings[$label]))) {
-        $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings[$label]);
-      }
-      else {
-        $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, reset($settings[$label]));
-      }
-    }
-    else {
-      $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state);
-    }
+    $dummy_field = $this->getDummyField($entity_type, $bundle, $condition, $form_state, $settings['value_form']);
 
     $form['value'] = [
       '#type' => 'fieldset',
@@ -303,7 +292,8 @@ class ConditionalFieldEditForm extends FormBase {
     foreach ($field_names as $field_name) {
       $field = $entity->getComponent($field_name);
 
-      $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+    $dependee = $field['third_party_settings']['conditional_fields'][$uuid]['dependee'];
 
       $exclude_fields = [
         'entity_type',
@@ -326,6 +316,12 @@ class ConditionalFieldEditForm extends FormBase {
 
       if ($settings['effect'] == 'show') {
         $settings['effect_options'] = [];
+      }
+
+      // Set field value.
+      if ($settings['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+        $settings['value_form'] = $settings[$dependee];
+        unset($settings[$dependee]);
       }
 
       $entity->setComponent($field_name, $field);
