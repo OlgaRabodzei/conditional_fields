@@ -31,4 +31,13 @@ class ConditionalFieldsHandlersManager extends DefaultPluginManager {
     $this->factory = new DefaultFactory($this->getDiscovery());
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefinitions() {
+    // TODO: make default plugin as the last one in the array
+    // OR push it into separate function.
+    return parent::getDefinitions();
+  }
+
 }

@@ -3,6 +3,7 @@
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
+use Drupal\Component\Utility\Unicode;
 
 /**
  * Provides states handler for text fields.
@@ -16,23 +17,26 @@ class DefaultStateHandler extends ConditionalFieldsHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultStateHandler($options) {
+  public function statesHandler($field, $field_info, $options) {
     // Build the values that trigger the dependency.
     $values = array();
     $values_set = $options['values_set'];
 
-    switch($values_set) {
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET :
+    switch ($values_set) {
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $values[$options['condition']] = $options['value_form'];
         break;
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX :
+
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
         $values[$options['condition']] = ['regex' => $options['regex']];
         break;
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND :
+
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         $values_array = explode("\r\n", $options['values']);
         $values[$options['condition']] = count($values_array) == 1 ? $values_array[0] : $values_array;
         break;
-      default :
+
+      default:
         if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR) {
           // XOR behaves like OR with added 'xor' element.
           $values[] = 'xor';

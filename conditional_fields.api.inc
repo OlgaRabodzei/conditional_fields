@@ -134,8 +134,9 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
           }
         }
         if (empty($state)) {
+          // Default plugin.
           $instance = $type->createInstance('states_handler_default_state');
-          $state = $instance->defaultStateHandler($options);
+          $state = $instance->statesHandler($dependee_form_field, $dependee_form_state, $options);
         }
       }
 
