@@ -21,7 +21,6 @@ class Radios extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
-    $state = [];
     $select_states = [];
     $values_array = explode("\r\n", $options['values']);
     $state = [];

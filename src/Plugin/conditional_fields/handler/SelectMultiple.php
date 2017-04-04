@@ -27,7 +27,7 @@ class SelectMultiple extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
-    $select_states = [];
+    $state = [];
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         if (count($options['value_form']) > 1) {
@@ -35,7 +35,7 @@ class SelectMultiple extends ConditionalFieldsHandlerBase {
             return $item['value'];
           }, $options['value_form']);
           $state[$options['state']][$options['selector']] = array('value' => $values);
-          return;
+          return $state;
         }
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
@@ -45,7 +45,7 @@ class SelectMultiple extends ConditionalFieldsHandlerBase {
         else {
           $state[$options['state']][$options['selector']]['value'] = [];
         }
-        return [];
+        return $state;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
         $select_states[$options['state']][] = 'xor';
@@ -64,7 +64,8 @@ class SelectMultiple extends ConditionalFieldsHandlerBase {
         break;
     }
 
-    return $select_states;
+    $state = $select_states;
+    return $state;
   }
 
 }
