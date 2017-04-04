@@ -5,6 +5,7 @@ conditional_fields:
   dependencies:
     - core/jquery
     - core/ckeditor
+    - core/drupal.states
 
 admin:
   version: "8.x-1.x"

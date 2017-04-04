@@ -1,28 +1,28 @@
-(function ($) {
+(function ($, Drupal) {
 
-// /**
-//  * Enhancements to states.js.
-//  */
-//
-// /**
-//  * Handle array values.
-//  * @see http://drupal.org/node/1149078
-//  */
-// Drupal.states.Dependent.comparisons['Array'] = function (reference, value) {
-//   // Make sure value is an array.
-//   if (!(typeof(value) === 'object' && (value instanceof Array))) {
-//     return false;
-//   }
-//   // We iterate through each value provided in the reference. If all of them
-//   // exist in value array, we return true. Otherwise return false.
-//   for (var key in reference) {
-//     if (reference.hasOwnProperty(key) && $.inArray(reference[key], value) < 0) {
-//       return false;
-//     }
-//   }
-//   return true;
-// };
-//
+/**
+ * Enhancements to states.js.
+ */
+
+/**
+ * Handle array values.
+ * @see http://drupal.org/node/1149078
+ */
+Drupal.states.Dependent.comparisons['Array'] = function (reference, value) {
+  // Make sure value is an array.
+  if (!(typeof(value) === 'object' && (value instanceof Array))) {
+    return false;
+  }
+  // We iterate through each value provided in the reference. If all of them
+  // exist in value array, we return true. Otherwise return false.
+  for (var key in reference) {
+    if (reference.hasOwnProperty(key) && $.inArray(reference[key], value) < 0) {
+      return false;
+    }
+  }
+  return true;
+};
+
 // /**
 //  * Handle Object values.
 //  */
@@ -221,4 +221,4 @@ Drupal.behaviors.statesModification = {
   }
 };
 
-})(jQuery);
+})(jQuery, Drupal);

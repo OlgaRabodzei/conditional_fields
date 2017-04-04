@@ -129,7 +129,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         foreach ($state_handlers as $handler => $handler_conditions) {
           /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $instance */
           $instance = $type->createInstance($handler);
-          if ($instance->checkHandler($dependee_form_field) && $instance->statesHandler($dependee_form_field, $dependee_form_state, $options)) {
+          if ($instance->checkHandler($dependee_form_field)) {
             $state = $instance->statesHandler($dependee_form_field, $dependee_form_state, $options);
           }
         }

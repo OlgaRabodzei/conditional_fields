@@ -22,7 +22,7 @@ class LinkAddressfield extends ConditionalFieldsHandlerBase {
    */
   public function statesHandler($field, $field_info, $options) {
     if ($options['values_set'] != CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
-      return;
+      return [];
     }
 
     $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;

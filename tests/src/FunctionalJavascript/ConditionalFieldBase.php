@@ -51,7 +51,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    *   (Optional) Message to pass to assertJsCondition().
    */
   protected function waitUntilVisible($selector, $timeout = 1000, $message = '') {
-    $condition = "jQuery('" . $selector . ":visible').length > 0";
+    $condition = "jQuery('{$selector}').is(':visible');";
     $this->assertJsCondition($condition, $timeout, $message);
   }
 
@@ -66,7 +66,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    *   (Optional) Message to pass to assertJsCondition().
    */
   protected function waitUntilHidden($selector, $timeout = 1000, $message = '') {
-    $condition = "jQuery('" . $selector . ":hidden').length > 0";
+    $condition = "jQuery('{$selector}').is(':hidden');";
     $this->assertJsCondition($condition, $timeout, $message);
   }
 

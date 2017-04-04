@@ -66,9 +66,7 @@ class Radios extends ConditionalFieldsHandlerBase {
         $state = [$options['state'] => $select_states];
         break;
     }
-    if (!empty($state)) {
-      return $state;
-    }
+    return $state;
   }
 
 }

@@ -23,7 +23,7 @@ class DateCombo extends ConditionalFieldsHandlerBase {
   public function statesHandler($field, $field_info, $options) {
     // Date text.
     if ($field_info['instance']['widget']['type'] == 'date_text') {
-      return;
+      return [];
     }
 
     // Add a condition for each date part.
