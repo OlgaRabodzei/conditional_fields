@@ -23,6 +23,8 @@ class Checkbox extends ConditionalFieldsHandlerBase {
    * @TODO: Different handlers for boolean and list fields.
    */
   public function statesHandler($field, $field_info, $options) {
+    $state = [];
+
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $value = !empty($options['value_form'][0]) ? $options['value_form'][0] : $options['value_form'];

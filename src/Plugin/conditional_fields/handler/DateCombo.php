@@ -21,9 +21,14 @@ class DateCombo extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
+    $state = [];
+
     // Date text.
     if ($field_info['instance']['widget']['type'] == 'date_text') {
-      return [];
+      if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+        $state[$options['state']][$options['selector']]['value'] = $state[$options['state']][$options['selector']]['value'][0]['value']['date'];
+      }
+      return $state;
     }
 
     // Add a condition for each date part.

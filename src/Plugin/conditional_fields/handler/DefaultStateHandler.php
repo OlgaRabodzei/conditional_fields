@@ -18,6 +18,8 @@ class DefaultStateHandler extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
+    $state = [];
+
     // Build the values that trigger the dependency.
     $values = array();
     $values_set = $options['values_set'];

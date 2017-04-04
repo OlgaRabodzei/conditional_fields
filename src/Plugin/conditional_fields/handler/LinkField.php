@@ -21,6 +21,8 @@ class LinkField extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
+    $state = [];
+
     $link_selectors = [];
     $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;
 
