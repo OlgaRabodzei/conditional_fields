@@ -119,55 +119,24 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         $state = array($options['state'] => array($options['selector'] => array($options['condition'] => TRUE)));
       }
       else {
-        // Build the values that trigger the dependency.
-        $values = array();
-
-        if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
-          // @TODO: Provide state conditions per each field value.
-          $values = $options['value_form'];
-        }
-        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
-          $values[$options['condition']] = ['regex' => $options['regex']];
-        }
-        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
-          $values_array = explode("\r\n", $options['values']);
-          $values[$options['condition']] = count($values_array) == 1 ? $values_array[0] : $values_array;
-        }
-        else {
-          if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR) {
-            // XOR behaves like OR with added 'xor' element.
-            $values[] = 'xor';
-          }
-          elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT) {
-            // NOT behaves like OR with switched state.
-            $options['state'] = strpos($options['state'], '!') === 0 ? Unicode::substr($options['state'], 1) : '!' . $options['state'];
-          }
-
-          // OR, NOT and XOR conditions are obtained with a nested array.
-          $values_array = explode("\r\n", $options['values']);
-          if (is_array($values_array)) {
-            foreach ($values_array as $value) {
-              $values[] = array('value' => $value);
-            }
-          }
-          else {
-            $values = $options['values'];
-          }
-        }
-
-        $state = array($options['state'] => array($options['selector'] => $values));
         $field_name = explode('[', $dependee_form_field['#name']);
         $dependee_form_state = isset($dependee_form_field['#field_parents'], $field_name[0], $form_state) ? WidgetBase::getWidgetState($dependee_form_field['#field_parents'], $field_name[0], $form_state) : NULL;
 
         // Execute special handler for fields that need further processing.
         // The handler has no return value. Modify the $state parameter by
         // reference if needed.
+        $state = array();
         foreach ($state_handlers as $handler => $handler_conditions) {
           /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $instance */
           $instance = $type->createInstance($handler);
           if ($instance->checkHandler($dependee_form_field)) {
-            $instance->statesHandler($dependee_form_field, $dependee_form_state, $options, $state);
+            $state = $instance->statesHandler($dependee_form_field, $dependee_form_state, $options);
           }
+        }
+        if (empty($state)) {
+          // Default plugin.
+          $default_handler = $type->getDefaultPlugin();
+          $state = $default_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
         }
       }
 

@@ -20,7 +20,7 @@ class Checkboxes extends ConditionalFieldsHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
     // Checkboxes are actually different form fields, so the #states property
     // has to include a state for each checkbox.
     $checkboxes_selectors = [];
@@ -66,6 +66,8 @@ class Checkboxes extends ConditionalFieldsHandlerBase {
     }
 
     $state = [$options['state'] => $checkboxes_selectors];
+
+    return $state;
   }
 
 }
