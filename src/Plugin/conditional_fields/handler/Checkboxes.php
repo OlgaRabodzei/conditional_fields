@@ -27,7 +27,7 @@ class Checkboxes extends ConditionalFieldsHandlerBase {
 
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        foreach ($options['value'] as $value) {
+        foreach ($options['value_form'] as $value) {
           $checkboxes_selectors[conditional_fields_field_selector($field[current($value)])] = ['checked' => TRUE];
         }
         break;
