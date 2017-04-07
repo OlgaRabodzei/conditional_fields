@@ -304,17 +304,17 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
 //            $input_state = _field_filter_items($field, $input_state);
           }
           if (empty($input_state)) {
-            $title = '';
-            $field_name = $field->getName();
-            if (isset($field_name)) {
-              $title = $field_name;
+            // Default to the field machine name.
+            $title = $field->getName();
+
+            if (isset($element['widget']['#title'])) {
+              $title = $element['widget']['#title'];
             }
-            else {
-              if (isset($dependent['field_parents'][0])) {
-                $title = $dependent['field_parents'][0];
-              }
+            elseif (isset($dependent['field_parents'][0])) {
+              $title = $dependent['field_parents'][0];
             }
-            $form_state->setError($element, t('@name field is required.', array('@name' => $title)));
+
+            $form_state->setErrorByName($field->getName(), t('%name is required.', array('%name' => $title)));
           }
         }
       }
