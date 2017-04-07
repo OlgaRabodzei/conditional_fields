@@ -51,7 +51,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    *   (Optional) Message to pass to assertJsCondition().
    */
   protected function waitUntilVisible($selector, $timeout = 1000, $message = '') {
-    $condition = "jQuery('" . $selector . ":visible').length > 0";
+    $condition = "jQuery('{$selector}').is(':visible');";
     $this->assertJsCondition($condition, $timeout, $message);
   }
 
@@ -66,7 +66,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    *   (Optional) Message to pass to assertJsCondition().
    */
   protected function waitUntilHidden($selector, $timeout = 1000, $message = '') {
-    $condition = "jQuery('" . $selector . ":hidden').length > 0";
+    $condition = "jQuery('{$selector}').is(':hidden');";
     $this->assertJsCondition($condition, $timeout, $message);
   }
 
@@ -82,6 +82,32 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    */
   protected function changeSelect($selector, $value = '') {
     $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('click').trigger('change');");
+  }
+
+  /**
+   * Create basic fields' dependency.
+   * @param string $path
+   *   The path to Conditional Field Form.
+   * @param string $dependent
+   *   Machine name of dependent field.
+   * @param string $dependee
+   *   Machine name of dependee field.
+   * @param string $state
+   *   Dependent field state.
+   * @param string $condition
+   *   Condition value.
+   */
+  protected function createCondition($path, $dependent, $dependee, $state, $condition){
+    $this->drupalGet($path);
+    $this->assertSession()->statusCodeEquals(200);
+    $edit = [
+      'table[add_new_dependency][dependent][]' => $dependent,
+      'table[add_new_dependency][dependee]' => $dependee,
+      'table[add_new_dependency][state]' => $state,
+      'table[add_new_dependency][condition]' => $condition,
+    ];
+    $this->submitForm($edit, 'Add dependency');
+    $this->assertSession()->statusCodeEquals(200);
   }
 
 }

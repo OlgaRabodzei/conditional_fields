@@ -41,8 +41,11 @@ conditional_fields.settings:
         type: string
     value_form:
       type: sequence
+      label: 'Values from widget'
       sequence:
-        type: string
+        # Since it sub-config of field.widget.third_party, get there.
+        type: field.value.[%parent.%parent.%parent.%parent.%parent.%parent.type]
+        label: 'Value from widget'
     effect:
       type: string
     effect_options:

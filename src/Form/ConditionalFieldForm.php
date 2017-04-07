@@ -166,9 +166,7 @@ class ConditionalFieldForm extends FormBase {
     ];
 
     $form_state->setRedirect($this->editPath, $parameters);
-
   }
-
 
   /**
    * Builds table with conditional fields.
@@ -272,7 +270,7 @@ class ConditionalFieldForm extends FormBase {
         '#type' => 'select',
         '#title' => $this->t('Controlled by'),
         '#title_display' => 'invisible',
-        '#description' => $this->t('Controlled by'),
+        '#description' => $this->t('Control field'),
         '#options' => $fields,
         '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
         '#required' => TRUE,
@@ -284,7 +282,7 @@ class ConditionalFieldForm extends FormBase {
         '#title_display' => 'invisible',
         '#options' => $states,
         '#default_value' => 'visible',
-        '#prefix' => $this->t('The dependent field is'),
+        '#prefix' => $this->t('The target field is'),
       ],
       'condition' => [
         '#type' => 'select',
@@ -292,7 +290,7 @@ class ConditionalFieldForm extends FormBase {
         '#title_display' => 'invisible',
         '#options' => $conditions,
         '#default_value' => 'value',
-        '#prefix' => $this->t('when the dependee'),
+        '#prefix' => $this->t('when the control field'),
       ],
       'actions' => [
         'submit' => [

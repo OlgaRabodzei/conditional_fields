@@ -27,53 +27,6 @@ function conditional_fields_load_dependencies_entity($entity_type = NULL, $bundl
 }
 
 /**
- * Builds a list of special fields handlers to be executed when building the
- * #states array. The keys are handler function names and the key/value pairs
- * are field properties and their values that trigger the execution
- * of the handler.
- *
- * The handlers themselves must accept the parameters $field, $field_info,
- * $options and $state.
- */
-function conditional_fields_states_handlers() {
-  module_load_include('inc', 'conditional_fields', 'conditional_fields.states');
-
-  $handlers = [
-    'conditional_fields_states_handler_select_multiple' => [
-      '#type' => 'select',
-      '#multiple' => TRUE,
-    ],
-    'conditional_fields_states_handler_checkbox' => [
-      '#type' => 'checkbox',
-    ],
-    'conditional_fields_states_handler_checkboxes' => [
-      '#type' => 'checkboxes',
-    ],
-    'conditional_fields_states_handler_text' => [
-      '#type' => 'textfield',
-    ],
-    'conditional_fields_states_handler_textarea' => [
-      '#type' => 'textarea',
-    ],
-    'conditional_fields_states_handler_date_combo' => [
-      '#type' => 'date_combo',
-    ],
-    'conditional_fields_states_handler_link_field' => [
-      '#type' => 'link_field',
-    ],
-    'conditional_fields_states_handler_link_addressfield' => [
-      '#addressfield' => 1,
-    ],
-  ];
-
-  // Allow other modules to modify the handlers.
-  \Drupal::moduleHandler()
-    ->alter('conditional_fields_states_handlers', $handlers);
-
-  return $handlers;
-}
-
-/**
  * after_build callback for forms with dependencies.
  *
  * Builds and attaches #states properties to dependent fields, adds additional
@@ -87,8 +40,8 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
   }
 
   $effects = [];
-  $state_handlers = conditional_fields_states_handlers();
-
+  $type = \Drupal::service('plugin.manager.conditional_fields_handlers');
+  $state_handlers = $type->getDefinitions();
   // Cycle all dependents.
   foreach ($form['#conditional_fields'] as $dependent => $dependent_info) {
     $states = array();
@@ -166,52 +119,25 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         $state = array($options['state'] => array($options['selector'] => array($options['condition'] => TRUE)));
       }
       else {
-        // Build the values that trigger the dependency.
-        $values = array();
-
-        if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
-          $values[$options['condition']] = $options['value_form'];
-        }
-        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX) {
-          $values[$options['condition']] = ['regex' => $options['regex']];
-        }
-        elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND) {
-          $values_array = explode("\r\n", $options['values']);
-          $values[$options['condition']] = count($values_array) == 1 ? $values_array[0] : $values_array;
-        }
-        else {
-          if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR) {
-            // XOR behaves like OR with added 'xor' element.
-            $values[] = 'xor';
-          }
-          elseif ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT) {
-            // NOT behaves like OR with switched state.
-            $options['state'] = strpos($options['state'], '!') === 0 ? Unicode::substr($options['state'], 1) : '!' . $options['state'];
-          }
-
-          // OR, NOT and XOR conditions are obtained with a nested array.
-          $values_array = explode("\r\n", $options['values']);
-          if (is_array($values_array)) {
-            foreach ($values_array as $value) {
-              $values[] = array('value' => $value);
-            }
-          }
-          else {
-            $values = $options['values'];
-          }
-        }
-
-        $state = array($options['state'] => array($options['selector'] => $values));
         $field_name = explode('[', $dependee_form_field['#name']);
         $dependee_form_state = isset($dependee_form_field['#field_parents'], $field_name[0], $form_state) ? WidgetBase::getWidgetState($dependee_form_field['#field_parents'], $field_name[0], $form_state) : NULL;
 
         // Execute special handler for fields that need further processing.
         // The handler has no return value. Modify the $state parameter by
         // reference if needed.
+        $state = array();
         foreach ($state_handlers as $handler => $handler_conditions) {
-          if (array_intersect_assoc($handler_conditions, $dependee_form_field) == $handler_conditions) {
-            $handler($dependee_form_field, $dependee_form_state, $options, $state);
+          /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $instance */
+          $instance = $type->createInstance($handler);
+          if ($instance->checkHandler($dependee_form_field)) {
+            $state = $instance->statesHandler($dependee_form_field, $dependee_form_state, $options);
+            break;
           }
+        }
+        if (empty($state)) {
+          // Default plugin.
+          $default_handler = $type->getDefaultPlugin();
+          $state = $default_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
         }
       }
 
@@ -378,17 +304,17 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
 //            $input_state = _field_filter_items($field, $input_state);
           }
           if (empty($input_state)) {
-            $title = '';
-            $field_name = $field->getName();
-            if (isset($field_name)) {
-              $title = $field_name;
+            // Default to the field machine name.
+            $title = $field->getName();
+
+            if (isset($element['widget']['#title'])) {
+              $title = $element['widget']['#title'];
             }
-            else {
-              if (isset($dependent['field_parents'][0])) {
-                $title = $dependent['field_parents'][0];
-              }
+            elseif (isset($dependent['field_parents'][0])) {
+              $title = $dependent['field_parents'][0];
             }
-            $form_state->setError($element, t('@name field is required.', array('@name' => $title)));
+
+            $form_state->setErrorByName($field->getName(), t('%name is required.', array('%name' => $title)));
           }
         }
       }

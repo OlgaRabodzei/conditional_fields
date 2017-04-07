@@ -122,7 +122,7 @@ function conditional_fields_theme() {
  */
 function conditional_fields_entity_operation(EntityInterface $entity) {
   $operations = array();
-  if ($entity->getEntityTypeId()=='node_type') {
+  if ($entity->getEntityTypeId() == 'node_type') {
     $operations['dependencies'] = array(
       'title' => t('Dependencies'),
       'url' => Url::fromRoute('conditional_fields.tab', [$entity->getEntityTypeId() => $entity->id()]),
@@ -134,6 +134,8 @@ function conditional_fields_entity_operation(EntityInterface $entity) {
 
 /**
  * Implements hook_element_info_alter().
+ *
+ * @see conditional_fields_element_after_build()
  */
 function conditional_fields_element_info_alter(array &$types) {
   foreach ($types as $type => $info) {
@@ -183,6 +185,11 @@ function conditional_fields_element_after_build($element, &$form_state) {
     if (method_exists($entity, 'getType')) {
       $bundle = $entity->getType();
       $entity_type = $entity->getEntityTypeId();
+
+      // Media entity returns the actual bundle object, rather than id.
+      if (is_object($bundle) && method_exists($bundle, 'getPluginId')) {
+        $bundle = $bundle->getPluginId();
+      }
 
       $dependencies = conditional_fields_load_dependencies($entity_type, $bundle);
 
@@ -460,4 +467,36 @@ function conditional_fields_field_behaviors($op, $options) {
   $behaviors = array_filter($behaviors);
 
   return $behaviors;
+}
+
+/**
+ * Builds a jQuery selector from the name or id attribute of a field.
+ *
+ * @todo support custom selectors with %lang and %key placeholders.
+ *
+ * @param $field
+ *   The field form element.
+ *
+ * @return
+ *   A jQuery selector string.
+ */
+function conditional_fields_field_selector($field) {
+  if (isset($field['#attributes']['name'])) {
+    return '[name="' . $field['#attributes']['name'] . '"]';
+  }
+
+  if (isset($field['#name'])) {
+    return '[name="' . $field['#name'] . '"]';
+  }
+
+  // Try with id if name is not found.
+  if (isset($field['#attributes']['id'])) {
+    return '#' . $field['#attributes']['id'];
+  }
+
+  if (isset($field['#id'])) {
+    return '#' . $field['#id'];
+  }
+
+  return FALSE;
 }

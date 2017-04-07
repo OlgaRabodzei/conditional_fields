@@ -224,19 +224,19 @@ class Conditions {
   public function conditionalFieldsBehaviors($op = NULL) {
     $behaviors = array(
       'edit' => array(
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => $this->t('Hide the dependent if the dependee is not in the form'),
-        CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => $this->t('Reset the dependent to its default values when the form is submitted if the dependency is not triggered.') . '<br /><em>' . $this->t('Note: This setting only applies if the condition is "Value", "Empty", or "Filled" and may not work with some field types. Also, ensure that the default values are valid, since they will not be validated.') . '</em>',
+        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => $this->t('Hide the target field if the control field is not in the form'),
+        CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => $this->t('Reset the target field to its default values when the form is submitted if the dependency is not triggered.') . '<br /><em>' . $this->t('Note: This setting only applies if the condition is "Value", "Empty", or "Filled" and may not work with some field types. Also, ensure that the default values are valid, since they will not be validated.') . '</em>',
         // TODO: Implement. Settings are imported from D6 though, they just do nothing for now.
         /*
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => $this->t('Hide the dependent if the dependee is not in the form and the dependency is not triggered.') . '<br /><em>' . $this->t('Note: This setting is not currently not implemented and has no effect.') . '</em>',
+        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => $this->t('Hide the target field if the control field is not in the form and the dependency is not triggered.') . '<br /><em>' . $this->t('Note: This setting is not currently not implemented and has no effect.') . '</em>',
         */
       ),
       'view' => array(
-        CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => $this->t('Hide the dependent if the dependency is not triggered'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => $this->t('Hide the dependent if the dependee is not viewable by the user'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => $this->t('Hide the dependent if the dependee is not viewable by the user and the dependency is not triggered'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => $this->t('Theme the dependent like an error message if the dependency is not triggered'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => $this->t('Show a textual description of the dependency under the dependent'),
+        CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => $this->t('Hide the target field if the dependency is not triggered'),
+        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => $this->t('Hide the target field if the control field is not viewable by the user'),
+        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => $this->t('Hide the target field if the control field is not viewable by the user and the dependency is not triggered'),
+        CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => $this->t('Theme the target field like an error message if the dependency is not triggered'),
+        CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => $this->t('Show a textual description of the dependency under the target field'),
       ),
     );
 

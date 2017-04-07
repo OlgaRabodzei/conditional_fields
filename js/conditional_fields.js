@@ -1,28 +1,28 @@
-(function ($) {
+(function ($, Drupal) {
 
-// /**
-//  * Enhancements to states.js.
-//  */
-//
-// /**
-//  * Handle array values.
-//  * @see http://drupal.org/node/1149078
-//  */
-// Drupal.states.Dependent.comparisons['Array'] = function (reference, value) {
-//   // Make sure value is an array.
-//   if (!(typeof(value) === 'object' && (value instanceof Array))) {
-//     return false;
-//   }
-//   // We iterate through each value provided in the reference. If all of them
-//   // exist in value array, we return true. Otherwise return false.
-//   for (var key in reference) {
-//     if (reference.hasOwnProperty(key) && $.inArray(reference[key], value) < 0) {
-//       return false;
-//     }
-//   }
-//   return true;
-// };
-//
+/**
+ * Enhancements to states.js.
+ */
+
+/**
+ * Handle array values.
+ * @see http://drupal.org/node/1149078
+ */
+Drupal.states.Dependent.comparisons['Array'] = function (reference, value) {
+  // Make sure value is an array.
+  if (!(typeof(value) === 'object' && (value instanceof Array))) {
+    return false;
+  }
+  // We iterate through each value provided in the reference. If all of them
+  // exist in value array, we return true. Otherwise return false.
+  for (var key in reference) {
+    if (reference.hasOwnProperty(key) && $.inArray(reference[key], value) < 0) {
+      return false;
+    }
+  }
+  return true;
+};
+
 // /**
 //  * Handle Object values.
 //  */
@@ -62,36 +62,39 @@
 //   }
 // };
 
-/**
- * Handles an autocompleteselect event.
- *
- * Override the autocomplete method to add a custom event.
- *
- * @param {jQuery.Event} event
- *   The event triggered.
- * @param {object} ui
- *   The jQuery UI settings object.
- *
- * @return {bool}
- *   Returns false to indicate the event status.
- */
- Drupal.autocomplete.options.select = function selectHandler(event, ui) {
-   var terms = Drupal.autocomplete.splitValues(event.target.value);
-   // Remove the current input.
-   terms.pop();
-   // Add the selected item.
-   if (ui.item.value.search(',') > 0) {
-     terms.push('"' + ui.item.value + '"');
-   }
-   else {
-     terms.push(ui.item.value);
-   }
-   event.target.value = terms.join(', ');
-   // Fire custom event that other controllers can listen to.
-   jQuery(event.target).trigger('autocomplete-select');
-   // Return false to tell jQuery UI that we've filled in the value already.
-     return false;
-   };
+// Checking if autocomplete is plugged in.
+if (Drupal.autocomplete) {
+  /**
+   * Handles an autocompleteselect event.
+   *
+   * Override the autocomplete method to add a custom event.
+   *
+   * @param {jQuery.Event} event
+   *   The event triggered.
+   * @param {object} ui
+   *   The jQuery UI settings object.
+   *
+   * @return {bool}
+   *   Returns false to indicate the event status.
+   */
+  Drupal.autocomplete.options.select = function selectHandler(event, ui) {
+    var terms = Drupal.autocomplete.splitValues(event.target.value);
+    // Remove the current input.
+    terms.pop();
+    // Add the selected item.
+    if (ui.item.value.search(',') > 0) {
+      terms.push('"' + ui.item.value + '"');
+    }
+    else {
+      terms.push(ui.item.value);
+    }
+    event.target.value = terms.join(', ');
+    // Fire custom event that other controllers can listen to.
+    jQuery(event.target).trigger('autocomplete-select');
+    // Return false to tell jQuery UI that we've filled in the value already.
+    return false;
+  };
+}
 
 /**
  * New and existing states enhanced with configurable options.
@@ -221,4 +224,4 @@ Drupal.behaviors.statesModification = {
   }
 };
 
-})(jQuery);
+})(jQuery, Drupal);
