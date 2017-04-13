@@ -45,6 +45,9 @@ class ConditionalFieldController extends ControllerBase {
    *
    * @param EntityTypeBundleInfoInterface $entityTypeBundleInfo
    *   Entity type bundle info.
+   *
+   * @param EntityFieldManagerInterface $entityFieldManager
+   *   Entity field manager.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager, FormBuilderInterface $formBuilder, EntityTypeBundleInfoInterface $entityTypeBundleInfo, EntityFieldManagerInterface $entityFieldManager) {
     $this->entityTypeManager = $entityTypeManager;
