@@ -14,18 +14,24 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 class Radios extends ConditionalFieldsHandlerBase {
 
   protected $handler_conditions = [
-    '#type' => 'radios',
+    // Temporary solution.
+    // Will be fixed during refactoring conditions on widget type.
+    '#type' => 'radio',
   ];
 
   /**
    * {@inheritdoc}
    */
-  public function statesHandler($field, $field_info, $options, &$state) {
+  public function statesHandler($field, $field_info, $options) {
     $select_states = [];
     $values_array = explode("\r\n", $options['values']);
+    $state = [];
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        $select_states[$options['selector']] = [$options['condition'] => $options['value']];
+        if (empty($options['value_form'][0]['value'])) {
+          break;
+        }
+        $select_states[$options['selector']] = [$options['condition'] => $options['value_form'][0]['value']];
         $state = [$options['state'] => $select_states];
         break;
 
@@ -65,6 +71,7 @@ class Radios extends ConditionalFieldsHandlerBase {
         $state = [$options['state'] => $select_states];
         break;
     }
+    return $state;
   }
 
 }

@@ -31,4 +31,24 @@ class ConditionalFieldsHandlersManager extends DefaultPluginManager {
     $this->factory = new DefaultFactory($this->getDiscovery());
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefinitions() {
+    // Remove the default plugin from the array.
+    $definitions = parent::getDefinitions();
+    unset($definitions['states_handler_default_state']);
+    return $definitions;
+  }
+
+  /**
+   * A default plugin that should be used if better one was not found.
+   *
+   * @return object
+   *   A fully configured plugin instance.
+   */
+  public function getDefaultPlugin() {
+    return $this->createInstance('states_handler_default_state');
+  }
+
 }
