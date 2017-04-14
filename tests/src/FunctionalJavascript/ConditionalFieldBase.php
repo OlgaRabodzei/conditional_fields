@@ -6,8 +6,6 @@ use Drupal\FunctionalJavascriptTests\JavascriptTestBase;
 
 /**
  * Base setup for ConditionalField tests.
- *
- * @group conditional_fields
  */
 abstract class ConditionalFieldBase extends JavascriptTestBase {
 
