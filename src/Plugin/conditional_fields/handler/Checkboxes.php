@@ -7,9 +7,9 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 /**
  * Provides states handler for checkboxes.
  *
- * @ConditionalFieldsHandler(
- *   id = "states_handler_checkboxes",
- * )
+ * TODO: Remove it after finishing refactoring of OptionsButtons.
+ *
+ * @see \Drupal\conditional_fields\Plugin\conditional_fields\handler\OptionsButtons
  */
 class Checkboxes extends ConditionalFieldsHandlerBase {
 

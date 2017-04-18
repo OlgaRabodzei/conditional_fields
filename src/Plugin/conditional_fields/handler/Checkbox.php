@@ -8,7 +8,7 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  * Provides states handler for single on/off checkbox.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_checkbox",
+ *   id = "states_handler_boolean_checkbox",
  * )
  */
 class Checkbox extends ConditionalFieldsHandlerBase {

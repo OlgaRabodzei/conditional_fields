@@ -8,7 +8,7 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  * Provides states handler for links provided by the Addressfield module.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_link_addressfield",
+ *   id = "states_handler_address_default",
  * )
  */
 class LinkAddressfield extends ConditionalFieldsHandlerBase {

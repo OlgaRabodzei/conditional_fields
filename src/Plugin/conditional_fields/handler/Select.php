@@ -5,22 +5,22 @@ namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 
 /**
- * Provides states handler for select list.
+ * Provides states handler for multiple select lists.
+ *
+ * Multiple select fields always require an array as value.
+ * In addition, since our modified States API triggers a dependency only if all
+ * reference values of type Array are selected, a different selector must be
+ * added for each value of a set for OR, XOR and NOT evaluations.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_select",
+ *   id = "states_handler_options_select",
  * )
  */
 class Select extends ConditionalFieldsHandlerBase {
 
-  /**
-   * Define field settings to apply proper plugin.
-   *
-   * @var array
-   */
   protected $handler_conditions = [
     '#type' => 'select',
-    '#multiple' => FALSE,
+    '#multiple' => TRUE,
   ];
 
   /**
@@ -28,42 +28,48 @@ class Select extends ConditionalFieldsHandlerBase {
    */
   public function statesHandler($field, $field_info, $options) {
     $state = [];
-
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         if (count($options['value_form']) == 1) {
           $state[$options['state']][$options['selector']] = [
-            'value' => $options['value_form'][0]['value']
+            'value' => $options['value_form'][0]['value'],
           ];
         }
-        break;
+        if (count($options['value_form']) > 1) {
+          $values = array_map(function ($item) {
+            return $item['value'];
+          }, $options['value_form']);
+          $state[$options['state']][$options['selector']] = array('value' => $values);
+        }
+        return $state;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
-        // This input mode is not available for single select.
-        break;
-
-      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
-        // Works, there are no implementation here.
-        break;
+        if (isset($state[$options['state']][$options['selector']]['value'])) {
+          $state[$options['state']][$options['selector']]['value'] = (array) $state[$options['state']][$options['selector']]['value'];
+        }
+        else {
+          $state[$options['state']][$options['selector']]['value'] = [];
+        }
+        return $state;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
-        $state[$options['state']][] = 'xor';
+        $select_states[$options['state']][] = 'xor';
+
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+        $regex = TRUE;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
-        $values = $options['values'];
-        if (!is_array($values)) {
-          $values = explode("\r\n", $options['values']);
-        }
-        foreach ($values as $value) {
-          $state[$options['state']][] = [
+        foreach ($options['values'] as $value) {
+          $select_states[$options['state']][] = [
             $options['selector'] => [
-              $options['condition'] => $value,
+              $options['condition'] => empty($regex) ? [$value] : $options['value'],
             ],
           ];
         }
         break;
     }
 
+    $state = $select_states;
     return $state;
   }
 

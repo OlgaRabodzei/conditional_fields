@@ -244,7 +244,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
 function conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options) {
   $type = \Drupal::service('plugin.manager.conditional_fields_handlers');
-  $state_handlers = $type->getDefinitions();
 
   if ($options['condition'] != 'value') {
     // Conditions different than "value" are always evaluated against TRUE.
@@ -262,18 +261,10 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
     // Execute special handler for fields that need further processing.
     // The handler has no return value. Modify the $state parameter by
     // reference if needed.
-    $state = array();
-    foreach ($state_handlers as $handler => $handler_conditions) {
-      /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $instance */
-      $instance = $type->createInstance($handler);
-      // TODO refactor for checking widget id and multiply.
-      // if ($instance->checkHandler($widget_id)).
-      if ($instance->checkHandler($dependee_form_field)) {
-        $state = $instance->statesHandler($dependee_form_field, $dependee_form_state, $options);
-        break;
-      }
+    if (isset($widget_id) && $cf_handler = $type->createInstance('states_handler_' . $widget_id)) {
+      $state = $cf_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
     }
-    if (empty($state)) {
+    else {
       // Default plugin.
       $default_handler = $type->getDefaultPlugin();
       $state = $default_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);

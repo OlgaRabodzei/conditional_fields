@@ -7,7 +7,7 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
 
 /**
- * Test Conditional Fields SelectMultiple Plugin.
+ * Test Conditional Fields Select Plugin.
  *
  * @group conditional_fields
  */
@@ -165,4 +165,5 @@ class ConditionalFieldSelectMultipleTest extends JavascriptTestBase {
       ])
       ->save();
   }
+
 }

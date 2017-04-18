@@ -176,7 +176,6 @@ class ConditionalFieldTextTest extends JavascriptTestBase {
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
   }
 
-
   /**
    * Tests creating Conditional Field: Visible if isFilled.
    */

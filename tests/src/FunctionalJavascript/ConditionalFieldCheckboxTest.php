@@ -53,6 +53,7 @@ class ConditionalFieldCheckboxTest extends JavascriptTestBase {
     $this->changeSelect('#edit-promote-value', FALSE);
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
   }
+
   /**
    * Tests creating Conditional Field: Visible if checked.
    */
