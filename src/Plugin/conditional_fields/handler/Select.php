@@ -23,20 +23,10 @@ class Select extends ConditionalFieldsHandlerBase {
    */
   public function statesHandler($field, $field_info, $options) {
     $state = [];
+
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        if (count($options['value_form']) == 1) {
-          $state[$options['state']][$options['selector']] = [
-            'value' => $options['value_form'][0]['value'],
-          ];
-        }
-        if (count($options['value_form']) > 1) {
-          $values = array_map(function ($item) {
-            return $item['value'];
-          }, $options['value_form']);
-          $state[$options['state']][$options['selector']] = array('value' => $values);
-        }
-        return $state;
+        return $this->widgetCase($field, $options);
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         if (isset($state[$options['state']][$options['selector']]['value'])) {
@@ -65,6 +55,33 @@ class Select extends ConditionalFieldsHandlerBase {
     }
 
     $state = $select_states;
+    return $state;
+  }
+
+  /**
+   * Returns state in widget input case.
+   */
+  protected function widgetCase($field, $options) {
+    $state = [];
+    $key_column = $field['#key_column'];
+
+    if (empty($key_column)) {
+      return $state;
+    }
+
+    if (count($options['value_form']) == 1) {
+      $state[$options['state']][$options['selector']] = [
+        'value' => $options['value_form'][0][$key_column],
+      ];
+    }
+
+    if (count($options['value_form']) > 1) {
+      $values = [];
+      foreach ($options['value_form'] as $item) {
+        $values[] = $item[$key_column];
+      }
+      $state[$options['state']][$options['selector']] = array('value' => $values);
+    }
     return $state;
   }
 
