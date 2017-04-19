@@ -31,10 +31,23 @@ class Select extends ConditionalFieldsHandlerBase {
 
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        if (count($options['value_form']) == 1) {
-          $state[$options['state']][$options['selector']] = [
-            'value' => $options['value_form'][0]['value']
-          ];
+        if (count($options['value_form']) == 1 && ($key = key($options['value_form'][0]))) {
+          // Get value depending on field type.
+          switch ($key) {
+            // Field type 'options_select'.
+            case 'value':
+              $state[$options['state']][$options['selector']] = [
+                'value' => $options['value_form'][0]['value']
+              ];
+              break;
+
+            // Field type 'entity_reference'.
+            case 'target_id':
+              $state[$options['state']][$options['selector']] = [
+                'value' => $options['value_form'][0]['target_id']
+              ];
+              break;
+          }
         }
         break;
 
