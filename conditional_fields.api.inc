@@ -264,7 +264,7 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
     if (isset($widget_id) && $cf_handler = $type->createInstance('states_handler_' . $widget_id)) {
       $state = $cf_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
     }
-    else {
+    if (empty($state)) {
       // Default plugin.
       $default_handler = $type->getDefaultPlugin();
       $state = $default_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);

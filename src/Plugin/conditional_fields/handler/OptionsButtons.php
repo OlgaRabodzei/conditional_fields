@@ -11,7 +11,7 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  *   id = "states_handler_options_buttons",
  * )
  */
-class OptionsButtons {
+class OptionsButtons extends ConditionalFieldsHandlerBase {
 
   /**
    * {@inheritdoc}
