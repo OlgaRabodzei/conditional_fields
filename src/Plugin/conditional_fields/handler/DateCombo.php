@@ -13,10 +13,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class DateCombo extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#type' => 'date_combo',
-  ];
-
   /**
    * {@inheritdoc}
    */

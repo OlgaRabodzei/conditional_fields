@@ -11,8 +11,4 @@ namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
  */
 class Textarea extends Text {
 
-  protected $handler_conditions = [
-    '#type' => 'textarea',
-  ];
-
 }

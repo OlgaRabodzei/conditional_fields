@@ -13,10 +13,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class LinkAddressfield extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#addressfield' => 1,
-  ];
-
   /**
    * {@inheritdoc}
    */

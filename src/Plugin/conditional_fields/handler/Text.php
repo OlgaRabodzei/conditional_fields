@@ -13,10 +13,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class Text extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#type' => 'textfield',
-  ];
-
   /**
    * {@inheritdoc}
    */

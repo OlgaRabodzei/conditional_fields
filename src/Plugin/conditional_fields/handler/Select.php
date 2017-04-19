@@ -18,11 +18,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class Select extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#type' => 'select',
-    '#multiple' => TRUE,
-  ];
-
   /**
    * {@inheritdoc}
    */

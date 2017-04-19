@@ -13,10 +13,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class Checkbox extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#type' => 'checkbox',
-  ];
-
   /**
    * {@inheritdoc}
    *

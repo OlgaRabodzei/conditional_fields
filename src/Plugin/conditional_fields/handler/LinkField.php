@@ -13,10 +13,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class LinkField extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#type' => 'link_field',
-  ];
-
   /**
    * {@inheritdoc}
    */
