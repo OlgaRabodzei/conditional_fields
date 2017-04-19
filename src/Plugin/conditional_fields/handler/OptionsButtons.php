@@ -17,11 +17,11 @@ class OptionsButtons extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
-    if ($field['multiple'] == TRUE) {
+    if (array_key_exists('#type', $field) && $field['#type'] == 'checkboxes') {
       // Check boxes.
       return $this->checkBoxesHandler($field, $field_info, $options);
     }
-    else {
+    elseif (array_key_exists('#type', $field) && $field['#type'] == 'radios') {
       // Radio.
       return $this->radioHandler($field, $field_info, $options);
     }
