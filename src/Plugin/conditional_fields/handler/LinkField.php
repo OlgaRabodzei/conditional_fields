@@ -8,7 +8,7 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  * Provides states handler for links provided by the Link module.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_link_field",
+ *   id = "states_handler_link_default",
  * )
  */
 class LinkField extends ConditionalFieldsHandlerBase {
@@ -21,18 +21,54 @@ class LinkField extends ConditionalFieldsHandlerBase {
    * {@inheritdoc}
    */
   public function statesHandler($field, $field_info, $options) {
-    $link_selectors = [];
-    $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;
+    $state = [];
 
-    // Add a condition for each link part (Title and URL)
-    if ($field_info['instance']['settings']['title'] == 'optional' || $field_info['instance']['settings']['title'] == 'required') {
-      $link_selectors[conditional_fields_field_selector($field['title'])] = ['value' => $regex ? $options['value'] : $options['value_form'][0]['title']];
+    switch ($options['values_set']) {
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
+        // Add a condition for title of URL.
+        if (!empty($options['value_form'][0]['title'])) {
+          // Prepare selector for title of link.
+          $title_selector = str_replace('uri', 'title', $options['selector']);
+          $state[$options['state']][$title_selector] = [
+            'value' => $options['value_form'][0]['title']
+          ];
+        }
+
+        $uri = $this->getLinkTypeFromUri($options['value_form'][0]['uri']);
+        $state[$options['state']][$options['selector']] = [
+          $options['condition'] => $uri,
+        ];
+        break;
+
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
+        // Works, there are not implementation here.
+        break;
+
+
+      case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
+        // @todo: Send field settings to statesHandler to check field cardinality.
+        break;
+
     }
-    $link_selectors[conditional_fields_field_selector($field['url'])] = ['value' => $regex ? $options['value'] : $options['value_form'][0]['url']];
-
-    $state = [$options['state'] => $link_selectors];
 
     return $state;
+  }
+
+  /**
+   * Get value for internal and entity links.
+   *
+   * For example:
+   *  - internal:/node/1 returns /node/1
+   *  - entity:node/1 returns node/1
+   *
+   * @todo: It would be better return a node title instead of the path, is not it?
+   */
+  private function getLinkTypeFromUri($uri) {
+    $parts = explode(':', $uri);
+
+    return (count($parts) > 1) ? $parts[1] : $parts[0];
   }
 
 }
