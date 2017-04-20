@@ -10,6 +10,11 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 class ConditionalFieldTextTestTest extends ConditionalFieldBaseTest {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/text/';
+
+  /**
    * Tests creating Conditional Field: Visible if has value from Title value.
    */
   public function testCreateConfigVisibleValueAnd() {
@@ -39,13 +44,14 @@ class ConditionalFieldTextTestTest extends ConditionalFieldBaseTest {
 
     // Check that the field Body is not visible.
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
+
+    // Change a select value set to show the body.
     $this->changeField('.field--name-title input', $text);
-//    $this->createScreenshot('sites/simpletest/scr1BodyAndVis.jpg');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
+
     // Change a select value set to hide the body again.
     $this->changeField('.field--name-title input', $text . 'a');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
-//    $this->createScreenshot('sites/simpletest/scr2BodyAndHid.jpg');
   }
 
   /**

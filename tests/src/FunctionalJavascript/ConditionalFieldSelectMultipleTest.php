@@ -25,6 +25,11 @@ class ConditionalFieldSelectMultipleTestTest extends ConditionalFieldBaseTest {
   ];
 
   /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/select_multiple/';
+
+  /**
    * The field name used in the test.
    *
    * @var string

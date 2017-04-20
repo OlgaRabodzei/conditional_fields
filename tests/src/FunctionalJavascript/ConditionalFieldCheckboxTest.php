@@ -10,6 +10,11 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 class ConditionalFieldCheckboxTestTest extends ConditionalFieldBaseTest {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/checkbox/';
+
+  /**
    * Tests creating Conditional Field: Visible if checked.
    */
   public function testCreateConfigVisibleChecked() {

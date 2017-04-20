@@ -59,6 +59,17 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
         'name' => 'Article',
       ]);
     }
+    $this->checkScreenshotPathExist();
+  }
+
+  /**
+   * Check does screenshot path exist and create if it's necessary.
+   */
+  private function checkScreenshotPathExist() {
+    if (file_exists($this->screenshotPath)) {
+      return;
+    }
+    mkdir($this->screenshotPath, 0777, TRUE);
   }
 
   /**
@@ -95,14 +106,16 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
    * Helper to change Field value with Javascript.
    */
   protected function changeField($selector, $value = '') {
-    $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('keyup').trigger('change');");
+    $this->getSession()
+      ->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('keyup').trigger('change');");
   }
 
   /**
    * Helper to change selection with Javascript.
    */
   protected function changeSelect($selector, $value = '') {
-    $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('click').trigger('change');");
+    $this->getSession()
+      ->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('click').trigger('change');");
   }
 
   /**

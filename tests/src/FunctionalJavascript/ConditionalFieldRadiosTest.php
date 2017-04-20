@@ -17,6 +17,11 @@ class ConditionalFieldRadiosTestTest extends ConditionalFieldBaseTest {
   use EntityReferenceTestTrait;
 
   /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/radios/';
+
+  /**
    * The name and vid of vocabulary, created for testing.
    *
    * @var string

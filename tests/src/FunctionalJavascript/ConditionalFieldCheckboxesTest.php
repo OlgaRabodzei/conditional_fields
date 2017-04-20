@@ -17,6 +17,11 @@ class ConditionalFieldCheckboxesTestTest extends ConditionalFieldBaseTest {
   use EntityReferenceTestTrait;
 
   /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/checkboxes/';
+
+  /**
    * The name and vid of vocabulary, created for testing.
    *
    * @var string
