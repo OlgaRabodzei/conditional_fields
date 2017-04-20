@@ -5,14 +5,14 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields Select Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectTest extends JavascriptTestBase {
+class ConditionalFieldSelectTestTest extends JavascriptTestBase {
 
   /**
    * Modules to enable.

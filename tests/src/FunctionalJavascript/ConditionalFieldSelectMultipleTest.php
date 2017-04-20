@@ -4,14 +4,14 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields SelectMultiple Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectMultipleTest extends JavascriptTestBase {
+class ConditionalFieldSelectMultipleTestTest extends JavascriptTestBase {
   /**
    * Modules to enable.
    *

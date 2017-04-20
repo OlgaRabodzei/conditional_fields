@@ -2,14 +2,14 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields Checkbox state.
  *
  * @group conditional_fields
  */
-class ConditionalFieldCheckboxTest extends JavascriptTestBase {
+class ConditionalFieldCheckboxTestTest extends JavascriptTestBase {
 
   /**
    * Tests creating Conditional Field: Visible if checked.

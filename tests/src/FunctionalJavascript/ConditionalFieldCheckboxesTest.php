@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
@@ -12,7 +12,7 @@ use Drupal\taxonomy\Entity\Term;
  *
  * @group conditional_fields
  */
-class ConditionalFieldCheckboxesTest extends JavascriptTestBase {
+class ConditionalFieldCheckboxesTestTest extends JavascriptTestBase {
 
   use EntityReferenceTestTrait;
 

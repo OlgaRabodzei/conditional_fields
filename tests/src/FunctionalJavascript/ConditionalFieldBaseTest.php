@@ -7,7 +7,15 @@ use Drupal\FunctionalJavascriptTests\JavascriptTestBase;
 /**
  * Base setup for ConditionalField tests.
  */
-abstract class ConditionalFieldBase extends JavascriptTestBase {
+abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
+  protected $entityManager;
+
+  /**
+   * Access controller.
+   *
+   * @var \Drupal\Core\Entity\EntityAccessControlHandlerInterface
+   */
+  protected $accessControlHandler;
 
   /**
    * {@inheritdoc}
@@ -23,19 +31,30 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
   /**
    * {@inheritdoc}
    */
+  public function __construct($name, array $data, $dataName) {
+    $this->entityManager = \Drupal::service('entity.manager');
+    $this->accessControlHandler = $this->entityManager->getAccessControlHandler('node');
+    parent::__construct($name, $data, $dataName);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp() {
     parent::setUp();
 
     // Create Basic page and Article node types.
     if ($this->profile != 'standard') {
-      $this->drupalCreateContentType(array(
+      $this->drupalCreateContentType([
         'type' => 'page',
         'name' => 'Basic page',
         'display_submitted' => FALSE,
-      ));
-      $this->drupalCreateContentType(array('type' => 'article', 'name' => 'Article'));
+      ]);
+      $this->drupalCreateContentType([
+        'type' => 'article',
+        'name' => 'Article',
+      ]);
     }
-    $this->accessHandler = \Drupal::entityManager()->getAccessControlHandler('node');
   }
 
   /**
@@ -84,6 +103,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
 
   /**
    * Create basic fields' dependency.
+   *
    * @param string $path
    *   The path to Conditional Field Form.
    * @param string $dependent
@@ -95,7 +115,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    * @param string $condition
    *   Condition value.
    */
-  protected function createCondition($path, $dependent, $dependee, $state, $condition){
+  protected function createCondition($path, $dependent, $dependee, $state, $condition) {
     $this->drupalGet($path);
     $this->assertSession()->statusCodeEquals(200);
     $edit = [

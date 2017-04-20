@@ -4,14 +4,14 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript\Entity;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields check User entity.
  *
  * @group conditional_fields
  */
-class ConditionalFieldsUserTest extends JavascriptTestBase {
+class ConditionalFieldsUserTestTest extends JavascriptTestBase {
 
   protected $dependee = 'field_dependee';
   protected $dependent = 'field_dependent';

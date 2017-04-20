@@ -2,14 +2,14 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields Text Handler.
  *
  * @group conditional_fields
  */
-class ConditionalFieldTextTest extends JavascriptTestBase {
+class ConditionalFieldTextTestTest extends JavascriptTestBase {
 
   /**
    * Tests creating Conditional Field: Visible if has value from Title value.
