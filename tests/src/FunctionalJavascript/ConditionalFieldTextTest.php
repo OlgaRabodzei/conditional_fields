@@ -7,7 +7,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
  *
  * @group conditional_fields
  */
-class ConditionalFieldTextTestTest extends ConditionalFieldBaseTest {
+class ConditionalFieldTextTest extends ConditionalFieldBaseTest {
 
   /**
    * {@inheritdoc}
