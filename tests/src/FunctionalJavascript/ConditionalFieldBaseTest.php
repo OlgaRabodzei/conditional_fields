@@ -110,8 +110,6 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
   /**
    * Create basic fields' dependency.
    *
-   * @param string $path
-   *   The path to Conditional Field Form.
    * @param string $dependent
    *   Machine name of dependent field.
    * @param string $dependee
@@ -121,9 +119,7 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
    * @param string $condition
    *   Condition value.
    */
-  protected function createCondition($path, $dependent, $dependee, $state, $condition) {
-    $this->drupalGet($path);
-    $this->assertSession()->statusCodeEquals(200);
+  protected function createCondition($dependent, $dependee, $state, $condition) {
     $edit = [
       'table[add_new_dependency][dependent][]' => $dependent,
       'table[add_new_dependency][dependee]' => $dependee,
@@ -131,6 +127,38 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
       'table[add_new_dependency][condition]' => $condition,
     ];
     $this->submitForm($edit, 'Add dependency');
+    $this->assertSession()->statusCodeEquals(200);
+  }
+
+  /**
+   * Base steps for all javascript tests.
+   */
+  protected function baseTestSteps() {
+    $admin_account = $this->drupalCreateUser([
+      'view conditional fields',
+      'edit conditional fields',
+      'delete conditional fields',
+      'administer nodes',
+      'create article content',
+    ]);
+    $this->drupalLogin($admin_account);
+
+    // Visit a ConditionalFields configuration page that requires login.
+    $this->drupalGet('admin/structure/conditional_fields');
+    $this->assertSession()->statusCodeEquals(200);
+
+    // Configuration page contains the `Content` entity type.
+    $this->assertSession()->pageTextContains('Content');
+
+    // Visit a ConditionalFields configuration page for Content bundles.
+    $this->drupalGet('admin/structure/conditional_fields/node');
+    $this->assertSession()->statusCodeEquals(200);
+
+    // Configuration page contains the `Article` bundle of Content entity type.
+    $this->assertSession()->pageTextContains('Article');
+
+    // Visit a ConditionalFields configuration page for Article CT.
+    $this->drupalGet('admin/structure/conditional_fields/node/article');
     $this->assertSession()->statusCodeEquals(200);
   }
 

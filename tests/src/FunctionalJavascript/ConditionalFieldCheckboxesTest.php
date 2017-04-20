@@ -69,25 +69,10 @@ class ConditionalFieldCheckboxesTestTest extends ConditionalFieldBaseTest {
    * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
   public function testCreateConfigVisibleValueAnd() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'administer content types',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/types');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Article Dependencies');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->taxonomyName, 'visible', 'value');
 
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
@@ -132,25 +117,10 @@ class ConditionalFieldCheckboxesTestTest extends ConditionalFieldBaseTest {
    * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
   public function testCreateConfigVisibleValueOr() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'administer content types',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/types');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Article Dependencies');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->taxonomyName, 'visible', 'value');
 
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR);

@@ -13,31 +13,10 @@ class ConditionalFieldCheckboxTestTest extends ConditionalFieldBaseTest {
    * Tests creating Conditional Field: Visible if checked.
    */
   public function testCreateConfigVisibleChecked() {
-    $admin_account = $this->drupalCreateUser([
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'administer nodes',
-      'create article content',
-    ]);
-    $this->drupalLogin($admin_account);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'promote', 'visible', 'checked');
+    $this->createCondition('body', 'promote', 'visible', 'checked');
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
@@ -56,31 +35,10 @@ class ConditionalFieldCheckboxTestTest extends ConditionalFieldBaseTest {
    * Tests creating Conditional Field: Visible if checked.
    */
   public function testCreateConfigInvisibleUnchecked() {
-    $admin_account = $this->drupalCreateUser([
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'administer nodes',
-      'create article content',
-    ]);
-    $this->drupalLogin($admin_account);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'promote', '!visible', '!checked');
+    $this->createCondition('body', 'promote', '!visible', '!checked');
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
