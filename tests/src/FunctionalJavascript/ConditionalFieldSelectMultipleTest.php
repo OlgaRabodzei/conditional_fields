@@ -4,6 +4,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 /**
  * Test Conditional Fields SelectMultiple Plugin.
@@ -82,7 +83,7 @@ class ConditionalFieldSelectMultipleTestTest extends ConditionalFieldBaseTest {
     ]);
     $this->field->save();
 
-    entity_get_form_display('node', 'article', 'default')
+    EntityFormDisplay::load('node.article.default')
       ->setComponent($this->fieldName, [
         'type' => 'options_select',
       ])

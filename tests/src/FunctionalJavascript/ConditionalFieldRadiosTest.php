@@ -5,6 +5,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 /**
  * Test Conditional Fields States.
@@ -59,7 +60,7 @@ class ConditionalFieldRadiosTestTest extends ConditionalFieldBaseTest {
       ],
     ];
     $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
-    entity_get_form_display('node', 'article', 'default')
+    EntityFormDisplay::load('node.article.default')
       ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
       ->save();
   }
