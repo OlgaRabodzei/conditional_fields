@@ -91,7 +91,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldBaseTest {
 
     // Submit the form.
     $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.
@@ -139,7 +139,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldBaseTest {
 
     // Submit the form.
     $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.

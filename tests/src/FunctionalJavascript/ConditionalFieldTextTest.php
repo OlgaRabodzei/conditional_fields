@@ -30,7 +30,7 @@ class ConditionalFieldTextTest extends ConditionalFieldBaseTest {
     $this->changeField('#edit-values', $text);
     // Submit the form.
     $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.
@@ -72,7 +72,7 @@ class ConditionalFieldTextTest extends ConditionalFieldBaseTest {
     $this->changeField('#edit-values', $values);
     // Submit the form.
     $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.
@@ -114,7 +114,7 @@ class ConditionalFieldTextTest extends ConditionalFieldBaseTest {
     $this->changeField('#edit-title-0-value', $text);
     // Submit the form.
     $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.

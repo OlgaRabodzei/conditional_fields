@@ -120,7 +120,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
       $this->changeField($selector, $value);
     }
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '02-select-single-post-add-list-options-filed-conditions.png');
 
