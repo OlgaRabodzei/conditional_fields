@@ -2,14 +2,12 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
-
 /**
  * Test Conditional Fields Checkbox state.
  *
  * @group conditional_fields
  */
-class ConditionalFieldCheckboxTestTest extends JavascriptTestBase {
+class ConditionalFieldCheckboxTestTest extends ConditionalFieldBaseTest {
 
   /**
    * Tests creating Conditional Field: Visible if checked.
@@ -53,6 +51,7 @@ class ConditionalFieldCheckboxTestTest extends JavascriptTestBase {
     $this->changeSelect('#edit-promote-value', FALSE);
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
   }
+
   /**
    * Tests creating Conditional Field: Visible if checked.
    */

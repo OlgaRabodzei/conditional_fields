@@ -5,14 +5,13 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields Select Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectTestTest extends JavascriptTestBase {
+class ConditionalFieldSelectTestTest extends ConditionalFieldBaseTest {
 
   /**
    * Modules to enable.
@@ -112,7 +111,7 @@ class ConditionalFieldSelectTestTest extends JavascriptTestBase {
     $this->assertSession()->pageTextContains('Article Dependencies');
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', $this->fieldName, 'visible', 'value' );
+    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', $this->fieldName, 'visible', 'value');
     $this->createScreenshot('sites/simpletest/01-select-single-add-filed-conditions.png');
 
     // Set up conditions.

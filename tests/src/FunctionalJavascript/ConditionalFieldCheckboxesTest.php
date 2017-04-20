@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
@@ -12,7 +11,7 @@ use Drupal\taxonomy\Entity\Term;
  *
  * @group conditional_fields
  */
-class ConditionalFieldCheckboxesTestTest extends JavascriptTestBase {
+class ConditionalFieldCheckboxesTestTest extends ConditionalFieldBaseTest {
 
   use EntityReferenceTestTrait;
 
@@ -29,6 +28,41 @@ class ConditionalFieldCheckboxesTestTest extends JavascriptTestBase {
    * @var int
    */
   protected $termsCount;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+    // Create a vocabulary with random name.
+    $this->taxonomyName = $this->getRandomGenerator()->word(8);
+    $vocabulary = Vocabulary::create([
+      'name' => $this->taxonomyName,
+      'vid' => $this->taxonomyName,
+    ]);
+    $vocabulary->save();
+    // Create a random taxonomy terms for vocabulary.
+    $this->termsCount = mt_rand(3, 6);
+    for ($i = 1; $i <= $this->termsCount; $i++) {
+      $termName = $this->getRandomGenerator()->word(8);
+      Term::create([
+        'parent' => [],
+        'name' => $termName,
+        'vid' => $this->taxonomyName,
+      ])->save();
+    }
+    // Add a custom field with taxonomy terms to 'Article'.
+    // The field label is a machine name of created vocabulary.
+    $handler_settings = [
+      'target_bundles' => [
+        $vocabulary->id() => $vocabulary->id(),
+      ],
+    ];
+    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings, -1);
+    entity_get_form_display('node', 'article', 'default')
+      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
+      ->save();
+  }
 
   /**
    * Tests creating Conditional Field: Visible if has value from taxonomy.
@@ -52,15 +86,16 @@ class ConditionalFieldCheckboxesTestTest extends JavascriptTestBase {
     $this->assertSession()->pageTextContains('Article Dependencies');
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value' );
+    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value');
 
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
     // Random term id to check necessary values.
     $term_id_1 = mt_rand(1, $this->termsCount);
-    do {$term_id_2 = mt_rand(1, $this->termsCount);}
-    while ($term_id_2 == $term_id_1);
-    $values = $term_id_1.'\r\n'.$term_id_2;
+    do {
+      $term_id_2 = mt_rand(1, $this->termsCount);
+    } while ($term_id_2 == $term_id_1);
+    $values = $term_id_1 . '\r\n' . $term_id_2;
     $this->changeField('#edit-values', $values);
 
     // Submit the form.
@@ -114,15 +149,16 @@ class ConditionalFieldCheckboxesTestTest extends JavascriptTestBase {
     $this->assertSession()->pageTextContains('Article Dependencies');
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value' );
+    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', 'field_' . $this->taxonomyName, 'visible', 'value');
 
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR);
     // Random term id to check necessary values.
     $term_id_1 = mt_rand(1, $this->termsCount);
-    do {$term_id_2 = mt_rand(1, $this->termsCount);}
-    while ($term_id_2 == $term_id_1);
-    $values = $term_id_1.'\r\n'.$term_id_2;
+    do {
+      $term_id_2 = mt_rand(1, $this->termsCount);
+    } while ($term_id_2 == $term_id_1);
+    $values = $term_id_1 . '\r\n' . $term_id_2;
     $this->changeField('#edit-values', $values);
 
     // Submit the form.
@@ -153,41 +189,6 @@ class ConditionalFieldCheckboxesTestTest extends JavascriptTestBase {
     // Change a select value set to hide the body again.
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_2, $term_id_2);
     $this->waitUntilHidden('.field--name-body', 60, 'Article Body field is visible');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    parent::setUp();
-    // Create a vocabulary with random name.
-    $this->taxonomyName = $this->getRandomGenerator()->word(8);
-    $vocabulary = Vocabulary::create([
-      'name' => $this->taxonomyName,
-      'vid' => $this->taxonomyName,
-    ]);
-    $vocabulary->save();
-    // Create a random taxonomy terms for vocabulary.
-    $this->termsCount = mt_rand(3, 6);
-    for ($i = 1; $i <= $this->termsCount; $i++) {
-      $termName = $this->getRandomGenerator()->word(8);
-      Term::create([
-        'parent' => [],
-        'name' => $termName,
-        'vid' => $this->taxonomyName,
-      ])->save();
-    }
-    // Add a custom field with taxonomy terms to 'Article'.
-    // The field label is a machine name of created vocabulary.
-    $handler_settings = [
-      'target_bundles' => [
-        $vocabulary->id() => $vocabulary->id(),
-      ],
-    ];
-    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings, -1);
-    entity_get_form_display('node', 'article', 'default')
-      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
-      ->save();
   }
 
 }

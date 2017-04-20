@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
@@ -12,7 +11,7 @@ use Drupal\taxonomy\Entity\Term;
  *
  * @group conditional_fields
  */
-class ConditionalFieldRadiosTestTest extends JavascriptTestBase {
+class ConditionalFieldRadiosTestTest extends ConditionalFieldBaseTest {
 
   use EntityReferenceTestTrait;
 
@@ -29,6 +28,41 @@ class ConditionalFieldRadiosTestTest extends JavascriptTestBase {
    * @var int
    */
   protected $termsCount;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+    // Create a vocabulary with random name.
+    $this->taxonomyName = $this->getRandomGenerator()->word(8);
+    $vocabulary = Vocabulary::create([
+      'name' => $this->taxonomyName,
+      'vid' => $this->taxonomyName,
+    ]);
+    $vocabulary->save();
+    // Create a random taxonomy terms for vocabulary.
+    $this->termsCount = mt_rand(3, 5);
+    for ($i = 1; $i <= $this->termsCount; $i++) {
+      $termName = $this->getRandomGenerator()->word(8);
+      Term::create([
+        'parent' => [],
+        'name' => $termName,
+        'vid' => $this->taxonomyName,
+      ])->save();
+    }
+    // Add a custom field with taxonomy terms to 'Article'.
+    // The field label is a machine name of created vocabulary.
+    $handler_settings = [
+      'target_bundles' => [
+        $vocabulary->id() => $vocabulary->id(),
+      ],
+    ];
+    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
+    entity_get_form_display('node', 'article', 'default')
+      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
+      ->save();
+  }
 
   /**
    * Tests creating Conditional Field: Visible if has value from taxonomy.
@@ -91,7 +125,7 @@ class ConditionalFieldRadiosTestTest extends JavascriptTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has one of values from taxonomy.
+   * Tests creating CF: Visible if has one of values from taxonomy.
    */
   public function testCreateConfigOr() {
     $user = $this->drupalCreateUser([
@@ -252,41 +286,6 @@ class ConditionalFieldRadiosTestTest extends JavascriptTestBase {
       $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id, $term_id);
       $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    parent::setUp();
-    // Create a vocabulary with random name.
-    $this->taxonomyName = $this->getRandomGenerator()->word(8);
-    $vocabulary = Vocabulary::create([
-      'name' => $this->taxonomyName,
-      'vid' => $this->taxonomyName,
-    ]);
-    $vocabulary->save();
-    // Create a random taxonomy terms for vocabulary.
-    $this->termsCount = mt_rand(3, 5);
-    for ($i = 1; $i <= $this->termsCount; $i++) {
-      $termName = $this->getRandomGenerator()->word(8);
-      Term::create([
-        'parent' => [],
-        'name' => $termName,
-        'vid' => $this->taxonomyName,
-      ])->save();
-    }
-    // Add a custom field with taxonomy terms to 'Article'.
-    // The field label is a machine name of created vocabulary.
-    $handler_settings = [
-      'target_bundles' => [
-        $vocabulary->id() => $vocabulary->id(),
-      ],
-    ];
-    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
-    entity_get_form_display('node', 'article', 'default')
-      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
-      ->save();
   }
 
 }

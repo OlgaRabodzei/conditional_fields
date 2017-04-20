@@ -4,14 +4,14 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest as JavascriptTestBase;
 
 /**
  * Test Conditional Fields SelectMultiple Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectMultipleTestTest extends JavascriptTestBase {
+class ConditionalFieldSelectMultipleTestTest extends ConditionalFieldBaseTest {
+
   /**
    * Modules to enable.
    *
@@ -30,6 +30,11 @@ class ConditionalFieldSelectMultipleTestTest extends JavascriptTestBase {
    */
   protected $fieldName = 'test_options';
 
+  /**
+   * Control field selector.
+   *
+   * @var string
+   */
   protected $fieldSelector;
 
   /**
@@ -54,6 +59,37 @@ class ConditionalFieldSelectMultipleTestTest extends JavascriptTestBase {
   protected $field;
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+    $this->fieldSelector = "[name=\"{$this->fieldName}[]\"]";
+    $this->fieldStorageDefinition = [
+      'field_name' => $this->fieldName,
+      'entity_type' => 'node',
+      'type' => 'list_integer',
+      'cardinality' => -1,
+      'settings' => [
+        'allowed_values' => ['One', 'Two', 'Three'],
+      ],
+    ];
+    $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
+    $this->fieldStorage->save();
+
+    $this->field = FieldConfig::create([
+      'field_storage' => $this->fieldStorage,
+      'bundle' => 'article',
+    ]);
+    $this->field->save();
+
+    entity_get_form_display('node', 'article', 'default')
+      ->setComponent($this->fieldName, [
+        'type' => 'options_select',
+      ])
+      ->save();
+  }
+
+  /**
    * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
   public function testCreateConfigVisibleValueAnd() {
@@ -75,7 +111,7 @@ class ConditionalFieldSelectMultipleTestTest extends JavascriptTestBase {
     $this->assertSession()->pageTextContains('Article Dependencies');
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', $this->fieldName, 'visible', 'value' );
+    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', $this->fieldName, 'visible', 'value');
     $this->createScreenshot('sites/simpletest/01-add-list-options-filed-conditions.png');
 
     // Set up conditions.
@@ -135,34 +171,4 @@ class ConditionalFieldSelectMultipleTestTest extends JavascriptTestBase {
     $this->getSession()->executeScript("jQuery('{$selector}').val({$value}).trigger('keyup').trigger('change');");
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    parent::setUp();
-    $this->fieldSelector = "[name=\"{$this->fieldName}[]\"]";
-    $this->fieldStorageDefinition = [
-      'field_name' => $this->fieldName,
-      'entity_type' => 'node',
-      'type' => 'list_integer',
-      'cardinality' => -1,
-      'settings' => [
-        'allowed_values' => ['One', 'Two', 'Three'],
-      ],
-    ];
-    $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
-    $this->fieldStorage->save();
-
-    $this->field = FieldConfig::create([
-      'field_storage' => $this->fieldStorage,
-      'bundle' => 'article',
-    ]);
-    $this->field->save();
-
-    entity_get_form_display('node', 'article', 'default')
-      ->setComponent($this->fieldName, [
-        'type' => 'options_select',
-      ])
-      ->save();
-  }
 }
