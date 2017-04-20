@@ -24,6 +24,13 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
   protected $accessControlHandler;
 
   /**
+   * Path to create screenshot.
+   *
+   * @var string
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/';
+
+  /**
    * {@inheritdoc}
    */
   public static $modules = [
@@ -33,15 +40,6 @@ abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
     'field_ui',
     'taxonomy',
   ];
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct($name, array $data, $dataName) {
-    $this->entityManager = \Drupal::service('entity.manager');
-    $this->accessControlHandler = $this->entityManager->getAccessControlHandler('node');
-    parent::__construct($name, $data, $dataName);
-  }
 
   /**
    * {@inheritdoc}

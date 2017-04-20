@@ -98,7 +98,7 @@ class ConditionalFieldSelectMultipleTestTest extends ConditionalFieldBaseTest {
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot('sites/simpletest/01-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '01-add-list-options-filed-conditions.png');
 
     // Set up conditions.
     $data = [
@@ -118,11 +118,11 @@ class ConditionalFieldSelectMultipleTestTest extends ConditionalFieldBaseTest {
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot('sites/simpletest/02-post-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '02-post-add-list-options-filed-conditions.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->createScreenshot('sites/simpletest/03-submit-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '03-submit-list-options-filed-conditions.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -130,22 +130,22 @@ class ConditionalFieldSelectMultipleTestTest extends ConditionalFieldBaseTest {
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot('sites/simpletest/04-body-invisible-when-controlled-field-has-no-value.png');
+    $this->createScreenshot($this->screenshotPath . '04-body-invisible-when-controlled-field-has-no-value.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
 
     // Change a select value set that should not show the body.
     $this->changeField($this->fieldSelector, [0]);
-    $this->createScreenshot('sites/simpletest/05-body-invisible-when-controlled-field-has-wrong-value.png');
+    $this->createScreenshot($this->screenshotPath . '05-body-invisible-when-controlled-field-has-wrong-value.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
 
     // Change a select value set to show the body.
     $this->changeField($this->fieldSelector, [0, 1]);
-    $this->createScreenshot('sites/simpletest/06-body-visible-when-controlled-field-has-value.png');
+    $this->createScreenshot($this->screenshotPath . '06-body-visible-when-controlled-field-has-value.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a select value set to hide the body again.
     $this->changeField($this->fieldSelector, ['_none']);
-    $this->createScreenshot('sites/simpletest/07-body-invisible-when-controlled-field-has-no-value-again.png');
+    $this->createScreenshot($this->screenshotPath . '07-body-invisible-when-controlled-field-has-no-value-again.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
   }
 

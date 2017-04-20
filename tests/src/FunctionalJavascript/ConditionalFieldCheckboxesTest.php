@@ -103,14 +103,14 @@ class ConditionalFieldCheckboxesTestTest extends ConditionalFieldBaseTest {
     // Change a select value set to show the body.
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_1, $term_id_1);
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_2, $term_id_2);
-    $this->createScreenshot('sites/simpletest/scr1BodyVisCheckboxes.jpg');
+    $this->createScreenshot($this->screenshotPath . 'scr1BodyVisCheckboxes.jpg');
     $this->waitUntilVisible('.field--name-body', 60, 'Article Body field is not visible');
     // Change a select value set to hide the body again.
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_1, $term_id_1);
     $this->waitUntilHidden('.field--name-body', 60, 'Article Body field is visible');
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_2, $term_id_2);
     $this->waitUntilHidden('.field--name-body', 60, 'Article Body field is visible');
-    $this->createScreenshot('sites/simpletest/scr2BodyHidCheckboxes.jpg');
+    $this->createScreenshot($this->screenshotPath . 'scr2BodyHidCheckboxes.jpg');
   }
 
   /**
