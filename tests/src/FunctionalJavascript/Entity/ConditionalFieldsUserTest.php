@@ -39,6 +39,11 @@ class ConditionalFieldsUserTestTest extends ConditionalFieldBaseTest {
   /**
    * {@inheritdoc}
    */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/user/';
+
+  /**
+   * {@inheritdoc}
+   */
   public function setUp() {
     parent::setUp();
     $this->addField($this->dependee, 'boolean', 'boolean_checkbox');
@@ -70,7 +75,7 @@ class ConditionalFieldsUserTestTest extends ConditionalFieldBaseTest {
       'bundle' => 'user',
     ]);
     $field->save();
-    EntityFormDisplay::load('user.user.default')
+    entity_get_form_display('user', 'user', 'default')
       ->setComponent($field_name, [
         'type' => $widget,
       ])
@@ -85,6 +90,7 @@ class ConditionalFieldsUserTestTest extends ConditionalFieldBaseTest {
     $this->createCondition($this->dependent, $this->dependee, 'visible', 'checked');
 
     // Check that configuration is saved.
+    $this->drupalGet('admin/structure/conditional_fields/user/user');
     $this->createScreenshot($this->screenshotPath . '01-config-was-added.png');
     $this->assertSession()->pageTextContains($this->dependent . ' ' . $this->dependee . ' visible checked');
 
