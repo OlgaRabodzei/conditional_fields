@@ -6,14 +6,18 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\link\LinkItemInterface;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
 
 /**
  * Test Conditional Fields Link field plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
+class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/link_field/';
 
   /**
    * Modules to enable.
@@ -67,7 +71,7 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->fieldSelector = "[name=\"{$this->fieldName}[0][uri]\"]";
+    $this->fieldSelector = '[name="' . $this->fieldName . '[0][uri]"]';
     $this->fieldStorageDefinition = [
       'field_name' => $this->fieldName,
       'entity_type' => 'node',
@@ -97,33 +101,18 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
    * Tests creating Conditional Field: Visible, values input mode - OR.
    */
   public function testFieldLinkVisibleValueOr() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'administer content types',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/types');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Article Dependencies');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', $this->fieldName, 'visible', 'value' );
-    $this->createScreenshot('sites/simpletest/01-link-field-add-filed-conditions.png');
+    $this->createCondition('body', $this->fieldName, 'visible', 'value');
+    $this->createScreenshot($this->screenshotPath . '01-link-field-add-filed-conditions.png');
 
     // Set up conditions.
-    $urls = ['<front>', 'node/add'];
+    $urls = implode('\n', ['node/add', 'node/1']);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
-      '[name="values"]' => implode(PHP_EOL, $urls),
+      '[name="values"]' => $urls,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -131,14 +120,15 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
     foreach ($data as $selector => $value) {
       $this->changeField($selector, $value);
     }
+
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot('sites/simpletest/02-link-field-post-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '02-link-field-post-add-list-options-filed-conditions.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->createScreenshot('sites/simpletest/03-link-field-submit-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '03-link-field-submit-options-filed-conditions.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -146,27 +136,27 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot('sites/simpletest/04-link-field-body-invisible-when-controlled-field-has-no-value.png');
+    $this->createScreenshot($this->screenshotPath . '04-link-field-body-invisible-when-controlled-field-has-no-value.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a link that should not show the body.
     $this->changeField($this->fieldSelector, 'https://drupal.org');
-    $this->createScreenshot('sites/simpletest/05-link-field-body-invisible-when-controlled-field-has-wrong-value.png');
+    $this->createScreenshot($this->screenshotPath . '05-link-field-body-invisible-when-controlled-field-has-wrong-value.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a link value to show the body.
     $this->changeField($this->fieldSelector, $urls[0]);
-    $this->createScreenshot('sites/simpletest/06-link-field-body-visible-when-controlled-field-has-value.png');
+    $this->createScreenshot($this->screenshotPath . '06-link-field-body-visible-when-controlled-field-has-value.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change a link value to show the body.
     $this->changeField($this->fieldSelector, $urls[1]);
-    $this->createScreenshot('sites/simpletest/07-link-field-body-visible-when-controlled-field-has-value.png');
+    $this->createScreenshot($this->screenshotPath . '07-link-field-body-visible-when-controlled-field-has-value.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change a link value to hide the body again.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot('sites/simpletest/08-link-field-body-invisible-when-controlled-field-has-no-value-again.png');
+    $this->createScreenshot($this->screenshotPath . '08-link-field-body-invisible-when-controlled-field-has-no-value-again.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
@@ -174,33 +164,18 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
    * Tests creating Conditional Field: Visible, values input mode - NOT.
    */
   public function testFieldLinkVisibleValueNot() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'administer content types',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/types');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Article Dependencies');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('admin/structure/types/manage/article/conditionals', 'body', $this->fieldName, 'visible', 'value' );
-    $this->createScreenshot('sites/simpletest/01-testFieldLinkVisibleValueNot.png');
+    $this->createCondition('body', $this->fieldName, 'visible', 'value' );
+    $this->createScreenshot($this->screenshotPath . '01-testFieldLinkVisibleValueNot.png');
 
     // Set up conditions.
-    $urls = ['<front>', 'node/add'];
+    $urls = implode('\n', ['node/add', 'node/1']);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
-      '[name="values"]' => implode(PHP_EOL, $urls),
+      '[name="values"]' => $urls,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -211,11 +186,11 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot('sites/simpletest/02-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '02-testFieldLinkVisibleValueNot.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->createScreenshot('sites/simpletest/03-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '03-testFieldLinkVisibleValueNot.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -223,31 +198,23 @@ class ConditionalFieldLinkFieldTest extends JavascriptTestBase {
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is visible.
-    $this->createScreenshot('sites/simpletest/04-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '04-testFieldLinkVisibleValueNot.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change a link that should not show the body.
     $this->changeField($this->fieldSelector, $urls[0]);
-    $this->createScreenshot('sites/simpletest/05-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '05-testFieldLinkVisibleValueNot.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a link that should not show the body again.
     $this->changeField($this->fieldSelector, $urls[1]);
-    $this->createScreenshot('sites/simpletest/06-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '06-testFieldLinkVisibleValueNot.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a link value to show the body.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot('sites/simpletest/08-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '08-testFieldLinkVisibleValueNot.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
-  }
-
-  /**
-   * Helper to change Field value with Javascript.
-   */
-  protected function changeField($selector, $value = '') {
-    $value = json_encode($value);
-    $this->getSession()->executeScript("jQuery('{$selector}').val({$value}).trigger('keyup').trigger('change');");
   }
 
 }
