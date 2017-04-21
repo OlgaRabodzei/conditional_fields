@@ -7,7 +7,28 @@ use Drupal\FunctionalJavascriptTests\JavascriptTestBase;
 /**
  * Base setup for ConditionalField tests.
  */
-abstract class ConditionalFieldBase extends JavascriptTestBase {
+abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
+
+  /**
+   * The entity manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityManagerInterface
+   */
+  protected $entityManager;
+
+  /**
+   * Access controller.
+   *
+   * @var \Drupal\Core\Entity\EntityAccessControlHandlerInterface
+   */
+  protected $accessControlHandler;
+
+  /**
+   * Path to create screenshot.
+   *
+   * @var string
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/';
 
   /**
    * {@inheritdoc}
@@ -28,14 +49,27 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
 
     // Create Basic page and Article node types.
     if ($this->profile != 'standard') {
-      $this->drupalCreateContentType(array(
+      $this->drupalCreateContentType([
         'type' => 'page',
         'name' => 'Basic page',
         'display_submitted' => FALSE,
-      ));
-      $this->drupalCreateContentType(array('type' => 'article', 'name' => 'Article'));
+      ]);
+      $this->drupalCreateContentType([
+        'type' => 'article',
+        'name' => 'Article',
+      ]);
     }
-    $this->accessHandler = \Drupal::entityManager()->getAccessControlHandler('node');
+    $this->checkScreenshotPathExist();
+  }
+
+  /**
+   * Check does screenshot path exist and create if it's necessary.
+   */
+  private function checkScreenshotPathExist() {
+    if (file_exists($this->screenshotPath)) {
+      return;
+    }
+    mkdir($this->screenshotPath, 0777, TRUE);
   }
 
   /**
@@ -72,20 +106,21 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    * Helper to change Field value with Javascript.
    */
   protected function changeField($selector, $value = '') {
-    $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('keyup').trigger('change');");
+    $this->getSession()
+      ->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('keyup').trigger('change');");
   }
 
   /**
    * Helper to change selection with Javascript.
    */
   protected function changeSelect($selector, $value = '') {
-    $this->getSession()->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('click').trigger('change');");
+    $this->getSession()
+      ->executeScript("jQuery('" . $selector . "').val('" . $value . "').trigger('click').trigger('change');");
   }
 
   /**
    * Create basic fields' dependency.
-   * @param string $path
-   *   The path to Conditional Field Form.
+   *
    * @param string $dependent
    *   Machine name of dependent field.
    * @param string $dependee
@@ -95,9 +130,7 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
    * @param string $condition
    *   Condition value.
    */
-  protected function createCondition($path, $dependent, $dependee, $state, $condition){
-    $this->drupalGet($path);
-    $this->assertSession()->statusCodeEquals(200);
+  protected function createCondition($dependent, $dependee, $state, $condition) {
     $edit = [
       'table[add_new_dependency][dependent][]' => $dependent,
       'table[add_new_dependency][dependee]' => $dependee,
@@ -105,6 +138,38 @@ abstract class ConditionalFieldBase extends JavascriptTestBase {
       'table[add_new_dependency][condition]' => $condition,
     ];
     $this->submitForm($edit, 'Add dependency');
+    $this->assertSession()->statusCodeEquals(200);
+  }
+
+  /**
+   * Base steps for all javascript tests.
+   */
+  protected function baseTestSteps() {
+    $admin_account = $this->drupalCreateUser([
+      'view conditional fields',
+      'edit conditional fields',
+      'delete conditional fields',
+      'administer nodes',
+      'create article content',
+    ]);
+    $this->drupalLogin($admin_account);
+
+    // Visit a ConditionalFields configuration page that requires login.
+    $this->drupalGet('admin/structure/conditional_fields');
+    $this->assertSession()->statusCodeEquals(200);
+
+    // Configuration page contains the `Content` entity type.
+    $this->assertSession()->pageTextContains('Content');
+
+    // Visit a ConditionalFields configuration page for Content bundles.
+    $this->drupalGet('admin/structure/conditional_fields/node');
+    $this->assertSession()->statusCodeEquals(200);
+
+    // Configuration page contains the `Article` bundle of Content entity type.
+    $this->assertSession()->pageTextContains('Article');
+
+    // Visit a ConditionalFields configuration page for Article CT.
+    $this->drupalGet('admin/structure/conditional_fields/node/article');
     $this->assertSession()->statusCodeEquals(200);
   }
 

@@ -2,19 +2,24 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBase as JavascriptTestBase;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 /**
  * Test Conditional Fields States.
  *
  * @group conditional_fields
  */
-class ConditionalFieldRadiosTest extends JavascriptTestBase {
+class ConditionalFieldRadiosTest extends ConditionalFieldBaseTest {
 
   use EntityReferenceTestTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/radios/';
 
   /**
    * The name and vid of vocabulary, created for testing.
@@ -31,34 +36,48 @@ class ConditionalFieldRadiosTest extends JavascriptTestBase {
   protected $termsCount;
 
   /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+    // Create a vocabulary with random name.
+    $this->taxonomyName = $this->getRandomGenerator()->word(8);
+    $vocabulary = Vocabulary::create([
+      'name' => $this->taxonomyName,
+      'vid' => $this->taxonomyName,
+    ]);
+    $vocabulary->save();
+    // Create a random taxonomy terms for vocabulary.
+    $this->termsCount = mt_rand(3, 5);
+    for ($i = 1; $i <= $this->termsCount; $i++) {
+      $termName = $this->getRandomGenerator()->word(8);
+      Term::create([
+        'parent' => [],
+        'name' => $termName,
+        'vid' => $this->taxonomyName,
+      ])->save();
+    }
+    // Add a custom field with taxonomy terms to 'Article'.
+    // The field label is a machine name of created vocabulary.
+    $handler_settings = [
+      'target_bundles' => [
+        $vocabulary->id() => $vocabulary->id(),
+      ],
+    ];
+    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
+    EntityFormDisplay::load('node.article.default')
+      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
+      ->save();
+  }
+
+  /**
    * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
   public function testCreateConfigAnd() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'field_' . $this->taxonomyName, 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->taxonomyName, 'visible', 'value');
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
     // Random term id to check necessary value.
@@ -91,34 +110,13 @@ class ConditionalFieldRadiosTest extends JavascriptTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has one of values from taxonomy.
+   * Tests creating CF: Visible if has one of values from taxonomy.
    */
   public function testCreateConfigOr() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'field_' . $this->taxonomyName, 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->taxonomyName, 'visible', 'value');
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR);
     // Random term id to check necessary value.
@@ -161,31 +159,10 @@ class ConditionalFieldRadiosTest extends JavascriptTestBase {
    * Tests creating Conditional Field: Visible if has any value from taxonomy.
    */
   public function testCreateConfigChecked() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'field_' . $this->taxonomyName, 'visible', 'checked');
+    $this->createCondition('body', 'field_' . $this->taxonomyName, 'visible', 'checked');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
@@ -210,31 +187,10 @@ class ConditionalFieldRadiosTest extends JavascriptTestBase {
    * Tests creating Conditional Field: inVisible if has any value from taxonomy.
    */
   public function testCreateConfigUnChecked() {
-    $user = $this->drupalCreateUser([
-      'administer nodes',
-      'view conditional fields',
-      'edit conditional fields',
-      'delete conditional fields',
-      'create article content',
-    ]);
-    $this->drupalLogin($user);
-
-    // Visit a ConditionalFields configuration page that requires login.
-    $this->drupalGet('admin/structure/conditional_fields');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Content` entity type.
-    $this->assertSession()->pageTextContains('Content');
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->drupalGet('admin/structure/conditional_fields/node');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Configuration page contains the `Article` bundle of Content entity type.
-    $this->assertSession()->pageTextContains('Article');
+    $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('admin/structure/conditional_fields/node/article', 'body', 'field_' . $this->taxonomyName, 'visible', '!checked');
+    $this->createCondition('body', 'field_' . $this->taxonomyName, 'visible', '!checked');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
@@ -252,41 +208,6 @@ class ConditionalFieldRadiosTest extends JavascriptTestBase {
       $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id, $term_id);
       $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    parent::setUp();
-    // Create a vocabulary with random name.
-    $this->taxonomyName = $this->getRandomGenerator()->word(8);
-    $vocabulary = Vocabulary::create([
-      'name' => $this->taxonomyName,
-      'vid' => $this->taxonomyName,
-    ]);
-    $vocabulary->save();
-    // Create a random taxonomy terms for vocabulary.
-    $this->termsCount = mt_rand(3, 5);
-    for ($i = 1; $i <= $this->termsCount; $i++) {
-      $termName = $this->getRandomGenerator()->word(8);
-      Term::create([
-        'parent' => [],
-        'name' => $termName,
-        'vid' => $this->taxonomyName,
-      ])->save();
-    }
-    // Add a custom field with taxonomy terms to 'Article'.
-    // The field label is a machine name of created vocabulary.
-    $handler_settings = [
-      'target_bundles' => [
-        $vocabulary->id() => $vocabulary->id(),
-      ],
-    ];
-    $this->createEntityReferenceField('node', 'article', 'field_' . $this->taxonomyName, $this->taxonomyName, 'taxonomy_term', 'default', $handler_settings);
-    entity_get_form_display('node', 'article', 'default')
-      ->setComponent('field_' . $this->taxonomyName, ['type' => 'options_buttons'])
-      ->save();
   }
 
 }
