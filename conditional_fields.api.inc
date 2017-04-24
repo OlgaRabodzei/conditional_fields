@@ -118,12 +118,9 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
     }
 
+    // TODO: Support behaviors dependent on user role.
     // Execute custom behaviors callbacks.
-    if (!empty($behaviors)) {
-      foreach ($behaviors as $behavior) {
-        $behavior($form, $form_state, $dependent, $dependent_info);
-      }
-    }
+    conditional_fields_execute_behaviors($behaviors, $form, $form_state, $dependent, $dependent_info);
 
     unset($behaviors);
 
@@ -189,6 +186,22 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
   $form_state->setValue('conditional_fields_untriggered_dependents', []);
 
   return $form;
+}
+
+/**
+ * Execute custom behaviors callbacks.
+ */
+function conditional_fields_execute_behaviors($behaviors, $form, FormStateInterface &$form_state, $dependent, $dependent_info) {
+  if (empty($behaviors)) {
+    return;
+  }
+  foreach ($behaviors as $behavior) {
+    if (!function_exists($behavior)) {
+      continue;
+    }
+    $behavior($form, $form_state, $dependent, $dependent_info);
+  }
+
 }
 
 function conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options) {
