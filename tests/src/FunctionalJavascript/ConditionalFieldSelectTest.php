@@ -2,16 +2,16 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 /**
- * Test Conditional Fields SelectMultiple Plugin.
+ * Test Conditional Fields Select Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
+class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
 
   /**
    * Modules to enable.
@@ -27,17 +27,17 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
   /**
    * {@inheritdoc}
    */
-  protected $screenshotPath = 'sites/simpletest/conditional_fields/select_multiple/';
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/select/';
 
   /**
    * The field name used in the test.
    *
    * @var string
    */
-  protected $fieldName = 'test_options';
+  protected $fieldName = 'single_select';
 
   /**
-   * Control field selector.
+   * Jquery selector of field in a document.
    *
    * @var string
    */
@@ -58,7 +58,7 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
   protected $fieldStorage;
 
   /**
-   * The list field used in the test.
+   * The field to use in this test.
    *
    * @var \Drupal\field\Entity\FieldConfig
    */
@@ -69,12 +69,13 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
    */
   protected function setUp() {
     parent::setUp();
-    $this->fieldSelector = "[name=\"{$this->fieldName}[]\"]";
+
+    $this->fieldSelector = "[name=\"{$this->fieldName}\"]";
     $this->fieldStorageDefinition = [
       'field_name' => $this->fieldName,
       'entity_type' => 'node',
       'type' => 'list_integer',
-      'cardinality' => -1,
+      'cardinality' => 1,
       'settings' => [
         'allowed_values' => ['One', 'Two', 'Three'],
       ],
@@ -89,27 +90,25 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
     $this->field->save();
 
     EntityFormDisplay::load('node.article.default')
-      ->setComponent($this->fieldName, [
-        'type' => 'options_select',
-      ])
+      ->setComponent($this->fieldName, ['type' => 'options_select'])
       ->save();
   }
 
   /**
    * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
-  public function testCreateConfigVisibleValueAnd() {
+  public function testSelectSingleVisibleValueAnd() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '01-select-single-add-filed-conditions.png');
 
     // Set up conditions.
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      $this->fieldSelector => [0, 1],
+      $this->fieldSelector => 2,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -123,11 +122,11 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-post-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '02-select-single-post-add-list-options-filed-conditions.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->createScreenshot($this->screenshotPath . '03-submit-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '03-select-single-submit-list-options-filed-conditions.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -135,23 +134,23 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot($this->screenshotPath . '04-body-invisible-when-controlled-field-has-no-value.png');
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+    $this->createScreenshot($this->screenshotPath . '04-select-single-body-invisible-when-controlled-field-has-no-value.png');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a select value set that should not show the body.
-    $this->changeField($this->fieldSelector, [0]);
-    $this->createScreenshot($this->screenshotPath . '05-body-invisible-when-controlled-field-has-wrong-value.png');
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+    $this->changeField($this->fieldSelector, 1);
+    $this->createScreenshot($this->screenshotPath . '05-select-single-body-invisible-when-controlled-field-has-wrong-value.png');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a select value set to show the body.
-    $this->changeField($this->fieldSelector, [0, 1]);
-    $this->createScreenshot($this->screenshotPath . '06-body-visible-when-controlled-field-has-value.png');
-    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
+    $this->changeField($this->fieldSelector, 2);
+    $this->createScreenshot($this->screenshotPath . '06-select-single-body-visible-when-controlled-field-has-value.png');
+    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change a select value set to hide the body again.
-    $this->changeField($this->fieldSelector, ['_none']);
-    $this->createScreenshot($this->screenshotPath . '07-body-invisible-when-controlled-field-has-no-value-again.png');
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+    $this->changeField($this->fieldSelector, '_none');
+    $this->createScreenshot($this->screenshotPath . '07-select-single-body-invisible-when-controlled-field-has-no-value-again.png');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
   /**

@@ -1,7 +1,7 @@
 conditional_fields:
   path: '/admin/structure/conditional_fields'
   defaults:
-    _controller: '\Drupal\conditional_fields\Controller\ConditionalFieldController::entityTypeList'
+    _controller: 'conditional_fields.controller:entityTypeList'
     _title: 'Conditional fields'
   requirements:
     _permission: 'view conditional fields'
@@ -9,13 +9,15 @@ conditional_fields:
 conditional_fields.bundle_list:
   path: '/admin/structure/conditional_fields/{entity_type}'
   defaults:
-    _controller: '\Drupal\conditional_fields\Controller\ConditionalFieldController::bundleList'
+    _title_callback: 'conditional_fields.controller:bundleListTitle'
+    _controller: 'conditional_fields.controller:bundleList'
   requirements:
     _permission: 'view conditional fields'
 
 conditional_fields.conditions_list:
   path: '/admin/structure/conditional_fields/{entity_type}/{bundle}'
   defaults:
+    _title_callback: 'conditional_fields.controller:formTitle'
     _form: '\Drupal\conditional_fields\Form\ConditionalFieldForm'
   requirements:
     _permission: 'view conditional fields'
@@ -23,6 +25,7 @@ conditional_fields.conditions_list:
 conditional_fields.edit_form:
   path: '/admin/structure/conditional_fields/{entity_type}/{bundle}/{field_name}/{uuid}/edit'
   defaults:
+    _title_callback: 'conditional_fields.controller:editFormTitle'
     _form: '\Drupal\conditional_fields\Form\ConditionalFieldEditForm'
   requirements:
     _permission: 'edit conditional fields'
@@ -37,7 +40,8 @@ conditional_fields.delete_form:
 conditional_fields.tab:
   path: '/admin/structure/types/manage/{node_type}/conditionals'
   defaults:
-    _controller: '\Drupal\conditional_fields\Controller\ConditionalFieldController::provideArguments'
+    _title: 'Manage Dependencies'
+    _controller: 'conditional_fields.controller:provideArguments'
   requirements:
     _permission: 'view conditional fields'
 

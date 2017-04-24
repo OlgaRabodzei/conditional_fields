@@ -3,7 +3,6 @@
 namespace Drupal\Tests\conditional_fields\Unit;
 
 use Drupal\Tests\UnitTestCase;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 
 use Drupal\conditional_fields\Controller\ConditionalFieldController;
 
@@ -21,9 +20,14 @@ use Drupal\conditional_fields\Controller\ConditionalFieldController;
  */
 class ConditionalFieldControllerTest extends UnitTestCase {
 
+  /**
+   * CF Controller.
+   *
+   * @var ConditionalFieldController
+   */
   protected $controller;
 
- /**
+  /**
    * {@inheritdoc}
    */
   protected function setUp() {
@@ -49,12 +53,25 @@ class ConditionalFieldControllerTest extends UnitTestCase {
     $entity_type_manager->expects($this->any())
       ->method('getDefinitions')
       ->will($this->returnValue($entity_types));
-    $container = new ContainerBuilder();
-    $container->set('entity_type.manager', $entity_type_manager);
-    \Drupal::setContainer($container);
+
+    // For only one test case this classes not used,
+    // change this after adding new test cases.
+    $form_builder = $this->getMock('Drupal\Core\Form\FormBuilderInterface');
+    $form_builder->expects($this->never())->method($this->anything());
+
+    $entity_type_bundle_info = $this->getMock('Drupal\Core\Entity\EntityTypeBundleInfoInterface');
+    $entity_type_bundle_info->expects($this->never())->method($this->anything());
+
+    $entity_field_manager = $this->getMock('Drupal\Core\Entity\EntityFieldManagerInterface');
+    $entity_field_manager->expects($this->never())->method($this->anything());
 
     // ConditionalFieldController::create();
-    $this->controller = new ConditionalFieldController();
+    $this->controller = new ConditionalFieldController(
+      $entity_type_manager,
+      $form_builder,
+      $entity_type_bundle_info,
+      $entity_field_manager
+    );
   }
 
   /**
@@ -68,4 +85,5 @@ class ConditionalFieldControllerTest extends UnitTestCase {
     $this->assertEquals(1, count($available_entity_types));
     $this->assertEquals($available_entity_types[0]['title'], 'contentA');
   }
+
 }
