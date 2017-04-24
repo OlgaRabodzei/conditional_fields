@@ -83,10 +83,10 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->field = FieldConfig::create([
       'field_storage' => $this->fieldStorage,
       'bundle' => 'article',
-      'settings' => array(
+      'settings' => [
         'title' => DRUPAL_DISABLED,
         'link_type' => LinkItemInterface::LINK_GENERIC,
-      ),
+      ],
     ]);
     $this->field->save();
 
@@ -122,12 +122,13 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     }
 
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '02-link-field-post-add-list-options-filed-conditions.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
+    $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '03-link-field-submit-options-filed-conditions.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
@@ -167,7 +168,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('body', $this->fieldName, 'visible', 'value' );
+    $this->createCondition('body', $this->fieldName, 'visible', 'value');
     $this->createScreenshot($this->screenshotPath . '01-testFieldLinkVisibleValueNot.png');
 
     // Set up conditions.
@@ -184,12 +185,13 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
       $this->changeField($selector, $value);
     }
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form-tab').submit();");
+    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '02-testFieldLinkVisibleValueNot.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
+    $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '03-testFieldLinkVisibleValueNot.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
