@@ -2,6 +2,7 @@
 
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
+use Drupal\Component\Utility\Tags;
 use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
 
 /**
@@ -13,10 +14,6 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  */
 class LinkField extends ConditionalFieldsHandlerBase {
 
-  protected $handler_conditions = [
-    '#type' => 'link_field',
-  ];
-
   /**
    * {@inheritdoc}
    */
@@ -25,19 +22,22 @@ class LinkField extends ConditionalFieldsHandlerBase {
 
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        // Add a condition for title of URL.
-        if (!empty($options['value_form'][0]['title'])) {
-          // Prepare selector for title of link.
-          $title_selector = str_replace('uri', 'title', $options['selector']);
-          $state[$options['state']][$title_selector] = [
-            'value' => $options['value_form'][0]['title']
-          ];
+        $values_array = [];
+
+        // Get an array of values or string for comparing.
+        $values = static::getUriAsDisplayableString($options['value_form'][0]['uri']);
+
+        if (is_array($values)) {
+          foreach ($values as $value) {
+            $values_array[] = ['value' => $value];
+          }
+        }
+        // Link type = External links only - can be only string.
+        else {
+          $values_array = [$options['condition'] => $values];
         }
 
-        $uri = $this->getLinkTypeFromUri($options['value_form'][0]['uri']);
-        $state[$options['state']][$options['selector']] = [
-          $options['condition'] => $uri,
-        ];
+        $state[$options['state']][$options['selector']] = $values_array;
         break;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
@@ -57,18 +57,78 @@ class LinkField extends ConditionalFieldsHandlerBase {
   }
 
   /**
-   * Get value for internal and entity links.
+   * Gets the URI without the 'internal:' or 'entity:' scheme.
    *
-   * For example:
-   *  - internal:/node/1 returns /node/1
-   *  - entity:node/1 returns node/1
+   * The following two forms of URIs are transformed:
+   * - 'entity:' URIs: to entity autocomplete ("label (entity id)") strings;
+   * - 'internal:' URIs: the scheme is stripped.
    *
-   * @todo: It would be better return a node title instead of the path, is not it?
+   * This method is the inverse of ::getUserEnteredStringAsUri().
+   *
+   * @param string $uri
+   *   The URI to get the displayable string for.
+   *
+   * @return string
+   *
+   * @see LinkWidget::getUserEnteredStringAsUri()
    */
-  private function getLinkTypeFromUri($uri) {
-    $parts = explode(':', $uri);
+  private static function getUriAsDisplayableString($uri) {
+    $scheme = parse_url($uri, PHP_URL_SCHEME);
 
-    return (count($parts) > 1) ? $parts[1] : $parts[0];
+    // By default, the displayable string is the URI.
+    $displayable_string = $uri;
+
+    // A different displayable string may be chosen in case of the 'internal:'
+    // or 'entity:' built-in schemes.
+    if ($scheme === 'internal') {
+      $uri_reference = explode(':', $uri, 2)[1];
+
+      // @todo '<front>' is valid input for BC reasons, may be removed by
+      //   https://www.drupal.org/node/2421941
+      $path = parse_url($uri, PHP_URL_PATH);
+      if ($path === '/') {
+        $uri_reference = '<front>' . substr($uri_reference, 1);
+      }
+
+      $displayable_string = $uri_reference;
+    }
+    elseif ($scheme === 'entity') {
+      list($entity_type, $entity_id) = explode('/', substr($uri, 7), 2);
+      // Show the 'entity:' URI as the entity autocomplete would.
+      $entity_manager = \Drupal::entityManager();
+      if ($entity_manager->getDefinition($entity_type, FALSE) && $entity = \Drupal::entityManager()->getStorage($entity_type)->load($entity_id)) {
+        $displayable_string = static::getEntityLabels($entity);
+      }
+    }
+
+    return $displayable_string;
+  }
+
+  /**
+   * Returns an array with relevant values for autocomplete in different format.
+   *
+   * @param object $entity
+   *   The entity object.
+   *
+   * @return array
+   *   Relevant values for autocomplete, eg.
+   *   - Node title
+   *   - Node title (1)
+   *   - /node/1
+   */
+  private static function getEntityLabels($entity) {
+    // Use the special view label, since some entities allow the label to be
+    // viewed, even if the entity is not allowed to be viewed.
+    $title = $entity->label();
+
+    // Labels containing commas or quotes must be wrapped in quotes.
+    $title = Tags::encode($title);
+
+    $title_nid = $title . ' (' . $entity->id() . ')';
+
+    $result = [$title, $title_nid, '/node/' . $entity->id()];
+
+    return $result;
   }
 
 }
