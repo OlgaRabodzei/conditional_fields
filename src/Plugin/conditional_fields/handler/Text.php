@@ -8,14 +8,10 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  * Provides states handler for text fields.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_text",
+ *   id = "states_handler_string_textfield",
  * )
  */
 class Text extends ConditionalFieldsHandlerBase {
-
-  protected $handler_conditions = [
-    '#type' => 'textfield',
-  ];
 
   /**
    * {@inheritdoc}

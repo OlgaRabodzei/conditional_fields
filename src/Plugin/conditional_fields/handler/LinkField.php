@@ -8,14 +8,10 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  * Provides states handler for links provided by the Link module.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_link_field",
+ *   id = "states_handler_link_default",
  * )
  */
 class LinkField extends ConditionalFieldsHandlerBase {
-
-  protected $handler_conditions = [
-    '#type' => 'link_field',
-  ];
 
   /**
    * {@inheritdoc}
