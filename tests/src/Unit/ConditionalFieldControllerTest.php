@@ -3,7 +3,6 @@
 namespace Drupal\Tests\conditional_fields\Unit;
 
 use Drupal\Tests\UnitTestCase;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 
 use Drupal\conditional_fields\Controller\ConditionalFieldController;
 
@@ -22,6 +21,8 @@ use Drupal\conditional_fields\Controller\ConditionalFieldController;
 class ConditionalFieldControllerTest extends UnitTestCase {
 
   /**
+   * CF Controller.
+   *
    * @var ConditionalFieldController
    */
   protected $controller;
@@ -53,7 +54,8 @@ class ConditionalFieldControllerTest extends UnitTestCase {
       ->method('getDefinitions')
       ->will($this->returnValue($entity_types));
 
-    // For only one test case this classes not used, change this after adding new test cases.
+    // For only one test case this classes not used,
+    // change this after adding new test cases.
     $form_builder = $this->getMock('Drupal\Core\Form\FormBuilderInterface');
     $form_builder->expects($this->never())->method($this->anything());
 
@@ -83,4 +85,5 @@ class ConditionalFieldControllerTest extends UnitTestCase {
     $this->assertEquals(1, count($available_entity_types));
     $this->assertEquals($available_entity_types[0]['title'], 'contentA');
   }
+
 }
