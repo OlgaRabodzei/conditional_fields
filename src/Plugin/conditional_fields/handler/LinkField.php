@@ -16,6 +16,9 @@ class LinkField extends ConditionalFieldsHandlerBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo: Provide possibility to create states with pair URL and title.
+   *        Only states for URL currently supported.
    */
   public function statesHandler($field, $field_info, $options) {
     $state = [];
@@ -46,7 +49,6 @@ class LinkField extends ConditionalFieldsHandlerBase {
         // Works, there are not implementation here.
         break;
 
-
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND:
         // @todo: Send field settings to statesHandler to check field cardinality.
         break;
@@ -68,7 +70,8 @@ class LinkField extends ConditionalFieldsHandlerBase {
    * @param string $uri
    *   The URI to get the displayable string for.
    *
-   * @return string
+   * @return string|array
+   *   An available values for triggering event.
    *
    * @see LinkWidget::getUserEnteredStringAsUri()
    */
