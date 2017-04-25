@@ -163,11 +163,11 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->createScreenshot($this->screenshotPath . '01-link-field-add-filed-conditions.png');
 
     // Set up conditions.
-    $urls = implode('\n', ['node/add', 'node/1']);
+    $urls = ['node/add', 'node/1'];
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
-      '[name="values"]' => $urls,
+      '[name="values"]' => implode('\n', $urls),
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -227,11 +227,11 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->createScreenshot($this->screenshotPath . '01-testFieldLinkVisibleValueNot.png');
 
     // Set up conditions.
-    $urls = implode('\n', ['node/add', 'node/1']);
+    $urls = ['node/add', 'node/1'];
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
-      '[name="values"]' => $urls,
+      '[name="values"]' => implode('\n', $urls),
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
