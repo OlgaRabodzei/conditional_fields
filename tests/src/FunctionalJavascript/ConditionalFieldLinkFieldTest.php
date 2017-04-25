@@ -98,6 +98,61 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
   }
 
   /**
+   * Tests creating Conditional Field: Visible, values input mode - Widget.
+   */
+  public function testFieldLinkVisibleValueWidget() {
+    $this->baseTestSteps();
+
+    // Visit a ConditionalFields configuration page for Content bundles.
+    $this->createCondition('body', $this->fieldName, 'visible', 'value');
+    $this->createScreenshot($this->screenshotPath . '01-testFieldLinkVisibleValueWidget.png');
+
+    // Set up conditions.
+    $external_url = 'https://drupal.org';
+    $data = [
+      '[name="condition"]' => 'value',
+      '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
+      $this->fieldSelector => $external_url,
+      '[name="grouping"]' => 'AND',
+      '[name="state"]' => 'visible',
+      '[name="effect"]' => 'show',
+    ];
+    foreach ($data as $selector => $value) {
+      $this->changeField($selector, $value);
+    }
+
+    $this->getSession()->wait(1000, '!jQuery.active');
+    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $this->assertSession()->statusCodeEquals(200);
+    $this->createScreenshot($this->screenshotPath . '02-testFieldLinkVisibleValueWidget.png');
+
+    // Check if that configuration is saved.
+    $this->drupalGet('admin/structure/types/manage/article/conditionals');
+    $this->assertSession()->statusCodeEquals(200);
+    $this->createScreenshot($this->screenshotPath . '03-testFieldLinkVisibleValueWidget.png');
+    $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
+
+    // Visit Article Add form to check that conditions are applied.
+    $this->drupalGet('node/add/article');
+    $this->assertSession()->statusCodeEquals(200);
+
+    // Change a link that should not show the body.
+    $this->changeField($this->fieldSelector, '');
+    $this->createScreenshot($this->screenshotPath . '04-testFieldLinkVisibleValueWidget.png');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
+
+    // Check that the field Body is visible.
+    $this->changeField($this->fieldSelector, $external_url);
+    $this->createScreenshot($this->screenshotPath . '05-testFieldLinkVisibleValueWidget.png');
+    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
+
+    // Change a link that should not show the body again.
+    $this->changeField($this->fieldSelector, '');
+    $this->createScreenshot($this->screenshotPath . '06-testFieldLinkVisibleValueWidget.png');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
+  }
+
+  /**
    * Tests creating Conditional Field: Visible, values input mode - OR.
    */
   public function testFieldLinkVisibleValueOr() {
