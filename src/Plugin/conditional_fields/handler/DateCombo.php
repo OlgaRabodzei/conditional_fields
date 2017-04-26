@@ -8,14 +8,10 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  * Provides states handler for date combos.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_date_combo",
+ *   id = "states_handler_datetime_default",
  * )
  */
 class DateCombo extends ConditionalFieldsHandlerBase {
-
-  protected $handler_conditions = [
-    '#type' => 'date_combo',
-  ];
 
   /**
    * {@inheritdoc}

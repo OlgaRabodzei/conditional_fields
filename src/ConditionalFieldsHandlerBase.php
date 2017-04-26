@@ -7,8 +7,6 @@ namespace Drupal\conditional_fields;
  */
 abstract class ConditionalFieldsHandlerBase implements ConditionalFieldsHandlersPluginInterface {
 
-  protected $handler_conditions = [];
-
   /**
    * {@inheritdoc}
    */
