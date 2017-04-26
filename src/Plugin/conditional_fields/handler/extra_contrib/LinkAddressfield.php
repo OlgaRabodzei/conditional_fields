@@ -59,4 +59,15 @@ class LinkAddressfield extends ConditionalFieldsHandlerBase {
     return $state;
   }
 
+  /**
+   * Get values from widget settings for plugin.
+   *
+   * @param array $value_form
+   *   Dependency options.
+   *
+   * @return mixed
+   *   Values for triggering events.
+   */
+  public function getWidgetValue(array $value_form) {}
+
 }

@@ -76,13 +76,23 @@ class Select extends ConditionalFieldsHandlerBase {
     }
 
     if (count($options['value_form']) > 1) {
-      $values = [];
-      foreach ($options['value_form'] as $item) {
-        $values[] = $item[$key_column];
-      }
-      $state[$options['state']][$options['selector']] = array('value' => $values);
+      $state[$options['state']][$options['selector']] = [
+        'value' => array_column($options['value_form'], 'value')
+      ];
     }
+
     return $state;
   }
+
+  /**
+   * Get values from widget settings for plugin.
+   *
+   * @param array $value_form
+   *   Dependency options.
+   *
+   * @return mixed
+   *   Values for triggering events.
+   */
+  public function getWidgetValue(array $value_form) {}
 
 }
