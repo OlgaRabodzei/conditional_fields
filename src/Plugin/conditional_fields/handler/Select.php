@@ -73,7 +73,7 @@ class Select extends ConditionalFieldsHandlerBase {
     // of field.
     if ($field['#multiple']) {
       $state[$options['state']][$options['selector']] = [
-        'value' => array_column($options['value_form'], 'value')
+        'value' => array_column($options['value_form'], $key_column)
       ];
     }
     else {
