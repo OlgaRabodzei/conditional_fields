@@ -2,43 +2,44 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\link\LinkItemInterface;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use \DateTime;
 
 /**
- * Test Conditional Fields Link field plugin.
+ * Test Conditional Fields States.
  *
  * @group conditional_fields
  */
-class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
+class ConditionalFieldDateTimeTest extends ConditionalFieldBaseTest {
 
   /**
    * {@inheritdoc}
    */
-  protected $screenshotPath = 'sites/simpletest/conditional_fields/link_field/';
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/datetime/';
 
   /**
-   * Modules to enable.
+   * The default display settings to use for the formatters.
+   */
+  protected $defaultSettings;
+
+  /**
+   * An array of display options to pass to entity_get_display()
    *
    * @var array
    */
-  public static $modules = [
-    'conditional_fields',
-    'node',
-    'link',
-  ];
+  protected $displayOptions;
 
   /**
    * The field name used in the test.
    *
    * @var string
    */
-  protected $fieldName = 'link_field';
+  protected $fieldName = 'test_datetime';
 
   /**
-   * Jquery selector of field in a document.
+   * Control field selector.
    *
    * @var string
    */
@@ -59,7 +60,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
   protected $fieldStorage;
 
   /**
-   * The field to use in this test.
+   * The list field used in the test.
    *
    * @var \Drupal\field\Entity\FieldConfig
    */
@@ -70,49 +71,60 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
    */
   protected function setUp() {
     parent::setUp();
-
-    $this->fieldSelector = '[name="' . $this->fieldName . '[0][uri]"]';
+    $this->fieldSelector = "[name=\"{$this->fieldName}[0][value][date]\"]";
     $this->fieldStorageDefinition = [
-      'field_name' => $this->fieldName,
+      'field_name'  => $this->fieldName,
       'entity_type' => 'node',
-      'type' => 'link',
+      'type'        => 'datetime',
+      'settings' => array('datetime_type' => 'date'),
     ];
     $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
     $this->fieldStorage->save();
 
     $this->field = FieldConfig::create([
       'field_storage' => $this->fieldStorage,
-      'bundle' => 'article',
-      'settings' => [
-        'title' => DRUPAL_DISABLED,
-        'link_type' => LinkItemInterface::LINK_GENERIC,
-      ],
+      'bundle'        => 'article',
     ]);
     $this->field->save();
 
     EntityFormDisplay::load('node.article.default')
       ->setComponent($this->fieldName, [
-        'type' => 'link_default',
+        'type' => 'datetime_default',
       ])
+      ->save();
+
+    $this->defaultSettings = array(
+      'timezone_override' => '',
+    );
+
+    $this->displayOptions = array(
+      'type' => 'datetime_default',
+      'label' => 'hidden',
+      'settings' => array('format_type' => 'medium') + $this->defaultSettings,
+    );
+    entity_get_display($this->field->getTargetEntityTypeId(), $this->field->getTargetBundle(), 'full')
+      ->setComponent($this->fieldName, $this->displayOptions)
       ->save();
   }
 
   /**
    * Tests creating Conditional Field: Visible, values input mode - Widget.
    */
-  public function testFieldLinkVisibleValueWidget() {
+  public function testDateTimeVisibleValueWidget() {
+    $date = new DateTime();
+    $date->setTimestamp(time());
+
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-testFieldLinkVisibleValueWidget.png');
+    $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueWidget.png');
 
     // Set up conditions.
-    $external_url = 'https://drupal.org';
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      $this->fieldSelector => $external_url,
+      $this->fieldSelector => $date->format('Y-m-d'),
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -124,50 +136,55 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-testFieldLinkVisibleValueWidget.png');
+    $this->createScreenshot($this->screenshotPath . '02-testDateTimeVisibleValueWidget.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '03-testFieldLinkVisibleValueWidget.png');
+    $this->createScreenshot($this->screenshotPath . '03-testDateTimeVisibleValueWidget.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
     $this->assertSession()->statusCodeEquals(200);
 
-    // Change a link that should not show the body.
+    // Change a date that should not show the body.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '04-testFieldLinkVisibleValueWidget.png');
+    $this->createScreenshot($this->screenshotPath . '04-testDateTimeVisibleValueWidget.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Check that the field Body is visible.
-    $this->changeField($this->fieldSelector, $external_url);
-    $this->createScreenshot($this->screenshotPath . '05-testFieldLinkVisibleValueWidget.png');
+    $this->changeField($this->fieldSelector, $date);
+    $this->createScreenshot($this->screenshotPath . '05-testDateTimeVisibleValueWidget.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
-    // Change a link that should not show the body again.
+    // Change a date that should not show the body again.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '06-testFieldLinkVisibleValueWidget.png');
+    $this->createScreenshot($this->screenshotPath . '06-testDateTimeVisibleValueWidget.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
   /**
    * Tests creating Conditional Field: Visible, values input mode - OR.
    */
-  public function testFieldLinkVisibleValueOr() {
+  public function testDateTimeVisibleValueOr() {
+    $date = new DateTime();
+    $date2 = new DateTime();
+    $date->setTimestamp(time());
+    $date2->setTimestamp(strtotime("-1 year"));
+
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-link-field-add-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueOr.png');
 
     // Set up conditions.
-    $urls = ['node/add', 'node/1'];
+    $dates = implode('\n', [$date->format('Y-m-d'), $date2->format('Y-m-d')]);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
-      '[name="values"]' => implode('\n', $urls),
+      '[name="values"]' => $dates,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -179,12 +196,12 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-link-field-post-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '02-testDateTimeVisibleValueOr.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '03-link-field-submit-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '03-testDateTimeVisibleValueOr.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -192,46 +209,51 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot($this->screenshotPath . '04-link-field-body-invisible-when-controlled-field-has-no-value.png');
+    $this->createScreenshot($this->screenshotPath . '04-testDateTimeVisibleValueOr.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change a link that should not show the body.
+    // Change a date that should not show the body.
     $this->changeField($this->fieldSelector, 'https://drupal.org');
-    $this->createScreenshot($this->screenshotPath . '05-link-field-body-invisible-when-controlled-field-has-wrong-value.png');
+    $this->createScreenshot($this->screenshotPath . '05-testDateTimeVisibleValueOr.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change a link value to show the body.
-    $this->changeField($this->fieldSelector, $urls[0]);
-    $this->createScreenshot($this->screenshotPath . '06-link-field-body-visible-when-controlled-field-has-value.png');
+    // Change a date value to show the body.
+    $this->changeField($this->fieldSelector, $dates[0]);
+    $this->createScreenshot($this->screenshotPath . '06-testDateTimeVisibleValueOr.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
-    // Change a link value to show the body.
-    $this->changeField($this->fieldSelector, $urls[1]);
-    $this->createScreenshot($this->screenshotPath . '07-link-field-body-visible-when-controlled-field-has-value.png');
+    // Change a date value to show the body.
+    $this->changeField($this->fieldSelector, $dates[1]);
+    $this->createScreenshot($this->screenshotPath . '07-testDateTimeVisibleValueOr.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
-    // Change a link value to hide the body again.
+    // Change a date value to hide the body again.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '08-link-field-body-invisible-when-controlled-field-has-no-value-again.png');
+    $this->createScreenshot($this->screenshotPath . '08-testDateTimeVisibleValueOr.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
   /**
    * Tests creating Conditional Field: Visible, values input mode - NOT.
    */
-  public function testFieldLinkVisibleValueNot() {
+  public function testDateTimeVisibleValueNot() {
+    $date = new DateTime();
+    $date2 = new DateTime();
+    $date->setTimestamp(time());
+    $date2->setTimestamp(strtotime("-1 year"));
+
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueNot.png');
 
     // Set up conditions.
-    $urls = ['node/add', 'node/1'];
+    $dates = implode('\n', [$date->format('Y-m-d'), $date2->format('Y-m-d')]);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
-      '[name="values"]' => implode('\n', $urls),
+      '[name="values"]' => $dates,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -242,12 +264,12 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '02-testDateTimeVisibleValueNot.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '03-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '03-testDateTimeVisibleValueNot.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -255,23 +277,22 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is visible.
-    $this->createScreenshot($this->screenshotPath . '04-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '04-testDateTimeVisibleValueNot.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
-    // Change a link that should not show the body.
-    $this->changeField($this->fieldSelector, $urls[0]);
-    $this->createScreenshot($this->screenshotPath . '05-testFieldLinkVisibleValueNot.png');
+    // Change a date that should not show the body.
+    $this->changeField($this->fieldSelector, $dates[0]);
+    $this->createScreenshot($this->screenshotPath . '05-testDateTimeVisibleValueNot.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change a link that should not show the body again.
-    $this->changeField($this->fieldSelector, $urls[1]);
-    $this->createScreenshot($this->screenshotPath . '06-testFieldLinkVisibleValueNot.png');
+    // Change a date that should not show the body again.
+    $this->changeField($this->fieldSelector, $dates[1]);
+    $this->createScreenshot($this->screenshotPath . '06-testDateTimeVisibleValueNot.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change a link value to show the body.
+    // Change a date value to show the body.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '08-testFieldLinkVisibleValueNot.png');
+    $this->createScreenshot($this->screenshotPath . '08-testDateTimeVisibleValueNot.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
   }
-
 }
