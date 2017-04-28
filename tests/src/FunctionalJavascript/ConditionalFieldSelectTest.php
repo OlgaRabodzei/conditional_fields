@@ -97,7 +97,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
   /**
    * Tests creating Conditional Field: Visible if has value from taxonomy.
    */
-  public function testSelectSingleVisibleValueAnd() {
+  public function testCreateConfigVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
