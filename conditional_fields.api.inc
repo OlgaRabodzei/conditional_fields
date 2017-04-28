@@ -243,6 +243,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 }
 
 function conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options) {
+  $state = [];
   $type = \Drupal::service('plugin.manager.conditional_fields_handlers');
 
   if ($options['condition'] != 'value') {
@@ -261,13 +262,17 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
     // Execute special handler for fields that need further processing.
     // The handler has no return value. Modify the $state parameter by
     // reference if needed.
-    if (isset($widget_id) && $cf_handler = $type->createInstance('states_handler_' . $widget_id)) {
-      $state = $cf_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
-    }
-    if (empty($state)) {
-      // Default plugin.
-      $default_handler = $type->getDefaultPlugin();
-      $state = $default_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
+    if (isset($widget_id)) {
+      $handler_id = 'states_handler_' . $widget_id;
+      if (array_key_exists($handler_id, $type->getDefinitions())) {
+        /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $handler */
+        $handler = $type->createInstance($handler_id);
+      }
+      else {
+        // Use default plugin.
+        $handler = $type->getDefaultPlugin();
+      }
+      $state = $handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
     }
   }
 
