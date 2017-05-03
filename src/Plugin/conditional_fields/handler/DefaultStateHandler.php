@@ -24,7 +24,12 @@ class DefaultStateHandler extends ConditionalFieldsHandlerBase {
 
     switch ($values_set) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        $values[$options['condition']] = $options['value_form'];
+        if ($options['field_cardinality'] == 1) {
+          $values[$options['condition']] = current($options['value_form'][0]);
+        }
+        else {
+          $values[$options['condition']] = $options['value_form'];
+        }
         break;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:

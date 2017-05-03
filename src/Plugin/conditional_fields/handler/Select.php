@@ -69,19 +69,16 @@ class Select extends ConditionalFieldsHandlerBase {
       return $state;
     }
 
-    if (count($options['value_form']) == 1) {
+    if ($options['field_cardinality'] == 1) {
       $state[$options['state']][$options['selector']] = [
         'value' => $options['value_form'][0][$key_column],
       ];
     }
-
-    if (count($options['value_form']) > 1) {
-      $values = [];
-      foreach ($options['value_form'] as $item) {
-        $values[] = $item[$key_column];
-      }
+    else {
+      $values = array_column($options['value_form'], $key_column);
       $state[$options['state']][$options['selector']] = array('value' => $values);
     }
+
     return $state;
   }
 

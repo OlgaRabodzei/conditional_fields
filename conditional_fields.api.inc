@@ -258,6 +258,13 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
       $widget_id = $dependee_display['type'];
     }
 
+    // @todo: Use field cardinality instead of number of values that was
+    // selected on manage dependency tab. As temporary solution put cardinality
+    // in $options. Format of #states depend on field widget and field
+    // cardinality (it can be like value: string and value: [array]).
+    $field_config = FieldStorageConfig::loadByName($form_display->getTargetEntityTypeId(), $dependee);
+    $options['field_cardinality'] = $field_config->getCardinality();
+
     // Execute special handler for fields that need further processing.
     // The handler has no return value. Modify the $state parameter by
     // reference if needed.
