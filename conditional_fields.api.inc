@@ -264,14 +264,8 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
     // reference if needed.
     if (isset($widget_id)) {
       $handler_id = 'states_handler_' . $widget_id;
-      if (array_key_exists($handler_id, $type->getDefinitions())) {
-        /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $handler */
-        $handler = $type->createInstance($handler_id);
-      }
-      else {
-        // Use default plugin.
-        $handler = $type->getDefaultPlugin();
-      }
+      /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $handler */
+      $handler = $type->createInstance($handler_id);
       $state = $handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
     }
   }

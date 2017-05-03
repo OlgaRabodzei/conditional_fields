@@ -3,6 +3,7 @@
 namespace Drupal\conditional_fields;
 
 use Drupal\Component\Plugin\Factory\DefaultFactory;
+use Drupal\Component\Plugin\FallbackPluginManagerInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
@@ -10,7 +11,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
 /**
  * Manages discovery and instantiation of handler plugins.
  */
-class ConditionalFieldsHandlersManager extends DefaultPluginManager {
+class ConditionalFieldsHandlersManager extends DefaultPluginManager implements FallbackPluginManagerInterface {
 
   /**
    * Constructs a new ConditionalFieldsHandlersManager object.
@@ -42,13 +43,10 @@ class ConditionalFieldsHandlersManager extends DefaultPluginManager {
   }
 
   /**
-   * A default plugin that should be used if better one was not found.
-   *
-   * @return object
-   *   A fully configured plugin instance.
+   * {@inheritdoc}
    */
-  public function getDefaultPlugin() {
-    return $this->createInstance('states_handler_default_state');
+  public function getFallbackPluginId($plugin_id, array $configuration = array()) {
+    return 'states_handler_default_state';
   }
 
 }
