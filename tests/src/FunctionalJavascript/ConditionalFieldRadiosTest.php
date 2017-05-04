@@ -12,7 +12,7 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
  *
  * @group conditional_fields
  */
-class ConditionalFieldRadiosTest extends ConditionalFieldBaseTest {
+class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
 
   use EntityReferenceTestTrait;
 

@@ -12,7 +12,7 @@ use Drupal\link\LinkItemInterface;
  *
  * @group conditional_fields
  */
-class ConditionalFieldLinkFieldTest extends ConditionalFieldBaseTest {
+class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase {
 
   /**
    * {@inheritdoc}
