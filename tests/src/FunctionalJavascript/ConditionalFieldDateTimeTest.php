@@ -12,7 +12,7 @@ use \DateTime;
  *
  * @group conditional_fields
  */
-class ConditionalFieldDateTimeTest extends ConditionalFieldBaseTest {
+class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase {
 
   /**
    * {@inheritdoc}

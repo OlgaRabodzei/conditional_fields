@@ -7,7 +7,7 @@ use Drupal\FunctionalJavascriptTests\JavascriptTestBase;
 /**
  * Base setup for ConditionalField tests.
  */
-abstract class ConditionalFieldBaseTest extends JavascriptTestBase {
+abstract class ConditionalFieldTestBase extends JavascriptTestBase {
 
   /**
    * The entity manager service.

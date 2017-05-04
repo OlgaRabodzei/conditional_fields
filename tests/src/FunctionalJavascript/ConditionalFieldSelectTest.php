@@ -11,7 +11,7 @@ use Drupal\field\Entity\FieldStorageConfig;
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
+class ConditionalFieldSelectTest extends ConditionalFieldTestBase {
 
   /**
    * Modules to enable.
