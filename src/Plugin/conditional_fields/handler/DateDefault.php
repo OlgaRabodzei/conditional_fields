@@ -11,7 +11,7 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  *   id = "states_handler_datetime_default",
  * )
  */
-class DateCombo extends ConditionalFieldsHandlerBase {
+class DateDefault extends ConditionalFieldsHandlerBase {
 
   /**
    * {@inheritdoc}
