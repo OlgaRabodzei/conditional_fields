@@ -12,7 +12,7 @@ use Drupal\Tests\RandomGeneratorTrait;
  *
  * @group conditional_fields
  */
-class ConditionalFieldEntityReferenceTest extends ConditionalFieldBaseTest {
+class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase {
 
   use EntityReferenceTestTrait;
   use RandomGeneratorTrait;
