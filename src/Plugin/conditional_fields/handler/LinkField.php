@@ -28,7 +28,8 @@ class LinkField extends ConditionalFieldsHandlerBase {
         $values_array = [];
 
         // Get an array of values or string for comparing.
-        $values = static::getUriAsDisplayableString($options['value_form'][0]['uri']);
+        $uri = $this->getWidgetValue($options['value_form']);
+        $values = static::getUriAsDisplayableString($uri);
 
         if (is_array($values)) {
           foreach ($values as $value) {
@@ -132,6 +133,19 @@ class LinkField extends ConditionalFieldsHandlerBase {
     $result = [$title, $title_nid, '/node/' . $entity->id()];
 
     return $result;
+  }
+
+  /**
+   * Get values from widget settings for plugin.
+   *
+   * @param array $value_form
+   *   Dependency options.
+   *
+   * @return mixed
+   *   Values for triggering events.
+   */
+  public function getWidgetValue(array $value_form) {
+    return $value_form[0]['uri'];
   }
 
 }
