@@ -24,7 +24,7 @@ class Checkbox extends ConditionalFieldsHandlerBase {
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $widget_value = $this->getWidgetValue($options['value_form']);
-        $checked = $field['#return_value'] == $widget_value['value'];
+        $checked = $field['#return_value'] == $widget_value;
         break;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:

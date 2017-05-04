@@ -24,8 +24,8 @@ class EntityReference extends ConditionalFieldsHandlerBase {
     switch ($values_set) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $target_id = $this->getWidgetValue($options['value_form']);
-        if (!empty($options['value_form'][0]['target_id'])) {
-          $node = Node::load($options['value_form'][0]['target_id']);
+        if (!empty($target_id)) {
+          $node = Node::load($target_id);
           // Create an array of valid formats of title for autocomplete.
           $state[$options['state']][$options['selector']] = [
             // Node title (nid).
