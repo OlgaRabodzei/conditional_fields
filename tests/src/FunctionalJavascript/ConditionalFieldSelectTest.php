@@ -5,13 +5,14 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields Select Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
+class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   /**
    * Modules to enable.
@@ -95,9 +96,9 @@ class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testSelectSingleVisibleValueAnd() {
+  public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -154,11 +155,38 @@ class ConditionalFieldSelectTest extends ConditionalFieldBaseTest {
   }
 
   /**
-   * Helper to change Field value with Javascript.
+   * {@inheritdoc}
    */
-  protected function changeField($selector, $value = '') {
-    $value = json_encode($value);
-    $this->getSession()->executeScript("jQuery('{$selector}').val({$value}).trigger('keyup').trigger('change');");
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {
+    // TODO: Implement testVisibleValueOr() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
   }
 
 }

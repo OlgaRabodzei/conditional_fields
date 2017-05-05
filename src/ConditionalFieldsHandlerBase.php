@@ -18,4 +18,11 @@ abstract class ConditionalFieldsHandlerBase implements ConditionalFieldsHandlers
     return FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getWidgetValue(array $value_form) {
+    return $value_form[0]['value'];
+  }
+
 }

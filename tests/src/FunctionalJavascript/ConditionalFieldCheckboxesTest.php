@@ -6,13 +6,14 @@ use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields Checkboxes Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldCheckboxesTest extends ConditionalFieldBaseTest {
+class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   use EntityReferenceTestTrait;
 
@@ -71,9 +72,23 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldBaseTest {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigVisibleValueAnd() {
+  public function testVisibleValueWidget() {
+    // TODO: Implement testVisibleValueWidget() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -119,9 +134,9 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldBaseTest {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigVisibleValueOr() {
+  public function testVisibleValueOr() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -165,6 +180,20 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldBaseTest {
     // Change a select value set to hide the body again.
     $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id_2, $term_id_2);
     $this->waitUntilHidden('.field--name-body', 60, 'Article Body field is visible');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
   }
 
 }

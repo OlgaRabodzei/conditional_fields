@@ -2,12 +2,14 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldCheckedUncheckedInterface;
+
 /**
  * Test Conditional Fields Checkbox state.
  *
  * @group conditional_fields
  */
-class ConditionalFieldCheckboxTest extends ConditionalFieldBaseTest {
+class ConditionalFieldCheckboxTest extends ConditionalFieldTestBase implements ConditionalFieldCheckedUncheckedInterface {
 
   /**
    * {@inheritdoc}
@@ -15,9 +17,9 @@ class ConditionalFieldCheckboxTest extends ConditionalFieldBaseTest {
   protected $screenshotPath = 'sites/simpletest/conditional_fields/checkbox/';
 
   /**
-   * Tests creating Conditional Field: Visible if checked.
+   * {@inheritdoc}
    */
-  public function testCreateConfigVisibleChecked() {
+  public function testVisibleChecked() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
@@ -37,9 +39,16 @@ class ConditionalFieldCheckboxTest extends ConditionalFieldBaseTest {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if checked.
+   * {@inheritdoc}
    */
-  public function testCreateConfigInvisibleUnchecked() {
+  public function testVisibleUnchecked() {
+    // TODO: Implement testVisibleUnchecked() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleUnchecked() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.

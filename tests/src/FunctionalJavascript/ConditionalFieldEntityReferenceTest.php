@@ -5,6 +5,8 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\node\Entity\Node;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 use Drupal\Tests\RandomGeneratorTrait;
 
 /**
@@ -12,7 +14,9 @@ use Drupal\Tests\RandomGeneratorTrait;
  *
  * @group conditional_fields
  */
-class ConditionalFieldEntityReferenceTest extends ConditionalFieldBaseTest {
+class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase implements
+  ConditionalFieldValueInterface,
+  ConditionalFieldFilledEmptyInterface {
 
   use EntityReferenceTestTrait;
   use RandomGeneratorTrait;
@@ -90,7 +94,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldBaseTest {
   /**
    * Tests creating Conditional Field: Visible if has value from widget.
    */
-  public function testEntityReferenceVisibleValueWidget() {
+  public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Create a node that we will use in reference field.
@@ -167,6 +171,69 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldBaseTest {
     $this->changeField($this->fieldSelector, '');
     $this->createScreenshot($this->screenshotPath . '09-entity-reference-body-invisible-when-controlled-field-has-no-value-again.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {
+    // TODO: Implement testVisibleValueOr() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleFilled() {
+    // TODO: Implement testVisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleEmpty() {
+    // TODO: Implement testVisibleEmpty() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleFilled() {
+    // TODO: Implement testInvisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleEmpty() {
+    // TODO: Implement testInvisibleEmpty() method.
   }
 
 }

@@ -69,19 +69,19 @@ class Select extends ConditionalFieldsHandlerBase {
       return $state;
     }
 
-    if (count($options['value_form']) == 1) {
+    // Use string or an array for trigger the dependency based on cardinality
+    // of field.
+    if ($field['#multiple']) {
       $state[$options['state']][$options['selector']] = [
-        'value' => $options['value_form'][0][$key_column],
+        'value' => array_column($options['value_form'], $key_column)
+      ];
+    }
+    else {
+      $state[$options['state']][$options['selector']] = [
+        'value' => $options['value_form'][0][$key_column]
       ];
     }
 
-    if (count($options['value_form']) > 1) {
-      $values = [];
-      foreach ($options['value_form'] as $item) {
-        $values[] = $item[$key_column];
-      }
-      $state[$options['state']][$options['selector']] = array('value' => $values);
-    }
     return $state;
   }
 

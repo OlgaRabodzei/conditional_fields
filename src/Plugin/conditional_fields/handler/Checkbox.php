@@ -23,8 +23,8 @@ class Checkbox extends ConditionalFieldsHandlerBase {
 
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        $value = !empty($options['value_form'][0]) ? $options['value_form'][0] : $options['value_form'];
-        $checked = $field['#return_value'] == $value['value'];
+        $widget_value = $this->getWidgetValue($options['value_form']);
+        $checked = $field['#return_value'] == $widget_value;
         break;
 
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
@@ -47,6 +47,19 @@ class Checkbox extends ConditionalFieldsHandlerBase {
     $state[$options['state']][$options['selector']] = array('checked' => $checked);
 
     return $state;
+  }
+
+  /**
+   * Get values from widget settings for plugin.
+   *
+   * @param array $value_form
+   *   Dependency options.
+   *
+   * @return mixed
+   *   Values for triggering events.
+   */
+  public function getWidgetValue(array $value_form) {
+    return isset($value_form[0]['value']) ? $value_form[0]['value'] : $value_form;
   }
 
 }
