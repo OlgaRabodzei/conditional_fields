@@ -158,27 +158,37 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueRegExp() {}
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueAnd() {}
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueOr() {}
+  public function testVisibleValueOr() {
+    // TODO: Implement testVisibleValueOr() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueNot() {}
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueXor() {}
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
 
   /**
    * Helper to change Field value with Javascript.

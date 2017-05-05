@@ -5,6 +5,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\node\Entity\Node;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 use Drupal\Tests\RandomGeneratorTrait;
 
@@ -13,7 +14,9 @@ use Drupal\Tests\RandomGeneratorTrait;
  *
  * @group conditional_fields
  */
-class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
+class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase implements
+  ConditionalFieldValueInterface,
+  ConditionalFieldFilledEmptyInterface {
 
   use EntityReferenceTestTrait;
   use RandomGeneratorTrait;
@@ -173,26 +176,64 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueRegExp() {}
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueAnd() {}
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueOr() {}
+  public function testVisibleValueOr() {
+    // TODO: Implement testVisibleValueOr() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueNot() {}
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueXor() {}
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleFilled() {
+    // TODO: Implement testVisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleEmpty() {
+    // TODO: Implement testVisibleEmpty() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleFilled() {
+    // TODO: Implement testInvisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleEmpty() {
+    // TODO: Implement testInvisibleEmpty() method.
+  }
 
 }

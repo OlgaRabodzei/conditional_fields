@@ -6,6 +6,7 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\link\LinkItemInterface;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
@@ -13,7 +14,9 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
  *
  * @group conditional_fields
  */
-class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
+class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
+  ConditionalFieldValueInterface,
+  ConditionalFieldFilledEmptyInterface {
 
   /**
    * {@inheritdoc}
@@ -156,12 +159,16 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueRegExp() {}
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueAnd() {}
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
 
   /**
    * {@inheritdoc}
@@ -288,6 +295,36 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueXor() {}
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleFilled() {
+    // TODO: Implement testVisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleEmpty() {
+    // TODO: Implement testVisibleEmpty() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleFilled() {
+    // TODO: Implement testInvisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleEmpty() {
+    // TODO: Implement testInvisibleEmpty() method.
+  }
 
 }

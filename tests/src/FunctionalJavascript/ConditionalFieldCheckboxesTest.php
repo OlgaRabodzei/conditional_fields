@@ -74,12 +74,16 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueWidget() {}
+  public function testVisibleValueWidget() {
+    // TODO: Implement testVisibleValueWidget() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueRegExp() {}
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
 
   /**
    * {@inheritdoc}
@@ -181,11 +185,15 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueNot() {}
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function testVisibleValueXor() {}
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
 
 }

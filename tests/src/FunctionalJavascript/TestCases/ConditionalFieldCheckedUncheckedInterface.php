@@ -18,4 +18,9 @@ interface ConditionalFieldCheckedUncheckedInterface {
    */
   public function testVisibleUnchecked();
 
+  /**
+   * The target field is Invisible when the control field is Unchecked.
+   */
+  public function testInvisibleUnchecked();
+
 }

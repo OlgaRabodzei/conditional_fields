@@ -42,6 +42,13 @@ class ConditionalFieldCheckboxTest extends ConditionalFieldTestBase implements C
    * {@inheritdoc}
    */
   public function testVisibleUnchecked() {
+    // TODO: Implement testVisibleUnchecked() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleUnchecked() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
