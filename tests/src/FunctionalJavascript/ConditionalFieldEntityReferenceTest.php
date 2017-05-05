@@ -5,6 +5,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\node\Entity\Node;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 use Drupal\Tests\RandomGeneratorTrait;
 
 /**
@@ -12,7 +13,7 @@ use Drupal\Tests\RandomGeneratorTrait;
  *
  * @group conditional_fields
  */
-class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase {
+class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   use EntityReferenceTestTrait;
   use RandomGeneratorTrait;
@@ -90,7 +91,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase {
   /**
    * Tests creating Conditional Field: Visible if has value from widget.
    */
-  public function testEntityReferenceVisibleValueWidget() {
+  public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Create a node that we will use in reference field.
@@ -168,5 +169,30 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase {
     $this->createScreenshot($this->screenshotPath . '09-entity-reference-body-invisible-when-controlled-field-has-no-value-again.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueRegExp() {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueNot() {}
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {}
 
 }
