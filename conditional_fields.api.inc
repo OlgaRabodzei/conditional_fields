@@ -268,6 +268,13 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
       $handler = $type->createInstance($handler_id);
       $state = $handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
     }
+
+    if (empty($state)) {
+      // If states empty Default plugin.
+      /** @var Drupal\conditional_fields\ConditionalFieldsHandlersPluginInterface $default_handler */
+      $default_handler = $type->createInstance('states_handler_default_state');
+      $state = $default_handler->statesHandler($dependee_form_field, $dependee_form_state, $options);
+    }
   }
 
   return $state;
