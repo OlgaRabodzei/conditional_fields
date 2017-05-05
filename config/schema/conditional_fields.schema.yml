@@ -20,7 +20,6 @@ field.widget.third_party.conditional_fields:
         type: conditional_fields.settings
         label: 'Condition settings'
 
-# TODO: Check all points.
 conditional_fields.settings:
   type: mapping
   label: 'Condition settings'
@@ -31,12 +30,16 @@ conditional_fields.settings:
       type: string
     grouping:
       type: string
+      label: 'Interaction with other dependencies'
     values_set:
       type: integer
+      label: 'Values input mode'
     value:
       type: string
+      label: 'Value for boolean or string condition'
     values:
       type: sequence
+      label: 'Value from set of values OR,AND,NOT,XOR'
       sequence:
         type: string
     value_form:
@@ -50,25 +53,6 @@ conditional_fields.settings:
       type: string
     effect_options:
       type: sequence
-    element_view: # Not sure
-      type: sequence
-      sequence:
-        type: string
-    element_view_per_role:
-      type: boolean
-    element_view_roles:
-      type: sequence
-      sequence:
-        type: string
-    element_edit: # Not sure
-      type: sequence
-      sequence:
-        type: string
-    element_edit_per_role:
-      type: boolean
-    element_edit_roles:
-      type: sequence
-      sequence:
-        type: string
     selector:
       type: string
+      label: 'Custom jQuery selector'
