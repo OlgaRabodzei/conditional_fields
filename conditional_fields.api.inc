@@ -509,7 +509,7 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
 
     // Reinstate remaining errors.
     foreach ($errors as $name => $error) {
-      $form_state->setError($form[$name], $error);
+      $form_state->setErrorByName($name, $error);
       // form_set_error() calls drupal_set_message(), so we have to filter out
       // these from the messages to avoid duplicates.
       $removed_messages[] = $error;
