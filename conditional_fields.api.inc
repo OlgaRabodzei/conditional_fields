@@ -83,43 +83,12 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       // If this dependent has multiple dependees, only the logic of the first
       // dependency will be taken into account.
       if (!isset($behaviors)) {
+        // TODO: Support behaviors.
+        // Behaviour dependent on user roles.
         $behaviors = conditional_fields_field_behaviors('edit', $options);
       }
 
-      // Determine if the dependee is in the form.
-      if (empty($dependee_form_field) || (isset($dependee_form_field['#access']) && $dependee_form_field['#access'] == FALSE)) {
-        // Apply orphan dependent behaviors.
-        /*
-        if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN, $behaviors)) {
-          // TODO
-          $is_triggered = TRUE;
-
-          if ($is_orphan && !$is_triggered) {
-            $form[$dependent]['#access'] = FALSE;
-          }
-        }
-        */
-        if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN, $behaviors)) {
-          $dependent_form_field['#access'] = FALSE;
-        }
-        unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN]);
-        unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN]);
-        unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED]);
-        continue;
-      }
-
-      unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN]);
-      unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN]);
-
-      // Build a jQuery selector if it was not overridden by a custom value.
-      // Note that this may be overridden later by a state handler.
-      if (!$options['selector']) {
-        $options['selector'] = conditional_fields_field_selector($dependee_form_field);
-      }
-      else {
-        // Replace the language placeholder in the selector with current language.
-        $options['selector'] = str_replace('%lang', $dependee_form_field['#language'], $options['selector']);
-      }
+      $options['selector'] = conditional_fields_get_selector($options['selector'], $dependee_form_field);
 
       $state = conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options);
 
@@ -134,49 +103,16 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         _conditional_fields_element_add_property($dependent_form_field, '#element_validate', 'conditional_fields_dependent_validate', 'append');
       }
 
-      // Add the $state into the correct logic group in $states.
-      foreach ($state as $key => $constraints) {
-        if (empty($states[$key][$options['grouping']])) {
-          $states[$key][$options['grouping']] = $constraints;
-        }
-        else {
-          $states[$key][$options['grouping']] = array_merge($states[$key][$options['grouping']], $constraints);
-        }
-      }
+      conditional_fields_add_state_to_group($states, $state, $options);
 
-      // Build effect settings for effects with options.
-      // TODO: add dependee key to allow different effects on the same selector.
-      if ($options['effect'] && $options['effect'] != 'show') {
-        $selector = conditional_fields_field_selector(NestedArray::getValue($form, array($dependent_location[0])));
-        // Convert numeric strings to numbers.
-        foreach ($options['effect_options'] as &$effect_option) {
-          if (is_numeric($effect_option)) {
-            $effect_option += 0;
-          }
-        }
-        $effects[$selector] = array(
-          'effect' => $options['effect'],
-          'options' => $options['effect_options'],
-        );
-      }
+      $selector = conditional_fields_field_selector(NestedArray::getValue($form, array($dependent_location[0])));
+      $effects[$selector] = conditional_fields_get_effect($options);
 
-      // Apply reset dependent to default if untriggered behavior.
-      if (in_array(CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED, $behaviors)) {
-        // Add property to element so conditional_fields_dependent_validate()
-        // can pick it up.
-        $dependent_form_field['#conditional_fields_reset_if_untriggered'] = TRUE;
-        unset($behaviors[CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED]);
-      }
     }
 
+    // TODO: Support behaviors dependent on user role.
     // Execute custom behaviors callbacks.
-    if (!empty($behaviors)) {
-      foreach ($behaviors as $behavior) {
-        $behavior($form, $form_state, $dependent, $dependent_info);
-      }
-    }
-
-    unset($behaviors);
+    conditional_fields_execute_behaviors($behaviors, $form, $form_state, $dependent, $dependent_info);
 
     if (empty($states)) {
       continue;
@@ -217,12 +153,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
     // Add the #states property to the dependent field.
     NestedArray::setValue($form, array_merge($dependent_location, array('#states')), $states);
-
-    $has_states = TRUE;
-  }
-
-  if (empty($has_states)) {
-    return $form;
   }
 
   $form['#attached']['library'][] = 'conditional_fields/conditional_fields';
@@ -240,6 +170,38 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
   $form_state->setValue('conditional_fields_untriggered_dependents', []);
 
   return $form;
+}
+
+/**
+ * Execute custom behaviors callbacks.
+ */
+function conditional_fields_execute_behaviors($behaviors, $form, FormStateInterface &$form_state, $dependent, $dependent_info) {
+  if (empty($behaviors)) {
+    return;
+  }
+  foreach ($behaviors as $behavior) {
+    if (!function_exists($behavior)) {
+      continue;
+    }
+    $behavior($form, $form_state, $dependent, $dependent_info);
+  }
+
+}
+
+/**
+ * Build a jQuery selector if it was not overridden by a custom value.
+ *
+ * Note that this may be overridden later by a state handler.
+ */
+function conditional_fields_get_selector($options_selector, $dependee_form_field) {
+  if (!$options_selector) {
+    $selector = conditional_fields_field_selector($dependee_form_field);
+  }
+  else {
+    // Replace the language placeholder in the selector with current language.
+    $selector = str_replace('%lang', $dependee_form_field['#language'], $options_selector);
+  }
+  return $selector;
 }
 
 function conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options) {
@@ -278,6 +240,36 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
   }
 
   return $state;
+}
+
+function conditional_fields_add_state_to_group(&$states, $state, $options) {
+  // Add the $state into the correct logic group in $states.
+  foreach ($state as $key => $constraints) {
+    if (empty($states[$key][$options['grouping']])) {
+      $states[$key][$options['grouping']] = $constraints;
+    }
+    else {
+      $states[$key][$options['grouping']] = array_merge($states[$key][$options['grouping']], $constraints);
+    }
+  }
+}
+
+function conditional_fields_get_effect($options) {
+  // Build effect settings for effects with options.
+  // TODO: add dependee key to allow different effects on the same selector.
+  if ($options['effect'] && $options['effect'] != 'show') {
+    // Convert numeric strings to numbers.
+    foreach ($options['effect_options'] as &$effect_option) {
+      if (is_numeric($effect_option)) {
+        $effect_option += 0;
+      }
+    }
+    return [
+      'effect' => $options['effect'],
+      'options' => $options['effect_options'],
+    ];
+  }
+  return [];
 }
 
 /**
