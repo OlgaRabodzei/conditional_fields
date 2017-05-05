@@ -2,6 +2,7 @@
 
 namespace Drupal\conditional_fields\Form;
 
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
@@ -320,6 +321,15 @@ class ConditionalFieldEditForm extends FormBase {
 
       // Set field value.
       if ($settings['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+        // Get and save value as string with timezone.
+        $value = &$settings[$dependee];
+        if (is_object($value[0]['value']) && $value[0]['value'] instanceof DrupalDateTime) {
+          foreach ($value as $delta => $date) {
+            if (!empty($date['value'])) {
+              $value[$delta]['value'] = $date['value']->format('Y-m-d');
+            }
+          }
+        }
         $settings['value_form'] = $settings[$dependee];
         unset($settings[$dependee]);
       }

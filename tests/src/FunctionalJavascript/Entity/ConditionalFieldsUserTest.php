@@ -4,7 +4,7 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript\Entity;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldBaseTest;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\ConditionalFieldTestBase;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 /**
@@ -12,7 +12,7 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
  *
  * @group conditional_fields
  */
-class ConditionalFieldsUserTestTest extends ConditionalFieldBaseTest {
+class ConditionalFieldsUserTestTest extends ConditionalFieldTestBase {
 
   /**
    * Control field name.

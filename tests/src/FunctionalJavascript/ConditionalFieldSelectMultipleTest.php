@@ -11,7 +11,7 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectMultipleTest extends ConditionalFieldBaseTest {
+class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase {
 
   /**
    * Modules to enable.

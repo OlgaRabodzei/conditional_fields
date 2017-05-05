@@ -11,7 +11,7 @@ use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
  *   id = "states_handler_datetime_default",
  * )
  */
-class DateCombo extends ConditionalFieldsHandlerBase {
+class DateDefault extends ConditionalFieldsHandlerBase {
 
   /**
    * {@inheritdoc}
@@ -32,15 +32,17 @@ class DateCombo extends ConditionalFieldsHandlerBase {
 
     $regex = $options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX;
 
+    $widget_values = $this->getWidgetValue($options['value_form']);
+
     // Date popup.
     if ($field_info['instance']['widget']['type'] == 'date_popup') {
       $date_selectors[conditional_fields_field_selector($field['value']['date'])] = [
-        'value' => $regex ? $options['value'] : $options['value_form'][0]['value']['date'],
+        'value' => $regex ? $options['value'] : $widget_values['date'],
       ];
 
       if ($field_info['field']['settings']['granularity']['hour'] || $field_info['field']['settings']['granularity']['minute'] || $field_info['field']['settings']['granularity']['second']) {
         $date_selectors[conditional_fields_field_selector($field['value']['time'])] = [
-          'value' => $regex ? $options['value'] : $options['value_form'][0]['value']['time'],
+          'value' => $regex ? $options['value'] : $widget_values['time'],
         ];
       }
     }
@@ -49,7 +51,7 @@ class DateCombo extends ConditionalFieldsHandlerBase {
       foreach ($field_info['field']['settings']['granularity'] as $date_part) {
         if ($date_part) {
           $date_selectors[conditional_fields_field_selector($field['value'][$date_part])] = [
-            'value' => $regex ? $options['value'] : $options['value_form'][0]['value'][$date_part],
+            'value' => $regex ? $options['value'] : $widget_values[$date_part],
           ];
         }
       }
