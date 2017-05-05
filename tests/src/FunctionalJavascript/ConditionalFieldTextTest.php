@@ -18,6 +18,9 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
    */
   protected $screenshotPath = 'sites/simpletest/conditional_fields/text/';
 
+  /**
+   * {@inheritdoc}
+   */
   public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
