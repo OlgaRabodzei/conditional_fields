@@ -88,15 +88,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
         $behaviors = conditional_fields_field_behaviors('edit', $options);
       }
 
-      // Build a jQuery selector if it was not overridden by a custom value.
-      // Note that this may be overridden later by a state handler.
-      if (!$options['selector']) {
-        $options['selector'] = conditional_fields_field_selector($dependee_form_field);
-      }
-      else {
-        // Replace the language placeholder in the selector with current language.
-        $options['selector'] = str_replace('%lang', $dependee_form_field['#language'], $options['selector']);
-      }
+      $options['selector'] = conditional_fields_get_selector($options['selector'], $dependee_form_field);
 
       $state = conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options);
 
@@ -121,8 +113,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
     // TODO: Support behaviors dependent on user role.
     // Execute custom behaviors callbacks.
     conditional_fields_execute_behaviors($behaviors, $form, $form_state, $dependent, $dependent_info);
-
-    unset($behaviors);
 
     if (empty($states)) {
       continue;
@@ -163,12 +153,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
     // Add the #states property to the dependent field.
     NestedArray::setValue($form, array_merge($dependent_location, array('#states')), $states);
-
-    $has_states = TRUE;
-  }
-
-  if (empty($has_states)) {
-    return $form;
   }
 
   $form['#attached']['library'][] = 'conditional_fields/conditional_fields';
@@ -202,6 +186,22 @@ function conditional_fields_execute_behaviors($behaviors, $form, FormStateInterf
     $behavior($form, $form_state, $dependent, $dependent_info);
   }
 
+}
+
+/**
+ * Build a jQuery selector if it was not overridden by a custom value.
+ *
+ * Note that this may be overridden later by a state handler.
+ */
+function conditional_fields_get_selector($options_selector, $dependee_form_field) {
+  if (!$options_selector) {
+    $selector = conditional_fields_field_selector($dependee_form_field);
+  }
+  else {
+    // Replace the language placeholder in the selector with current language.
+    $selector = str_replace('%lang', $dependee_form_field['#language'], $options_selector);
+  }
+  return $selector;
 }
 
 function conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options) {
