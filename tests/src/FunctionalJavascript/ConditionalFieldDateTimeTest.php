@@ -6,13 +6,14 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use \DateTime;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields States.
  *
  * @group conditional_fields
  */
-class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase {
+class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   /**
    * {@inheritdoc}
@@ -108,9 +109,9 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible, values input mode - Widget.
+   * {@inheritdoc}
    */
-  public function testDateTimeVisibleValueWidget() {
+  public function testVisibleValueWidget() {
     $date = new DateTime();
     $date->setTimestamp(time());
 
@@ -165,9 +166,23 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible, values input mode - OR.
+   * {@inheritdoc}
    */
-  public function testDateTimeVisibleValueOr() {
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {
     $date = new DateTime();
     $date2 = new DateTime();
     $date->setTimestamp(time());
@@ -234,9 +249,9 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible, values input mode - NOT.
+   * {@inheritdoc}
    */
-  public function testDateTimeVisibleValueNot() {
+  public function testVisibleValueNot() {
     $date = new DateTime();
     $date2 = new DateTime();
     $date->setTimestamp(time());
@@ -295,4 +310,12 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase {
     $this->createScreenshot($this->screenshotPath . '08-testDateTimeVisibleValueNot.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
+
 }

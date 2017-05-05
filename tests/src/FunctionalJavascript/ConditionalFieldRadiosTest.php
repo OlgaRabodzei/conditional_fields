@@ -6,13 +6,17 @@ use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldCheckedUncheckedInterface;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields States.
  *
  * @group conditional_fields
  */
-class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
+class ConditionalFieldRadiosTest extends ConditionalFieldTestBase implements
+  ConditionalFieldValueInterface,
+  ConditionalFieldCheckedUncheckedInterface {
 
   use EntityReferenceTestTrait;
 
@@ -71,9 +75,24 @@ class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigAnd() {
+  public function testVisibleValueWidget() {
+    // TODO: Implement testVisibleValueWidget() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
@@ -110,9 +129,9 @@ class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating CF: Visible if has one of values from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigOr() {
+  public function testVisibleValueOr() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
@@ -156,9 +175,23 @@ class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has any value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigChecked() {
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleChecked() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
@@ -184,9 +217,9 @@ class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: inVisible if has any value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigUnChecked() {
+  public function testVisibleUnchecked() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
@@ -208,6 +241,13 @@ class ConditionalFieldRadiosTest extends ConditionalFieldTestBase {
       $this->changeSelect('#edit-field-' . $this->taxonomyName . '-' . $term_id, $term_id);
       $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleUnchecked() {
+    // TODO: Implement testInvisibleUnchecked() method.
   }
 
 }
