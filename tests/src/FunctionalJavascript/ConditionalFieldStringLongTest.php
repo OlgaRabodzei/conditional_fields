@@ -144,7 +144,7 @@ class ConditionalFieldStringLongTest extends ConditionalFieldTestBase implements
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '01-testFieldStringLongVisibleValueAnd.png');
 
     // Set up conditions.
     $text = ['drupal string_long text first', 'drupal string_long text second'];
@@ -163,12 +163,12 @@ class ConditionalFieldStringLongTest extends ConditionalFieldTestBase implements
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '02-testFieldStringLongVisibleValueAnd.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '03-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '03-testFieldStringLongVisibleValueAnd.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -176,22 +176,22 @@ class ConditionalFieldStringLongTest extends ConditionalFieldTestBase implements
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot($this->screenshotPath . '04-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '04-testFieldStringLongVisibleValueAnd.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change field that should not show the body.
     $this->changeField($this->fieldSelector, 'https://drupal.org');
-    $this->createScreenshot($this->screenshotPath . '05-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '05-testFieldStringLongVisibleValueAnd.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change field value to show the body.
     $this->changeField($this->fieldSelector, implode('\n', $text));
-    $this->createScreenshot($this->screenshotPath . '06-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '06-testFieldStringLongVisibleValueAnd.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change field value to hide the body again.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '07-testFieldStringLongVisibleValueOr.png');
+    $this->createScreenshot($this->screenshotPath . '07-testFieldStringLongVisibleValueAnd.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
