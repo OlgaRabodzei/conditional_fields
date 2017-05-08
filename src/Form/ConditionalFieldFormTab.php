@@ -2,8 +2,6 @@
 
 namespace Drupal\conditional_fields\Form;
 
-use Drupal\conditional_fields\Form\ConditionalFieldForm;
-
 /**
  * Class ConditionalFieldFormTab.
  *

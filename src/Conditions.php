@@ -96,7 +96,8 @@ class Conditions {
    * conditional_fields.js.
    *
    * @return array
-   *   An associative array of effects. Each key is an unique name for the effect.
+   *   An associative array of effects.
+   *   Each key is an unique name for the effect.
    *   The value is an associative array:
    *   - label: The human readable name of the effect.
    *   - states: The states that can be associated with this effect.

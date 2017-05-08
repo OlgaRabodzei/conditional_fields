@@ -22,6 +22,8 @@ class ConditionalFieldEditForm extends FormBase {
   protected $redirectPath = 'conditional_fields.conditions_list';
 
   /**
+   * CF lists builder.
+   *
    * @var Conditions $list
    */
   protected $list;
@@ -228,10 +230,10 @@ class ConditionalFieldEditForm extends FormBase {
     ];
 
     $form['entity_edit'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => $this->t('Edit context settings'),
       '#description' => $this->t('These settings apply when the @entity is being added or edited in a form.', ['@entity' => $label]),
-      '#collapsible' => FALSE,
+      '#open' => TRUE,
     ];
 
     $form['entity_edit'] += $this->buildEditContextSettings([], $form_state, $condition);
@@ -266,7 +268,6 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Inprogress.
     $values = $form_state->cleanValues()->getValues();
     $uuid = $values['uuid'];
     $entity_type = $values['entity_type'];
@@ -284,17 +285,14 @@ class ConditionalFieldEditForm extends FormBase {
     foreach ($field_names as $field_name) {
       $field = $entity->getComponent($field_name);
 
-    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
-    $dependee = $field['third_party_settings']['conditional_fields'][$uuid]['dependee'];
+      $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+      $dependee = $field['third_party_settings']['conditional_fields'][$uuid]['dependee'];
 
       $exclude_fields = [
         'entity_type',
         'bundle',
         'field_name',
         'uuid',
-        // FIXME: provide saving for parameters below.
-        'element_edit_roles',
-        'element_view_roles',
       ];
 
       foreach ($values as $key => $value) {
@@ -437,10 +435,9 @@ class ConditionalFieldEditForm extends FormBase {
     }
 
     $form['dependency_advanced'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => $this->t('Advanced edit context settings', ['@entity' => $label]),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#open' => FALSE,
     ];
 
     $selector_description = $this->t('Only use if you know what you are doing, otherwise leave the field empty to let the dependency use an automatically generated selector.');
