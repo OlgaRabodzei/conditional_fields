@@ -300,17 +300,17 @@ class ConditionalFieldTextLongTest extends ConditionalFieldTestBase implements C
 
     // Change field that should not show the body.
     $this->changeField($this->fieldSelector, 'wrong text');
-    $this->createScreenshot($this->screenshotPath . '04-testFieldTextWithSummaryVisibleValueRegExp.png');
+    $this->createScreenshot($this->screenshotPath . '04-testFieldTextLongVisibleValueRegExp.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Check that the field Body is visible.
     $this->changeField($this->fieldSelector, 'text_correct');
-    $this->createScreenshot($this->screenshotPath . '05-testFieldTextWithSummaryVisibleValueRegExp.png');
+    $this->createScreenshot($this->screenshotPath . '05-testFieldTextLongVisibleValueRegExp.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change field that should not show the body again.
     $this->changeField($this->fieldSelector, 'wrong text');
-    $this->createScreenshot($this->screenshotPath . '06-testFieldTextWithSummaryVisibleValueRegExp.png');
+    $this->createScreenshot($this->screenshotPath . '06-testFieldTextLongVisibleValueRegExp.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
