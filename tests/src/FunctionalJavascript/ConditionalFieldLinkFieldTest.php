@@ -6,13 +6,17 @@ use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\link\LinkItemInterface;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields Link field plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase {
+class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
+  ConditionalFieldValueInterface,
+  ConditionalFieldFilledEmptyInterface {
 
   /**
    * {@inheritdoc}
@@ -98,9 +102,9 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible, values input mode - Widget.
+   * {@inheritdoc}
    */
-  public function testFieldLinkVisibleValueWidget() {
+  public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -153,9 +157,23 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible, values input mode - OR.
+   * {@inheritdoc}
    */
-  public function testFieldLinkVisibleValueOr() {
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -217,9 +235,9 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible, values input mode - NOT.
+   * {@inheritdoc}
    */
-  public function testFieldLinkVisibleValueNot() {
+  public function testVisibleValueNot() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -272,6 +290,41 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase {
     $this->changeField($this->fieldSelector, '');
     $this->createScreenshot($this->screenshotPath . '08-testFieldLinkVisibleValueNot.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleFilled() {
+    // TODO: Implement testVisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleEmpty() {
+    // TODO: Implement testVisibleEmpty() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleFilled() {
+    // TODO: Implement testInvisibleFilled() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testInvisibleEmpty() {
+    // TODO: Implement testInvisibleEmpty() method.
   }
 
 }

@@ -5,13 +5,14 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
 /**
  * Test Conditional Fields SelectMultiple Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase {
+class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   /**
    * Modules to enable.
@@ -96,9 +97,9 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase {
   }
 
   /**
-   * Tests creating Conditional Field: Visible if has value from taxonomy.
+   * {@inheritdoc}
    */
-  public function testCreateConfigVisibleValueWidget() {
+  public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
@@ -152,6 +153,41 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase {
     $this->changeField($this->fieldSelector, ['_none']);
     $this->createScreenshot($this->screenshotPath . '07-body-invisible-when-controlled-field-has-no-value-again.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueRegExp() {
+    // TODO: Implement testVisibleValueRegExp() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
+    // TODO: Implement testVisibleValueAnd() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {
+    // TODO: Implement testVisibleValueOr() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueNot() {
+    // TODO: Implement testVisibleValueNot() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    // TODO: Implement testVisibleValueXor() method.
   }
 
   /**
