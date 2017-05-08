@@ -299,18 +299,18 @@ class ConditionalFieldStringTest extends ConditionalFieldTestBase implements Con
     $this->assertSession()->statusCodeEquals(200);
 
     // Change field that should not show the body.
-    $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '04-testFieldStringVisibleValueRegExp.png');
+    $this->changeField($this->fieldSelector, 'wrong text');
+    $this->createScreenshot($this->screenshotPath . '04-testFieldTextWithSummaryVisibleValueRegExp.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Check that the field Body is visible.
-    $this->changeField($this->fieldSelector, $text);
-    $this->createScreenshot($this->screenshotPath . '05-testFieldStringVisibleValueRegExp.png');
+    $this->changeField($this->fieldSelector, 'string_correct');
+    $this->createScreenshot($this->screenshotPath . '05-testFieldTextWithSummaryVisibleValueRegExp.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Change field that should not show the body again.
-    $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '06-testFieldStringVisibleValueRegExp.png');
+    $this->changeField($this->fieldSelector, 'wrong text');
+    $this->createScreenshot($this->screenshotPath . '06-testFieldTextWithSummaryVisibleValueRegExp.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
