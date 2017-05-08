@@ -270,7 +270,7 @@ class ConditionalFieldStringLongTest extends ConditionalFieldTestBase implements
     $this->createScreenshot($this->screenshotPath . '01-testFieldStringLongVisibleValueRegExp.png');
 
     // Set up conditions.
-    $text = 'string_longregex';
+    $text = 'string_';
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX,

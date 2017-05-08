@@ -270,7 +270,7 @@ class ConditionalFieldStringTest extends ConditionalFieldTestBase implements Con
     $this->createScreenshot($this->screenshotPath . '01-testFieldStringVisibleValueRegExp.png');
 
     // Set up conditions.
-    $text = 'stringregex';
+    $text = 'string_';
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX,

@@ -270,7 +270,7 @@ class ConditionalFieldTextWithSummaryTest extends ConditionalFieldTestBase imple
     $this->createScreenshot($this->screenshotPath . '01-testFieldTextWithSummaryVisibleValueRegExp.png');
 
     // Set up conditions.
-    $text = 'text_with_summaryregex';
+    $text = 'text_';
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX,
