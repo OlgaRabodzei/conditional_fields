@@ -151,6 +151,7 @@ abstract class ConditionalFieldTestBase extends JavascriptTestBase {
       'delete conditional fields',
       'administer nodes',
       'create article content',
+      'administer content types'
     ]);
     $this->drupalLogin($admin_account);
 
