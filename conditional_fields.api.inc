@@ -429,8 +429,9 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
 }
 
 /**
- * Evaluates an array with 'AND', 'OR' and 'XOR' groupings,
- * each containing a list of boolean values.
+ * Evaluates an array with 'AND', 'OR' and 'XOR' groupings.
+ *
+ * Each containing a list of boolean values.
  */
 function conditional_fields_evaluate_grouping($groups) {
   $or = $and = $xor = TRUE;
@@ -475,12 +476,6 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
         $untriggered_dependents_errors = array_merge($untriggered_dependents_errors, $field['errors']);
       }
       continue;
-    }
-
-    if (!empty($field['reset'])) {
-      // TODO check the issue https://www.drupal.org/node/2833343
-      $dependent_info = WidgetBase::getWidgetState($dependent['#field_parents'], $dependent['#field_name'], $form_state);
-      $field_values_location[$dependent['#field_name']][$dependent['#language']] = field_get_default_value($dependent_info['instance']['entity_type'], NULL, $dependent_info['field'], $dependent_info['instance'], $dependent['#language']);
     }
 
     // Save the changed array back in place.
