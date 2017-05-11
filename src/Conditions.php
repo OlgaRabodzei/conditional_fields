@@ -20,30 +20,14 @@ class Conditions {
       'condition' => 'value',
       'grouping' => 'AND',
       'values_set' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      // !Important, the param default value MUST match to schema declaration,
+      // !Important.
+      // The param default value MUST match to schema declaration.
       // @see conditional_fields.schema.yml
-      // 'value' => array(),
       'value' => '',
       'values' => array(),
       'value_form' => array(),
       'effect' => 'show',
       'effect_options' => array(),
-      'element_view' => array(
-        CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE,
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN,
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => 0,
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => 0,
-        CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => 0,
-      ),
-      'element_view_per_role' => 0,
-      'element_view_roles' => array(),
-      'element_edit' => array(
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN,
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => 0,
-        CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => 0,
-      ),
-      'element_edit_per_role' => 0,
-      'element_edit_roles' => array(),
       'selector' => '',
     );
   }
