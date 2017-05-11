@@ -8,8 +8,8 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Field\WidgetBase;
-use Drupal\Component\Utility\Unicode;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
 
 /**
  * Loads all dependencies from the database.
@@ -27,7 +27,7 @@ function conditional_fields_load_dependencies_entity($entity_type = NULL, $bundl
 }
 
 /**
- * after_build callback for forms with dependencies.
+ * An after_build callback for forms with dependencies.
  *
  * Builds and attaches #states properties to dependent fields, adds additional
  * visual effects handling to the States API and attaches a validation callback
@@ -43,6 +43,7 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 
   $form_obj = $form_state->getFormObject();
   if (method_exists($form_obj, 'getFormDisplay')) {
+    /** @var EntityFormDisplayInterface $form_display */
     $form_display = $form_obj->getFormDisplay($form_state);
   }
   else {
@@ -79,15 +80,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       $dependee_form_field = NestedArray::getValue($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
-      // Load field edit behaviors.
-      // If this dependent has multiple dependees, only the logic of the first
-      // dependency will be taken into account.
-      if (!isset($behaviors)) {
-        // TODO: Support behaviors.
-        // Behaviour dependent on user roles.
-        $behaviors = conditional_fields_field_behaviors('edit', $options);
-      }
-
       $options['selector'] = conditional_fields_get_selector($options['selector'], $dependee_form_field);
 
       $state = conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options);
@@ -109,10 +101,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       $effects[$selector] = conditional_fields_get_effect($options);
 
     }
-
-    // TODO: Support behaviors dependent on user role.
-    // Execute custom behaviors callbacks.
-    conditional_fields_execute_behaviors($behaviors, $form, $form_state, $dependent, $dependent_info);
 
     if (empty($states)) {
       continue;
@@ -173,22 +161,6 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
 }
 
 /**
- * Execute custom behaviors callbacks.
- */
-function conditional_fields_execute_behaviors($behaviors, $form, FormStateInterface &$form_state, $dependent, $dependent_info) {
-  if (empty($behaviors)) {
-    return;
-  }
-  foreach ($behaviors as $behavior) {
-    if (!function_exists($behavior)) {
-      continue;
-    }
-    $behavior($form, $form_state, $dependent, $dependent_info);
-  }
-
-}
-
-/**
  * Build a jQuery selector if it was not overridden by a custom value.
  *
  * Note that this may be overridden later by a state handler.
@@ -204,7 +176,22 @@ function conditional_fields_get_selector($options_selector, $dependee_form_field
   return $selector;
 }
 
-function conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options) {
+/**
+ * Get list of states for the pair from the options.
+ *
+ * @param EntityFormDisplayInterface $form_display
+ *   Form display.
+ * @param string $dependee
+ *   Machine name of control field.
+ * @param array $dependee_form_field
+ *   Nested array of control field.
+ * @param array $options
+ *   Settings of dependency.
+ *
+ * @return array
+ *   List of states.
+ */
+function conditional_fields_get_state(EntityFormDisplayInterface $form_display, $dependee, $dependee_form_field, $options) {
   $state = [];
   $type = \Drupal::service('plugin.manager.conditional_fields_handlers');
 
@@ -249,6 +236,16 @@ function conditional_fields_get_state($form_display, $dependee, $dependee_form_f
   return $state;
 }
 
+/**
+ * Merge field states to general list.
+ *
+ * @param array $states
+ *   List of all form states.
+ * @param array $state
+ *   List of field states.
+ * @param array $options
+ *   Field CF settings.
+ */
 function conditional_fields_add_state_to_group(&$states, $state, $options) {
   // Add the $state into the correct logic group in $states.
   foreach ($state as $key => $constraints) {
@@ -261,6 +258,15 @@ function conditional_fields_add_state_to_group(&$states, $state, $options) {
   }
 }
 
+/**
+ * Returns js effect for field.
+ *
+ * @param array $options
+ *   Field CF settings.
+ *
+ * @return array
+ *   Effect with options.
+ */
 function conditional_fields_get_effect($options) {
   // Build effect settings for effects with options.
   // TODO: add dependee key to allow different effects on the same selector.
@@ -303,6 +309,7 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
   $triggered = conditional_fields_evaluate_dependencies($dependent, $form, $form_state);
   $return = FALSE;
 
+  // TODO: refactor this!
   if ($evaluated_dependencies = conditional_fields_evaluate_dependencies($dependent, $form, $form_state, FALSE)) {
     foreach ($evaluated_dependencies[reset($dependent['field_parents'])] as $operator) {
       foreach ($operator as $state => $result) {
@@ -320,7 +327,6 @@ function conditional_fields_dependent_validate($element, FormStateInterface &$fo
           $input_state = (is_null($input_state)) ? array() : $input_state;
           if (isset($dependent['field_parents'][0])) {
             $field = FieldStorageConfig::loadByName($form['#entity_type'], $dependent['field_parents'][0]);
-//            $input_state = _field_filter_items($field, $input_state);
           }
           if (empty($input_state)) {
             // Default to the field machine name.
@@ -430,8 +436,9 @@ function conditional_fields_evaluate_dependencies($dependent, $form, $form_state
 }
 
 /**
- * Evaluates an array with 'AND', 'OR' and 'XOR' groupings,
- * each containing a list of boolean values.
+ * Evaluates an array with 'AND', 'OR' and 'XOR' groupings.
+ *
+ * Each containing a list of boolean values.
  */
 function conditional_fields_evaluate_grouping($groups) {
   $or = $and = $xor = TRUE;
@@ -478,11 +485,6 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
       continue;
     }
 
-    if (!empty($field['reset'])) {
-      $dependent_info = WidgetBase::getWidgetState($dependent['#field_parents'], $dependent['#field_name'], $form_state);
-      $field_values_location[$dependent['#field_name']][$dependent['#language']] = field_get_default_value($dependent_info['instance']['entity_type'], NULL, $dependent_info['field'], $dependent_info['instance'], $dependent['#language']);
-    }
-
     // Save the changed array back in place.
     // Do not use form_set_value() since it assumes
     // that the values are located at
@@ -527,7 +529,7 @@ function conditional_fields_form_validate($form, FormStateInterface &$form_state
 /**
  * Extracts submitted field values during form validation.
  *
- * @return
+ * @return array|NULL
  *   The requested field values parent. Actual field vales are stored under the
  *   key $element['#field_name'].
  */
@@ -540,11 +542,13 @@ function conditional_fields_form_field_get_values($element, FormStateInterface $
 /**
  * Evaluate if a dependency meets the requirements to be triggered.
  *
- * @param $context
- *   'edit' if $values are extracted from $form_state or 'view' if
- *   $values are extracted from an entity.
+ * @param string $context
+ *   Options:
+ *   'edit' if $values are extracted from $form_state.
+ *   'view' if $values are extracted from an entity.
  *
  * @return bool
+ *   Can the dependency be triggered?
  */
 function conditional_fields_evaluate_dependency($context, $values, $options) {
   if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
@@ -684,4 +688,6 @@ function conditional_fields_evaluate_dependency($context, $values, $options) {
       $intersect = array_intersect($options['values'], $reference_values);
       return empty($intersect);
   }
+
+  return TRUE;
 }
