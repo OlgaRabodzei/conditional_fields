@@ -9,10 +9,10 @@ use Drupal\node\Entity\Node;
  * Provides states handler for entity reference fields.
  *
  * @ConditionalFieldsHandler(
- *   id = "states_handler_entity_reference_autocomplete",
+ *   id = "states_handler_entity_reference_autocomplete_tags",
  * )
  */
-class EntityReference extends ConditionalFieldsHandlerBase {
+class EntityReferenceTags extends ConditionalFieldsHandlerBase {
 
   /**
    * {@inheritdoc}
@@ -25,20 +25,25 @@ class EntityReference extends ConditionalFieldsHandlerBase {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
         $value_form = $this->getWidgetValue($options['value_form']);
         if ($options['field_cardinality'] == 1) {
-          $node = Node::load($value_form[0]['target_id']);
+          $node = Node::load($value_form);
           if ($node instanceof Node) {
             // Create an array of valid formats of title for autocomplete.
-            $state[$options['state']][$options['selector']] = $this->getAutocompleteSuggestions($node);
+            $state[$options['state']][$options['selector']] = [
+              'value' => $this->getAutocompleteSuggestions($node)
+            ];
           }
         }
         else {
-          $ids = array_column($value_form, 'target_id');
-          $nodes = Node::loadMultiple($ids);
+          $value_form = (array) $value_form;
+          $nodes = Node::loadMultiple($value_form);
           if (!empty($nodes)) {
+            $suggestion = [];
             foreach (array_values($nodes) as $key => $node) {
-              $selector = str_replace('[0]', "[{$key}]", $options['selector']);
-              $state[$options['state']][$selector] = $this->getAutocompleteSuggestions($node);
+              $suggestion[] = $this->getAutocompleteSuggestions($node);
             }
+            $state[$options['state']][$options['selector']] = [
+              'value' => implode(', ', $suggestion),
+            ];
           }
         }
         break;
@@ -55,17 +60,12 @@ class EntityReference extends ConditionalFieldsHandlerBase {
    *
    * @param $node
    *   A node object.
-   * @return array
+   * @return string
    *   An array with a few relevant suggestions for autocomplete.
    */
   private function getAutocompleteSuggestions($node) {
     /** @var Node $node */
-    return [
-      // Node title (nid).
-      ['value' => $node->label() . ' (' . $node->id() . ')'],
-      // Node title.
-      ['value' => $node->label()]
-    ];
+    return $node->label() . ' (' . $node->id() . ')';
   }
 
   /**
@@ -74,11 +74,20 @@ class EntityReference extends ConditionalFieldsHandlerBase {
    * @param array $value_form
    *   Dependency options.
    *
-   * @return mixed
+   * @return array
    *   Values for triggering events.
    */
   public function getWidgetValue(array $value_form) {
-    return $value_form;
+    if (!empty($value_form)) {
+      if (count($value_form['target_id']) > 1) {
+        return array_column($value_form['target_id'], 'target_id');
+      }
+
+      return $value_form['target_id'][0]['target_id'];
+    }
+    else {
+      return $value_form;
+    }
   }
 
 }
