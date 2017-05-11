@@ -100,9 +100,6 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
-      '[name="element_edit[1]"]' => 1,
-      '[name="element_view[1]"]' => 1,
-      '[name="element_view[2]"]' => 2,
     ];
     foreach ($data as $selector => $value) {
       $this->changeField($selector, $value);
