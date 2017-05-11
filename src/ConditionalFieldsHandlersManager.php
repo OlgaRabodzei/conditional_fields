@@ -7,6 +7,11 @@ use Drupal\Component\Plugin\FallbackPluginManagerInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\Component\Plugin\Discovery\StaticDiscovery;
+use Drupal\Component\Plugin\Discovery\DerivativeDiscoveryDecorator;
+use Drupal\Component\Plugin\Factory\ReflectionFactory;
+
+
 
 /**
  * Manages discovery and instantiation of handler plugins.
@@ -30,6 +35,34 @@ class ConditionalFieldsHandlersManager extends DefaultPluginManager implements F
     $this->alterInfo('handler_info');
     $this->setCacheBackend($cache_backend, 'handler_plugins');
     $this->factory = new DefaultFactory($this->getDiscovery());
+
+    $this->discovery = new StaticDiscovery();
+    $this->discovery = new DerivativeDiscoveryDecorator($this->discovery);
+
+    $this->discovery->setDefinition('states_handler_string_textfield', [
+      'id' => 'states_handler_string_textfield',
+      'label' => t('String textfield'),
+      'class' => 'Drupal\conditional_fields\Plugin\conditional_fields\handler\TextDefault',
+    ]);
+
+    $this->discovery->setDefinition('states_handler_string_textarea', [
+      'id' => 'states_handler_string_textarea',
+      'label' => t('String textarea'),
+      'class' => 'Drupal\conditional_fields\Plugin\conditional_fields\handler\TextDefault',
+    ]);
+    $this->discovery->setDefinition('states_handler_text_textfield', [
+      'id' => 'states_handler_text_textfield',
+      'label' => t('String textfield'),
+      'class' => 'Drupal\conditional_fields\Plugin\conditional_fields\handler\TextDefault',
+    ]);
+
+    $this->discovery->setDefinition('states_handler_text_textarea', [
+      'id' => 'states_handler_text_textarea',
+      'label' => t('String textarea'),
+      'class' => 'Drupal\conditional_fields\Plugin\conditional_fields\handler\TextDefault',
+    ]);
+    $this->factory = new ReflectionFactory($this->discovery);
+
   }
 
   /**
