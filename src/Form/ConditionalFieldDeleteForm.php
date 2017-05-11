@@ -13,9 +13,9 @@ use Drupal\Core\Url;
  */
 class ConditionalFieldDeleteForm extends ConfirmFormBase {
 
-  private $entity_type;
+  private $entityType;
   private $bundle;
-  private $field_name;
+  private $fieldName;
   private $uuid;
 
   /**
@@ -23,7 +23,7 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
    */
   public function getQuestion() {
     return $this->t('Are you sure you want to delete the %field_name condition?', [
-      '%field_name' => $this->field_name,
+      '%field_name' => $this->fieldName,
     ]);
   }
 
@@ -32,7 +32,7 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
    */
   public function getCancelUrl() {
     return Url::fromRoute('conditional_fields.conditions_list', [
-      'entity_type' => $this->entity_type,
+      'entity_type' => $this->entityType,
       'bundle' => $this->bundle,
     ]);
   }
@@ -48,19 +48,19 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    if (empty($this->entity_type) || empty($this->bundle) || empty($this->field_name) || empty($this->uuid)) {
+    if (empty($this->entityType) || empty($this->bundle) || empty($this->fieldName) || empty($this->uuid)) {
       return;
     }
     $entity = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
-      ->load($this->entity_type . '.' . $this->bundle . '.' . 'default');
+      ->load($this->entityType . '.' . $this->bundle . '.default');
     if (!$entity) {
       return;
     }
 
-    $field = $entity->getComponent($this->field_name);
+    $field = $entity->getComponent($this->fieldName);
     unset($field['third_party_settings']['conditional_fields'][$this->uuid]);
-    $entity->setComponent($this->field_name, $field);
+    $entity->setComponent($this->fieldName, $field);
     $entity->save();
     $form_state->setRedirectUrl($this->getCancelUrl());
   }
@@ -69,9 +69,9 @@ class ConditionalFieldDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $field_name = NULL, $uuid = NULL) {
-    $this->entity_type = $entity_type;
+    $this->entityType = $entity_type;
     $this->bundle = $bundle;
-    $this->field_name = $field_name;
+    $this->fieldName = $field_name;
     $this->uuid = $uuid;
 
     return parent::buildForm($form, $form_state);

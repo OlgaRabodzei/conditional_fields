@@ -93,8 +93,10 @@ class OptionsButtons extends ConditionalFieldsHandlerBase {
 
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
+        $selector = conditional_fields_field_selector($field);
         foreach ($options['value_form'] as $value) {
-          $checkboxes_selectors[conditional_fields_field_selector($field[current($value)])] = ['checked' => TRUE];
+          $selector_key = str_replace($field['#return_value'], current($value), $selector);
+          $checkboxes_selectors[$selector_key] = ['checked' => TRUE];
         }
         break;
 
