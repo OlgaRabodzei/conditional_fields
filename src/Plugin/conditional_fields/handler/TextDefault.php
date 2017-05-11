@@ -15,7 +15,7 @@ class TextDefault extends ConditionalFieldsHandlerBase {
    */
   public function statesHandler($field, $field_info, $options) {
     $state = [];
-    $values_array = explode("\r\n", $options['values']);
+    $values_array = !empty($options['values']) ? explode("\r\n", $options['values']) : '';
 
     // Text fields values are keyed by cardinality, so we have to flatten them.
     // TODO: support multiple values.
