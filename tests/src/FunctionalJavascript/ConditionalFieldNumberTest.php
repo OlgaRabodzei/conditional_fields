@@ -9,7 +9,7 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
 use Drupal\Tests\RandomGeneratorTrait;
 
 /**
- * Test Conditional Fields Entity Reference Plugin.
+ * Test Conditional Fields Number Plugin.
  *
  * @group conditional_fields
  */
