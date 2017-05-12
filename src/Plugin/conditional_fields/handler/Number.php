@@ -29,12 +29,13 @@ class Number extends ConditionalFieldsHandlerBase {
         else {
           $values = array_column($this->getWidgetValue($options['value_form']), 'value');
           foreach ($values as $key => $value) {
-            if (!empty($value)) {
-              $selector = str_replace('[0]', "[{$key}]", $options['selector']);
-              $state[$options['state']][$selector] = [
-                'value' => $value
-              ];
+            if (empty($value)) {
+              continue;
             }
+            $selector = str_replace('[0]', "[{$key}]", $options['selector']);
+            $state[$options['state']][$selector] = [
+              'value' => $value
+            ];
           }
         }
         return $state;
