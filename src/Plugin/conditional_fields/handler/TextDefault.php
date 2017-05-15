@@ -34,8 +34,9 @@ class TextDefault extends ConditionalFieldsHandlerBase {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_REGEX:
         $values[$options['condition']] = ['regex' => $options['regex']];
         $state[$options['state']][$options['selector']] = $values;
+        break;
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_XOR:
-        $select_states[$options['state']][] = 'xor';
+        $state[$options['state']][] = 'xor';
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT:
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
         if (is_array($values_array)) {
