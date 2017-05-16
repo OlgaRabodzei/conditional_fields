@@ -37,10 +37,19 @@ class OptionsButtons extends ConditionalFieldsHandlerBase {
     $state = [];
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
-        if (empty($options['value_form'][0]['value'])) {
+        // TODO: Try to get key_column automatically.
+        // like here:
+        // @see \Drupal\conditional_fields\Plugin\conditional_fields\handler\Select::widgetCase()
+        if (isset($options['value_form'][0]['value'])) {
+          $column_key = 'value';
+        }
+        elseif (isset($options['value_form'][0]['target_id'])) {
+          $column_key = 'target_id';
+        }
+        else {
           break;
         }
-        $select_states[$options['selector']] = [$options['condition'] => $options['value_form'][0]['value']];
+        $select_states[$options['selector']] = [$options['condition'] => $options['value_form'][0][$column_key]];
         $state = [$options['state'] => $select_states];
         break;
 
