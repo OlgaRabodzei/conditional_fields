@@ -1,6 +1,10 @@
 <?php
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
+
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 
@@ -9,7 +13,7 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
  *
  * @group conditional_fields
  */
-class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
+class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
   ConditionalFieldValueInterface,
   ConditionalFieldFilledEmptyInterface {
 
@@ -19,28 +23,99 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
   protected $screenshotPath = 'sites/simpletest/conditional_fields/text/';
 
   /**
+   * The field name used in the test.
+   *
+   * @var string
+   */
+  protected $fieldName = 'single_textfield';
+
+  /**
+   * Jquery selector of field in a document.
+   *
+   * @var string
+   */
+  protected $fieldSelector;
+
+  /**
+   * The field storage definition used to created the field storage.
+   *
+   * @var array
+   */
+  protected $fieldStorageDefinition;
+
+  /**
+   * The list field storage used in the test.
+   *
+   * @var \Drupal\field\Entity\FieldStorageConfig
+   */
+  protected $fieldStorage;
+
+  /**
+   * The field to use in this test.
+   *
+   * @var \Drupal\field\Entity\FieldConfig
+   */
+  protected $field;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+
+    $this->fieldSelector = '[name="field_' . $this->fieldName . '[0][value]"]';
+    $this->fieldStorageDefinition = [
+      'field_name' => 'field_' . $this->fieldName,
+      'entity_type' => 'node',
+      'type' => 'text',
+      'cardinality' => 1,
+    ];
+    $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
+    $this->fieldStorage->save();
+
+    FieldConfig::create([
+      'field_name' => 'field_' . $this->fieldName,
+      'entity_type' => 'node',
+      'bundle' => 'article',
+    ])->save();
+
+    EntityFormDisplay::load('node.article.default')
+      ->setComponent('field_' . $this->fieldName, ['type' => 'text_textfield'])
+      ->save();
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('body', 'title', 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->fieldName, 'visible', 'value');
 
-    // Change a condition's values set and the value.
-    $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET);
-    // Random term id to check necessary value.
+    // Set up conditions.
     $text = $this->getRandomGenerator()->word(8);
-    $this->changeField('#edit-title-0-value', $text);
-    // Submit the form.
-    $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $data = [
+      '[name="condition"]' => 'value',
+      '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
+      $this->fieldSelector => $text,
+      '[name="grouping"]' => 'AND',
+      '[name="state"]' => 'visible',
+      '[name="effect"]' => 'show',
+    ];
+    foreach ($data as $selector => $value) {
+      $this->changeField($selector, $value);
+    }
+
+    $this->getSession()->wait(1000, '!jQuery.active');
+    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
+
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()
-      ->pageTextContains('body title visible value');
+      ->pageTextContains('body ' .'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -48,10 +123,10 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
 
     // Check that the field Body is not visible.
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
-    $this->changeField('.field--name-title input', $text);
+    $this->changeField($this->fieldSelector, $text);
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
     // Change a select value set to hide the body again.
-    $this->changeField('.field--name-title input', $text . 'a');
+    $this->changeField($this->fieldSelector, $text . 'a');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
   }
 
@@ -69,7 +144,7 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('body', 'title', 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->fieldName, 'visible', 'value');
 
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
@@ -84,7 +159,7 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()
-      ->pageTextContains('body title visible value');
+      ->pageTextContains('body ' .'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -94,11 +169,11 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
 
     // Change a select value set to show the body.
-    $this->changeField('.field--name-title input', $text);
+    $this->changeField($this->fieldSelector, $text);
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a select value set to hide the body again.
-    $this->changeField('.field--name-title input', $text . 'a');
+    $this->changeField($this->fieldSelector, $text . 'a');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
   }
 
@@ -109,7 +184,7 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('body', 'title', 'visible', 'value');
+    $this->createCondition('body', 'field_' . $this->fieldName, 'visible', 'value');
 
     // Change a condition's values set and the value.
     $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR);
@@ -126,7 +201,7 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()
-      ->pageTextContains('body title visible value');
+      ->pageTextContains('body ' .'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -134,15 +209,15 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
 
     // Check that the field Body is not visible.
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
-    $this->changeField('.field--name-title input', $text1);
+    $this->changeField($this->fieldSelector, $text1);
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
     // Change a select value set to hide the body again.
-    $this->changeField('.field--name-title input', $text1 . 'a');
+    $this->changeField($this->fieldSelector, $text1 . 'a');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
-    $this->changeField('.field--name-title input', $text2);
+    $this->changeField($this->fieldSelector, $text2);
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
     // Change a select value set to hide the body again.
-    $this->changeField('.field--name-title input', $text2 . 'ma');
+    $this->changeField($this->fieldSelector, $text2 . 'ma');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
   }
 
@@ -167,11 +242,11 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('body', 'title', 'visible', '!empty');
+    $this->createCondition('body', 'field_' . $this->fieldName, 'visible', '!empty');
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
-    $this->assertSession()->pageTextContains('body title visible !empty');
+    $this->assertSession()->pageTextContains('body ' .'field_' . $this->fieldName . ' visible !empty');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -179,7 +254,7 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
 
     // Check that the field Body is not visible.
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
-    $this->changeField('.field--name-title input', 'This field is not empty.');
+    $this->changeField($this->fieldSelector, 'This field is not empty.');
     $this->waitUntilVisible('.field--name-body', 10, 'Article Body field is not visible');
   }
 
@@ -204,18 +279,18 @@ class ConditionalFieldTextTest extends ConditionalFieldTestBase implements
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for `Article` Content type.
-    $this->createCondition('body', 'title', '!visible', 'empty');
+    $this->createCondition('body', 'field_' . $this->fieldName, '!visible', 'empty');
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
-    $this->assertSession()->pageTextContains('body title !visible empty');
+    $this->assertSession()->pageTextContains('body ' .'field_' . $this->fieldName . ' !visible empty');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
     $this->assertSession()->statusCodeEquals(200);
 
     $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
-    $this->changeField('.field--name-title input', 'This field is not empty.');
+    $this->changeField($this->fieldSelector, 'This field is not empty.');
     $this->waitUntilVisible('.field--name-body', 10, 'Article Body field is not visible');
   }
 
