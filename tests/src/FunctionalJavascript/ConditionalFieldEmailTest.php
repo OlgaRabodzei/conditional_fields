@@ -235,12 +235,12 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Change a email value to show the body.
-    $this->changeField($this->fieldSelector, $emails[0]);
+    $this->changeField($this->fieldSelector, $email);
     $this->createScreenshot($this->screenshotPath . '06-testEmailTimeVisibleValueOr.png');
     $this->waitUntilVisible('.field--name-body', 500, 'Article Body field is visible');
 
     // Change a email value to show the body.
-    $this->changeField($this->fieldSelector, $emails[1]);
+    $this->changeField($this->fieldSelector, $email2);
     $this->createScreenshot($this->screenshotPath . '07-testEmailTimeVisibleValueOr.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
