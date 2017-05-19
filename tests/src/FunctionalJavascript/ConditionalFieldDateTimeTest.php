@@ -170,6 +170,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -177,6 +178,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -316,6 +318,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
 }
