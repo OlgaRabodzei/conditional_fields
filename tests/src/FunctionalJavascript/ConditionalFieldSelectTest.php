@@ -156,6 +156,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -163,6 +164,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -170,6 +172,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    */
   public function testVisibleValueOr() {
     // TODO: Implement testVisibleValueOr() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -177,6 +180,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -184,6 +188,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
 }

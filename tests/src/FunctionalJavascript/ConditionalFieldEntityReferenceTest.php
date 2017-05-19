@@ -175,6 +175,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -182,6 +183,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -189,6 +191,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleValueOr() {
     // TODO: Implement testVisibleValueOr() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -196,6 +199,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -203,6 +207,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -210,6 +215,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleFilled() {
     // TODO: Implement testVisibleFilled() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -217,6 +223,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleEmpty() {
     // TODO: Implement testVisibleEmpty() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -224,6 +231,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testInvisibleFilled() {
     // TODO: Implement testInvisibleFilled() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -231,6 +239,7 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
    */
   public function testInvisibleEmpty() {
     // TODO: Implement testInvisibleEmpty() method.
+    $this->markTestIncomplete();
   }
 
 }

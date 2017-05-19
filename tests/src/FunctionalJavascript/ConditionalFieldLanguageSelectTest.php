@@ -143,6 +143,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -150,6 +151,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -157,6 +159,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueOr() {
     // TODO: Implement testVisibleValueOr() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -164,6 +167,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -171,6 +175,7 @@ class ConditionalFieldLanguageSelectTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
 }
