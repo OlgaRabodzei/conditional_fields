@@ -49,9 +49,9 @@ install:
   - git clone --branch 8.2.x https://git.drupal.org/project/drupal.git
   - cd $TRAVIS_BUILD_DIR/../drupal
   - composer install
+  - composer config repositories.drupal composer https://packages.drupal.org/8
   # For daily development we'll test github repository.
-  #- composer config repositories.drupal composer https://packages.drupal.org/8
-  - composer require drupal/conditional_fields:1.x-dev
+  #- composer require drupal/conditional_fields:1.x-dev
   - composer require drush/drush
   # Patch template.
   #########################################
