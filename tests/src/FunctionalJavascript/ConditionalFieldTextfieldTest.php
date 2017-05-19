@@ -141,40 +141,7 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
    * {@inheritdoc}
    */
   public function testVisibleValueAnd() {
-    $this->baseTestSteps();
-
-    // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('body', 'field_' . $this->fieldName, 'visible', 'value');
-
-    // Change a condition's values set and the value.
-    $this->changeField('#edit-values-set', CONDITIONAL_FIELDS_DEPENDENCY_VALUES_AND);
-    // Random term id to check necessary value.
-    $text = $this->getRandomGenerator()->word(8);
-    $this->changeField('#edit-values', $text);
-    // Submit the form.
-    $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Check if that configuration is saved.
-    $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->assertSession()
-      ->pageTextContains('body ' .'field_' . $this->fieldName . ' visible value');
-
-    // Visit Article Add form to check that conditions are applied.
-    $this->drupalGet('node/add/article');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Check that the field Body is not visible.
-    $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
-
-    // Change a select value set to show the body.
-    $this->changeField($this->fieldSelector, $text);
-    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
-
-    // Change a select value set to hide the body again.
-    $this->changeField($this->fieldSelector, $text . 'a');
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+    // TODO: Implement testVisibleValueAnd() method.
   }
 
   /**
@@ -191,34 +158,52 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
     // Random term id to check necessary value.
     $text1 = $this->getRandomGenerator()->word(8);
     $text2 = $this->getRandomGenerator()->word(7);
-    $values = $text1 . '\r\n' . $text2;
-    $this->changeField('#edit-values', $values);
-    // Submit the form.
-    $this->getSession()
-      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
+
+    // Set up conditions.
+    $values = implode('\n', [$text1, $text2]);
+    $data = [
+      '[name="condition"]' => 'value',
+      '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
+      '[name="values"]' => $values,
+      '[name="grouping"]' => 'AND',
+      '[name="state"]' => 'visible',
+      '[name="effect"]' => 'show',
+    ];
+    foreach ($data as $selector => $value) {
+      $this->changeField($selector, $value);
+    }
+
+    $this->getSession()->wait(1000, '!jQuery.active');
+    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->assertSession()
-      ->pageTextContains('body ' .'field_' . $this->fieldName . ' visible value');
+    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->pageTextContains('body ' . 'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->waitUntilHidden('.field--name-body', 0, 'Article Body field is visible');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
+
+    // Change value that should not show the body.
+    $this->changeField($this->fieldSelector, 'wrong');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
+
+    // Change a value value to show the body.
     $this->changeField($this->fieldSelector, $text1);
-    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
-    // Change a select value set to hide the body again.
-    $this->changeField($this->fieldSelector, $text1 . 'a');
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
+
+    // Change a value value to show the body.
     $this->changeField($this->fieldSelector, $text2);
-    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is not visible');
-    // Change a select value set to hide the body again.
-    $this->changeField($this->fieldSelector, $text2 . 'ma');
-    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is visible');
+    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
+
+    // Change a value value to hide the body again.
+    $this->changeField($this->fieldSelector, '');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
   /**
