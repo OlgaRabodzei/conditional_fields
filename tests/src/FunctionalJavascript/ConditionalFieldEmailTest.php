@@ -174,6 +174,7 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -181,6 +182,7 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -255,6 +257,7 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -262,6 +265,7 @@ class ConditionalFieldEmailTest extends ConditionalFieldTestBase implements Cond
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**

@@ -315,7 +315,7 @@ class ConditionalFieldEditForm extends FormBase {
         if (is_object($value[0]['value']) && $value[0]['value'] instanceof DrupalDateTime) {
           foreach ($value as $delta => $date) {
             if (!empty($date['value'])) {
-              $value[$delta]['value'] = $date['value']->format('Y-m-d');
+              $value[$delta]['value'] = $date['value']->format(DATETIME_DATETIME_STORAGE_FORMAT);
             }
           }
         }

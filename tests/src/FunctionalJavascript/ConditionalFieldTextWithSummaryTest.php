@@ -385,6 +385,7 @@ class ConditionalFieldTextWithSummaryTest extends ConditionalFieldTestBase imple
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**

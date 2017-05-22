@@ -383,6 +383,7 @@ class ConditionalFieldTextTextareaTest extends ConditionalFieldTestBase implemen
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**

@@ -161,6 +161,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -168,6 +169,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -297,6 +299,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -304,6 +307,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleFilled() {
     // TODO: Implement testVisibleFilled() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -311,6 +315,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleEmpty() {
     // TODO: Implement testVisibleEmpty() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -318,6 +323,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testInvisibleFilled() {
     // TODO: Implement testInvisibleFilled() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -325,6 +331,7 @@ class ConditionalFieldLinkFieldTest extends ConditionalFieldTestBase implements
    */
   public function testInvisibleEmpty() {
     // TODO: Implement testInvisibleEmpty() method.
+    $this->markTestIncomplete();
   }
 
 }
