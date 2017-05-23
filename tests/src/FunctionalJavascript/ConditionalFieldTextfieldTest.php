@@ -135,6 +135,7 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -211,6 +212,7 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -218,6 +220,7 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -248,6 +251,7 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleEmpty() {
     // TODO: Implement testVisibleEmpty() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -255,6 +259,7 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
    */
   public function testInvisibleFilled() {
     // TODO: Implement testInvisibleFilled() method.
+    $this->markTestIncomplete();
   }
 
   /**

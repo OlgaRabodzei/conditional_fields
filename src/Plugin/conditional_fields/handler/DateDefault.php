@@ -3,6 +3,7 @@
 namespace Drupal\conditional_fields\Plugin\conditional_fields\handler;
 
 use Drupal\conditional_fields\ConditionalFieldsHandlerBase;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Provides states handler for date combos.
@@ -20,13 +21,18 @@ class DateDefault extends ConditionalFieldsHandlerBase {
     $state = [];
 
     // Date text.
-    if ($field_info['instance']['widget']['type'] == 'date_text') {
-      if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
-        $state[$options['state']][$options['selector']]['value'] = $state[$options['state']][$options['selector']]['value'][0]['value']['date'];
-      }
+    if ($options['values_set'] == CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET) {
+      $date_obj = new DrupalDateTime($options['value_form'][0]['value']);
+      // Just split DATETIME_DATETIME_STORAGE_FORMAT on date and time.
+      $date = $date_obj->format('Y-m-d');
+      // TODO: Support time.
+      // Need to check selector and create one more state for it.
+      // $time = $date_obj->format('H:i:s');.
+      $state[$options['state']][$options['selector']]['value'] = $date;
       return $state;
     }
 
+    // TODO: Check other cases below.
     // Add a condition for each date part.
     $date_selectors = [];
 

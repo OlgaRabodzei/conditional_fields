@@ -76,6 +76,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueWidget() {
     // TODO: Implement testVisibleValueWidget() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -83,6 +84,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -187,6 +189,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -194,6 +197,7 @@ class ConditionalFieldCheckboxesTest extends ConditionalFieldTestBase implements
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
 }
