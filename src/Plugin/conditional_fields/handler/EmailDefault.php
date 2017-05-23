@@ -44,9 +44,7 @@ class EmailDefault extends ConditionalFieldsHandlerBase {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR:
         if (is_array($values_array)) {
           foreach ($values_array as $value) {
-            $input_states[$options['selector']][] = [
-              $options['condition'] => $value,
-            ];
+            $input_states[$options['selector']][] = ['value' => $value];
           }
         }
         else {
@@ -54,8 +52,8 @@ class EmailDefault extends ConditionalFieldsHandlerBase {
             $options['condition'] => $values_array,
           ];
         }
-
-        $state = [$options['state'] => $input_states];
+        
+        $state[$options['state']][] = $input_states;
         break;
       default:
         break;
