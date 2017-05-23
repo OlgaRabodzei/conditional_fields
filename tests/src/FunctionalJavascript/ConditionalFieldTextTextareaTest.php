@@ -228,7 +228,7 @@ class ConditionalFieldTextTextareaTest extends ConditionalFieldTestBase implemen
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
-    $this->createCondition('body', 'field_' . $this->fieldName, '!visible', 'value');
+    $this->createCondition('body', 'field_' . $this->fieldName, 'visible', 'value');
     $this->createScreenshot($this->screenshotPath . '01-' . $this->testName . __FUNCTION__ . '.png');
     // Set up conditions.
     $text = ['drupal textarea text first', 'drupal textarea text second'];
@@ -237,7 +237,7 @@ class ConditionalFieldTextTextareaTest extends ConditionalFieldTestBase implemen
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
       '[name="values"]' => implode('\n', $text),
       '[name="grouping"]' => 'AND',
-      '[name="state"]' => '!visible',
+      '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
     ];
     foreach ($data as $selector => $value) {
@@ -252,7 +252,7 @@ class ConditionalFieldTextTextareaTest extends ConditionalFieldTestBase implemen
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '03-' . $this->testName . __FUNCTION__ . '.png');
-    $this->assertSession()->pageTextContains('body ' . 'field_' . $this->fieldName . ' !visible value');
+    $this->assertSession()->pageTextContains('body ' . 'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
