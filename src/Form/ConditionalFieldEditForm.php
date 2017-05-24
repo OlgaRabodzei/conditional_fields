@@ -12,6 +12,7 @@ use Drupal\Core\Render\Element;
 use Drupal\conditional_fields\Conditions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+
 /**
  * Class ConditionalFieldEditForm.
  *
@@ -315,7 +316,8 @@ class ConditionalFieldEditForm extends FormBase {
         if (is_object($value[0]['value']) && $value[0]['value'] instanceof DrupalDateTime) {
           foreach ($value as $delta => $date) {
             if (!empty($date['value'])) {
-              $value[$delta]['value'] = $date['value']->format(DATETIME_DATETIME_STORAGE_FORMAT);
+              // Need to find a solution to handle both datetime and date types.
+              $value[$delta]['value'] = $date['value']->format(DATETIME_DATE_STORAGE_FORMAT);
             }
           }
         }
