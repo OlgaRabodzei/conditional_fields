@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * Removes unused configuration.
+ */
+function conditional_fields_update_8001() {
+  $cf_service = \Drupal::service('conditional_fields.controller');
+  $bundle_info = \Drupal::service('entity_type.bundle.info');
+  $entity_types = $cf_service->getEntityTypes();
+  foreach ($entity_types as $entity_type) {
+    $etid = $entity_type->id();
+    $bundles = $bundle_info->getBundleInfo($etid);
+    foreach ($bundles as $bundle_name => $bundle) {
+      /** @var EntityFormDisplay $entity */
+      $entity = \Drupal::entityTypeManager()
+        ->getStorage('entity_form_display')
+        ->load("$etid.$bundle_name.default");
+      // Replace keys.
+      if ($entity) {
+        foreach ($entity->getComponents() as &$content) {
+          foreach ($content['third_party_settings']['conditional_fields'] as $cid => $condition) {
+            foreach ($condition['settings'] as $key => $value) {
+              if (strpos($key, 'element_') !== FALSE) {
+                unset($content['third_party_settings']['conditional_fields'][$cid]['settings'][$key]);
+              }
+            }
+            $entity->setThirdPartySetting('conditional_fields', 'conditional_fields', $content['third_party_settings']['conditional_fields'])->save();
+          }
+        }
+      }
+      if (!$entity) {
+        continue;
+      }
+    }
+  }
+}
