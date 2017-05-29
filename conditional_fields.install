@@ -17,16 +17,7 @@ function conditional_fields_update_8001() {
         ->load("$etid.$bundle_name.default");
       // Replace keys.
       if ($entity) {
-        foreach ($entity->getComponents() as &$content) {
-          foreach ($content['third_party_settings']['conditional_fields'] as $cid => $condition) {
-            foreach ($condition['settings'] as $key => $value) {
-              if (strpos($key, 'element_') !== FALSE) {
-                unset($content['third_party_settings']['conditional_fields'][$cid]['settings'][$key]);
-              }
-            }
-            $entity->setThirdPartySetting('conditional_fields', 'conditional_fields', $content['third_party_settings']['conditional_fields'])->save();
-          }
-        }
+        _conditional_fields_update_conditional_fields_settings($entity);
       }
       if (!$entity) {
         continue;

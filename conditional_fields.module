@@ -448,3 +448,21 @@ function conditional_fields_field_selector($field) {
 
   return FALSE;
 }
+
+/**
+ * Updates conditional fields entity's settings.
+ *
+ * @param $entity
+ */
+function _conditional_fields_update_conditional_fields_settings(&$entity) {
+  foreach ($entity->getComponents() as &$content) {
+    foreach ($content['third_party_settings']['conditional_fields'] as $cid => $condition) {
+      foreach ($condition['settings'] as $key => $value) {
+        if (strpos($key, 'element_') !== FALSE) {
+          unset($content['third_party_settings']['conditional_fields'][$cid]['settings'][$key]);
+        }
+      }
+      $entity->setThirdPartySetting('conditional_fields', 'conditional_fields', $content['third_party_settings']['conditional_fields'])->save();
+    }
+  }
+}
