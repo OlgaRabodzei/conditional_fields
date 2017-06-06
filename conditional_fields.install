@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Conditional fields module's updates.
+ */
 
 /**
  * Removes unused configuration.
@@ -24,4 +28,24 @@ function conditional_fields_update_8001() {
       }
     }
   }
+}
+
+/**
+ * Updates conditional fields entity's settings.
+ *
+ * @param EntityFormDisplay $entity
+ *   Config entity to update.
+ */
+function _conditional_fields_update_conditional_fields_settings(&$entity) {
+  foreach ($entity->getComponents() as $key => &$content) {
+    foreach ($content['third_party_settings']['conditional_fields'] as $cid => $condition) {
+      foreach ($condition['settings'] as $settings_key => $value) {
+        if (strpos($settings_key, 'element_') !== FALSE) {
+          unset($content['third_party_settings']['conditional_fields'][$cid]['settings'][$settings_key]);
+        }
+      }
+      $entity->setComponent($key, $content);
+    }
+  }
+  $entity->save();
 }
