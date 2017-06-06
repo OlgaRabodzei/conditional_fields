@@ -20,16 +20,22 @@ class ConditionalFieldController extends ControllerBase {
   protected $entityTypeManager;
 
   /**
+   * Form Builder.
+   *
    * @var \Drupal\Core\Form\FormBuilderInterface
    */
   protected $formBuilder;
 
   /**
+   * Entity type bundle info.
+   *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
    */
   protected $entityTypeBundleInfo;
 
   /**
+   * Entity field manager.
+   *
    * @var \Drupal\Core\Entity\EntityFieldManagerInterface
    */
   protected $entityFieldManager;
@@ -39,13 +45,10 @@ class ConditionalFieldController extends ControllerBase {
    *
    * @param EntityTypeManagerInterface $entityTypeManager
    *   Entity type manager.
-   *
    * @param FormBuilderInterface $formBuilder
    *   Form builder.
-   *
    * @param EntityTypeBundleInfoInterface $entityTypeBundleInfo
    *   Entity type bundle info.
-   *
    * @param EntityFieldManagerInterface $entityFieldManager
    *   Entity field manager.
    */
@@ -83,7 +86,6 @@ class ConditionalFieldController extends ControllerBase {
    *
    * @param string $entity_type
    *   Entity type.
-   *
    * @param string $bundle
    *   Entity bundle.
    *
@@ -103,10 +105,8 @@ class ConditionalFieldController extends ControllerBase {
    *
    * @param string $entity_type
    *   Entity type.
-   *
    * @param string $bundle
    *   Entity bundle.
-   *
    * @param string $field_name
    *   Field name.
    *
@@ -174,7 +174,7 @@ class ConditionalFieldController extends ControllerBase {
    * @return ContentEntityTypeInterface[]
    *   List of content entity types.
    */
-  protected function getEntityTypes() {
+  public function getEntityTypes() {
     $entityTypes = [];
 
     foreach ($this->entityTypeManager->getDefinitions() as $key => $entityType) {
@@ -189,7 +189,7 @@ class ConditionalFieldController extends ControllerBase {
   /**
    * Provide arguments for ConditionalFieldFormTab.
    *
-   * @param $node_type
+   * @param string $node_type
    *   Node type.
    *
    * @return array

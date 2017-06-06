@@ -43,6 +43,7 @@ class ConditionalFieldCheckboxTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleUnchecked() {
     // TODO: Implement testVisibleUnchecked() method.
+    $this->markTestIncomplete();
   }
 
   /**

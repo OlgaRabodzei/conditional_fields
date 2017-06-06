@@ -2,47 +2,56 @@
 
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
-use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
- * Test Conditional Fields Select Plugin.
+ * Test Conditional Fields States.
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
-
-  /**
-   * Modules to enable.
-   *
-   * @var array
-   */
-  public static $modules = [
-    'conditional_fields',
-    'node',
-    'options',
-  ];
+class ConditionalFieldDateListTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   /**
    * {@inheritdoc}
    */
-  protected $screenshotPath = 'sites/simpletest/conditional_fields/select/';
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/datelist/';
+
+  /**
+   * The test's name to use in file names.
+   *
+   * @var string
+   */
+  protected $testName = 'DateList';
+
+  /**
+   * The default display settings to use for the formatters.
+   */
+  protected $defaultSettings;
+
+  /**
+   * An array of display options to pass to entity_get_display()
+   *
+   * @var array
+   */
+  protected $displayOptions;
 
   /**
    * The field name used in the test.
    *
    * @var string
    */
-  protected $fieldName = 'single_select';
+  protected $fieldName = 'test_datelist';
 
   /**
-   * Jquery selector of field in a document.
+   * Control field selector.
    *
-   * @var string
+   * @var array
    */
-  protected $fieldSelector;
+  protected $fieldSelectors;
 
   /**
    * The field storage definition used to created the field storage.
@@ -59,7 +68,7 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
   protected $fieldStorage;
 
   /**
-   * The field to use in this test.
+   * The list field used in the test.
    *
    * @var \Drupal\field\Entity\FieldConfig
    */
@@ -70,28 +79,30 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    */
   protected function setUp() {
     parent::setUp();
-
-    $this->fieldSelector = "[name=\"{$this->fieldName}\"]";
+    $this->fieldSelectors = array(
+      'day' => "[name=\"{$this->fieldName}[0][value][day]\"]",
+      'month' => "[name=\"{$this->fieldName}[0][value][month]\"]",
+      'year' => "[name=\"{$this->fieldName}[0][value][year]\"]",
+    );
     $this->fieldStorageDefinition = [
-      'field_name' => $this->fieldName,
+      'field_name'  => $this->fieldName,
       'entity_type' => 'node',
-      'type' => 'list_integer',
-      'cardinality' => 1,
-      'settings' => [
-        'allowed_values' => ['One', 'Two', 'Three'],
-      ],
+      'type'        => 'datetime',
+      'settings' => array('datetime_type' => 'date'),
     ];
     $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
     $this->fieldStorage->save();
 
     $this->field = FieldConfig::create([
       'field_storage' => $this->fieldStorage,
-      'bundle' => 'article',
+      'bundle'        => 'article',
     ]);
     $this->field->save();
 
     EntityFormDisplay::load('node.article.default')
-      ->setComponent($this->fieldName, ['type' => 'options_select'])
+      ->setComponent($this->fieldName, [
+        'type' => 'datetime_datelist',
+      ])
       ->save();
   }
 
@@ -99,17 +110,25 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
    * {@inheritdoc}
    */
   public function testVisibleValueWidget() {
+    $date = new DrupalDateTime();
+    $date->createFromTimestamp(time());
+    $day = $date->format('j');
+    $month = $date->format('n');
+    $year = $date->format('Y');
+
     $this->baseTestSteps();
 
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-select-single-add-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '01-' . $this->testName . __FUNCTION__ . '.png');
 
     // Set up conditions.
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      $this->fieldSelector => 2,
+      $this->fieldSelectors['day'] => $day,
+      $this->fieldSelectors['month'] => $month,
+      $this->fieldSelectors['year'] => $year,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -117,14 +136,16 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
     foreach ($data as $selector => $value) {
       $this->changeField($selector, $value);
     }
+
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-select-single-post-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '02-' . $this->testName . __FUNCTION__ . '.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
-    $this->createScreenshot($this->screenshotPath . '03-select-single-submit-list-options-filed-conditions.png');
+    $this->assertSession()->statusCodeEquals(200);
+    $this->createScreenshot($this->screenshotPath . '03-' . $this->testName . __FUNCTION__ . '.png');
     $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -132,22 +153,25 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements Con
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot($this->screenshotPath . '04-select-single-body-invisible-when-controlled-field-has-no-value.png');
+    $this->createScreenshot($this->screenshotPath . '04-' . $this->testName . __FUNCTION__ . '.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change a select value set that should not show the body.
-    $this->changeField($this->fieldSelector, 1);
-    $this->createScreenshot($this->screenshotPath . '05-select-single-body-invisible-when-controlled-field-has-wrong-value.png');
+    // Change a date that should not show the body.
+    $this->changeField($this->fieldSelectors['day'], $day);
+    $this->createScreenshot($this->screenshotPath . '04-' . $this->testName . __FUNCTION__ . '.png');
+    $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
+    $this->changeField($this->fieldSelectors['month'], $month);
+    $this->createScreenshot($this->screenshotPath . '04-' . $this->testName . __FUNCTION__ . '.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change a select value set to show the body.
-    $this->changeField($this->fieldSelector, 2);
-    $this->createScreenshot($this->screenshotPath . '06-select-single-body-visible-when-controlled-field-has-value.png');
+    // Check that the field Body is visible.
+    $this->changeField($this->fieldSelectors['year'], $year);
+    $this->createScreenshot($this->screenshotPath . '04-' . $this->testName . __FUNCTION__ . '.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
-    // Change a select value set to hide the body again.
-    $this->changeField($this->fieldSelector, '_none');
-    $this->createScreenshot($this->screenshotPath . '07-select-single-body-invisible-when-controlled-field-has-no-value-again.png');
+    // Change a date that should not show the body again.
+    $this->changeField($this->fieldSelectors['day'], $day + 1);
+    $this->createScreenshot($this->screenshotPath . '06-' . $this->testName . __FUNCTION__ . '.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 

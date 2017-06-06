@@ -114,9 +114,6 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
-      '[name="element_edit[1]"]' => 1,
-      '[name="element_view[1]"]' => 1,
-      '[name="element_view[2]"]' => 2,
     ];
     foreach ($data as $selector => $value) {
       $this->changeField($selector, $value);
@@ -160,6 +157,7 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -167,6 +165,7 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -174,6 +173,7 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueOr() {
     // TODO: Implement testVisibleValueOr() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -181,6 +181,7 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueNot() {
     // TODO: Implement testVisibleValueNot() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -188,6 +189,7 @@ class ConditionalFieldSelectMultipleTest extends ConditionalFieldTestBase implem
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
   /**

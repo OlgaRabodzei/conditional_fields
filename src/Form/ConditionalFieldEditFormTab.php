@@ -3,7 +3,6 @@
 namespace Drupal\conditional_fields\Form;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\conditional_fields\Form\ConditionalFieldEditForm;
 
 /**
  * Class ConditionalFieldEditFormTab.
@@ -13,7 +12,6 @@ use Drupal\conditional_fields\Form\ConditionalFieldEditForm;
 class ConditionalFieldEditFormTab extends ConditionalFieldEditForm {
 
   protected $redirectPath = 'conditional_fields.tab';
-
 
   /**
    * {@inheritdoc}

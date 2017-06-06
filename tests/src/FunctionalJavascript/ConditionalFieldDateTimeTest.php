@@ -5,8 +5,8 @@ namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
-use \DateTime;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Test Conditional Fields States.
@@ -112,8 +112,9 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    * {@inheritdoc}
    */
   public function testVisibleValueWidget() {
-    $date = new DateTime();
-    $date->setTimestamp(time());
+    $date = new DrupalDateTime();
+    $date->createFromTimestamp(time());
+    $date_formatted = $date->format(DATETIME_DATE_STORAGE_FORMAT);
 
     $this->baseTestSteps();
 
@@ -125,7 +126,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      $this->fieldSelector => $date->format('Y-m-d'),
+      $this->fieldSelector => $date_formatted,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -155,7 +156,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
     // Check that the field Body is visible.
-    $this->changeField($this->fieldSelector, $date);
+    $this->changeField($this->fieldSelector, $date_formatted);
     $this->createScreenshot($this->screenshotPath . '05-testDateTimeVisibleValueWidget.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
@@ -170,6 +171,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleValueRegExp() {
     // TODO: Implement testVisibleValueRegExp() method.
+    $this->markTestIncomplete();
   }
 
   /**
@@ -177,16 +179,17 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleValueAnd() {
     // TODO: Implement testVisibleValueAnd() method.
+    $this->markTestIncomplete();
   }
 
   /**
    * {@inheritdoc}
    */
   public function testVisibleValueOr() {
-    $date = new DateTime();
-    $date2 = new DateTime();
-    $date->setTimestamp(time());
-    $date2->setTimestamp(strtotime("-1 year"));
+    $date = new DrupalDateTime();
+    $date2 = new DrupalDateTime();
+    $date->createFromTimestamp(time());
+    $date2->createFromTimestamp(strtotime("-1 year"));
 
     $this->baseTestSteps();
 
@@ -195,7 +198,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueOr.png');
 
     // Set up conditions.
-    $dates = implode('\n', [$date->format('Y-m-d'), $date2->format('Y-m-d')]);
+    $dates = implode('\n', [$date->format(DATETIME_DATE_STORAGE_FORMAT), $date2->format(DATETIME_DATE_STORAGE_FORMAT)]);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
@@ -252,10 +255,10 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    * {@inheritdoc}
    */
   public function testVisibleValueNot() {
-    $date = new DateTime();
-    $date2 = new DateTime();
-    $date->setTimestamp(time());
-    $date2->setTimestamp(strtotime("-1 year"));
+    $date = new DrupalDateTime();
+    $date2 = new DrupalDateTime();
+    $date->createFromTimestamp(time());
+    $date2->createFromTimestamp(strtotime("-1 year"));
 
     $this->baseTestSteps();
 
@@ -264,7 +267,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueNot.png');
 
     // Set up conditions.
-    $dates = implode('\n', [$date->format('Y-m-d'), $date2->format('Y-m-d')]);
+    $dates = implode('\n', [$date->format(DATETIME_DATE_STORAGE_FORMAT), $date2->format(DATETIME_DATE_STORAGE_FORMAT)]);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
@@ -316,6 +319,7 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
    */
   public function testVisibleValueXor() {
     // TODO: Implement testVisibleValueXor() method.
+    $this->markTestIncomplete();
   }
 
 }

@@ -20,30 +20,14 @@ class Conditions {
       'condition' => 'value',
       'grouping' => 'AND',
       'values_set' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      // !Important, the param default value MUST match to schema declaration,
+      // !Important.
+      // The param default value MUST match to schema declaration.
       // @see conditional_fields.schema.yml
-      // 'value' => array(),
       'value' => '',
       'values' => array(),
       'value_form' => array(),
       'effect' => 'show',
       'effect_options' => array(),
-      'element_view' => array(
-        CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE,
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN,
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => 0,
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => 0,
-        CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => 0,
-      ),
-      'element_view_per_role' => 0,
-      'element_view_roles' => array(),
-      'element_edit' => array(
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN,
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => 0,
-        CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => 0,
-      ),
-      'element_edit_per_role' => 0,
-      'element_edit_roles' => array(),
       'selector' => '',
     );
   }
@@ -96,7 +80,8 @@ class Conditions {
    * conditional_fields.js.
    *
    * @return array
-   *   An associative array of effects. Each key is an unique name for the effect.
+   *   An associative array of effects.
+   *   Each key is an unique name for the effect.
    *   The value is an associative array:
    *   - label: The human readable name of the effect.
    *   - states: The states that can be associated with this effect.
@@ -173,7 +158,7 @@ class Conditions {
   }
 
   /**
-   * List of states of a dependee field that may be used to evaluate a condition.
+   * List of states of a control field that may be used to evaluate a condition.
    */
   public function conditionalFieldsConditions($checkboxes = TRUE) {
     // Supported by States API.
@@ -187,67 +172,18 @@ class Conditions {
     );
 
     if ($checkboxes) {
-      // Relevant only if dependee is a list of checkboxes.
+      // Relevant only if control is a list of checkboxes.
       $conditions['checked'] = $this->t('Checked');
       $conditions['!checked'] = $this->t('Unchecked');
     }
 
     $conditions['value'] = $this->t('Value');
 
-    // TODO: Add support from Conditional Fields to these conditions
-    /*
-    '!disabled'  => $this->t('Enabled'),
-    'disabled'   => $this->t('Disabled'),
-    'required'   => $this->t('Required'),
-    '!required'  => $this->t('Optional'),
-    'relevant'   => $this->t('Relevant'),
-    '!relevant'  => $this->t('Irrelevant'),
-    'valid'      => $this->t('Valid'),
-    '!valid'     => $this->t('Invalid'),
-    '!readonly'  => $this->t('Read/Write'),
-    'readonly'   => $this->t('Read Only'),
-    '!collapsed' => $this->t('Expanded'),
-    'collapsed'  => $this->t('Collapsed'),
-     */
-
     // Allow other modules to modify the conditions.
     \Drupal::moduleHandler()
       ->alter('conditionalFieldsConditions', $conditions);
 
     return $conditions;
-  }
-
-  /**
-   * List of behaviors that can be applied when editing forms and viewing content
-   * with dependencies.
-   */
-  public function conditionalFieldsBehaviors($op = NULL) {
-    $behaviors = array(
-      'edit' => array(
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_ORPHAN => $this->t('Hide the target field if the control field is not in the form'),
-        CONDITIONAL_FIELDS_FIELD_EDIT_RESET_UNTRIGGERED => $this->t('Reset the target field to its default values when the form is submitted if the dependency is not triggered.') . '<br /><em>' . $this->t('Note: This setting only applies if the condition is "Value", "Empty", or "Filled" and may not work with some field types. Also, ensure that the default values are valid, since they will not be validated.') . '</em>',
-        // TODO: Implement. Settings are imported from D6 though, they just do nothing for now.
-        /*
-        CONDITIONAL_FIELDS_FIELD_EDIT_HIDE_UNTRIGGERED_ORPHAN => $this->t('Hide the target field if the control field is not in the form and the dependency is not triggered.') . '<br /><em>' . $this->t('Note: This setting is not currently not implemented and has no effect.') . '</em>',
-        */
-      ),
-      'view' => array(
-        CONDITIONAL_FIELDS_FIELD_VIEW_EVALUATE => $this->t('Hide the target field if the dependency is not triggered'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_ORPHAN => $this->t('Hide the target field if the control field is not viewable by the user'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIDE_UNTRIGGERED_ORPHAN => $this->t('Hide the target field if the control field is not viewable by the user and the dependency is not triggered'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_HIGHLIGHT => $this->t('Theme the target field like an error message if the dependency is not triggered'),
-        CONDITIONAL_FIELDS_FIELD_VIEW_DESCRIBE => $this->t('Show a textual description of the dependency under the target field'),
-      ),
-    );
-
-    // Allow other modules to modify the options.
-    \Drupal::moduleHandler()->alter('conditionalFieldsBehaviors', $behaviors);
-
-    if (isset($behaviors[$op])) {
-      return $behaviors[$op];
-    }
-
-    return $behaviors;
   }
 
 }

@@ -12,6 +12,7 @@ use Drupal\Core\Render\Element;
 use Drupal\conditional_fields\Conditions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+
 /**
  * Class ConditionalFieldEditForm.
  *
@@ -22,6 +23,8 @@ class ConditionalFieldEditForm extends FormBase {
   protected $redirectPath = 'conditional_fields.conditions_list';
 
   /**
+   * CF lists builder.
+   *
    * @var Conditions $list
    */
   protected $list;
@@ -228,22 +231,13 @@ class ConditionalFieldEditForm extends FormBase {
     ];
 
     $form['entity_edit'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => $this->t('Edit context settings'),
       '#description' => $this->t('These settings apply when the @entity is being added or edited in a form.', ['@entity' => $label]),
-      '#collapsible' => FALSE,
+      '#open' => TRUE,
     ];
 
     $form['entity_edit'] += $this->buildEditContextSettings([], $form_state, $condition);
-
-    $form['entity_view'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('View context settings'),
-      '#description' => $this->t('These settings apply when the @entity is viewed.', ['@entity' => $label]),
-      '#collapsible' => FALSE,
-    ];
-
-    $form['entity_view'] += $this->buildViewContextSettings([], $form_state, $condition);
 
     return $form;
   }
@@ -275,7 +269,6 @@ class ConditionalFieldEditForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Inprogress.
     $values = $form_state->cleanValues()->getValues();
     $uuid = $values['uuid'];
     $entity_type = $values['entity_type'];
@@ -293,17 +286,14 @@ class ConditionalFieldEditForm extends FormBase {
     foreach ($field_names as $field_name) {
       $field = $entity->getComponent($field_name);
 
-    $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
-    $dependee = $field['third_party_settings']['conditional_fields'][$uuid]['dependee'];
+      $settings = &$field['third_party_settings']['conditional_fields'][$uuid]['settings'];
+      $dependee = $field['third_party_settings']['conditional_fields'][$uuid]['dependee'];
 
       $exclude_fields = [
         'entity_type',
         'bundle',
         'field_name',
         'uuid',
-        // FIXME: provide saving for parameters below.
-        'element_edit_roles',
-        'element_view_roles',
       ];
 
       foreach ($values as $key => $value) {
@@ -326,7 +316,8 @@ class ConditionalFieldEditForm extends FormBase {
         if (is_object($value[0]['value']) && $value[0]['value'] instanceof DrupalDateTime) {
           foreach ($value as $delta => $date) {
             if (!empty($date['value'])) {
-              $value[$delta]['value'] = $date['value']->format('Y-m-d');
+              // Need to find a solution to handle both datetime and date types.
+              $value[$delta]['value'] = $date['value']->format(DATETIME_DATE_STORAGE_FORMAT);
             }
           }
         }
@@ -445,51 +436,10 @@ class ConditionalFieldEditForm extends FormBase {
       }
     }
 
-    $form['element_edit_per_role'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Activate per user role settings in edit context'),
-      '#description' => $this->t('If the user has more than one role, the first matching role will be used.'),
-      '#default_value' => array_key_exists('element_edit_per_role', $settings) ? $settings['element_edit_per_role'] : FALSE,
-    ];
-
-    $behaviors = $this->list->conditionalFieldsBehaviors();
-
-    $form['element_edit'] = [
-      '#type' => 'checkboxes',
-      '#title' => $this->t('Edit context settings for all roles'),
-      '#title_display' => 'invisible',
-      '#options' => $behaviors['edit'],
-      '#default_value' => array_key_exists('element_edit', $settings) ? $settings['element_edit'] : 0,
-      '#states' => [
-        'visible' => [
-          ':input[name="element_edit_per_role"]' => ['checked' => FALSE],
-        ],
-      ],
-    ];
-
-    $roles = user_roles();
-    $element_edit_roles = ['element_edit_roles' => ['#tree' => TRUE]];
-    foreach ($roles as $rid => $role) {
-      $element_edit_roles['element_edit_roles'][$rid] = [
-        '#type' => 'checkboxes',
-        '#title' => $this->t('Edit context settings for %role', ['%role' => $role->label()]),
-        '#options' => $behaviors['edit'],
-        '#default_value' => isset($settings['element_edit_roles'][$rid]) ? $settings['element_edit_roles'][$rid] : $settings['element_edit'],
-        '#states' => [
-          'visible' => [
-            ':input[name="element_edit_per_role"]' => ['checked' => TRUE],
-          ],
-        ],
-      ];
-    }
-
-    $form += $element_edit_roles;
-
     $form['dependency_advanced'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => $this->t('Advanced edit context settings', ['@entity' => $label]),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
+      '#open' => FALSE,
     ];
 
     $selector_description = $this->t('Only use if you know what you are doing, otherwise leave the field empty to let the dependency use an automatically generated selector.');
@@ -505,57 +455,6 @@ class ConditionalFieldEditForm extends FormBase {
       '#description' => $selector_description,
       '#default_value' => array_key_exists('selector', $settings) ? $settings['selector'] : '',
     ];
-
-    return $form;
-  }
-
-  /**
-   * Builds View Context Settings block.
-   */
-  public function buildViewContextSettings(array $form, FormStateInterface $form_state, $condition) {
-    $settings = array_key_exists('settings', $condition) ? $condition['settings'] : [];
-
-    $form['element_view_per_role'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Activate per user role settings in view context'),
-      '#description' => $this->t('If the user has more than one role, the first matching role will be used.'),
-      '#default_value' => array_key_exists('element_view_per_role', $settings) ? $settings['element_view_per_role'] : 0,
-    ];
-
-    $behaviors = $this->list->conditionalFieldsBehaviors();
-
-    $form['element_view'] = [
-      '#type' => 'checkboxes',
-      '#title' => $this->t('View context settings for all roles'),
-      '#title_display' => 'invisible',
-      '#description' => $this->t('Note: Options that need to evaluate if the dependency is triggered only apply if the condition is "Value", "Empty", or "Filled".'),
-      '#options' => $behaviors['view'],
-      '#default_value' => array_key_exists('element_view', $settings) ? $settings['element_view'] : 0,
-      '#states' => [
-        'visible' => [
-          ':input[name="element_view_per_role"]' => ['checked' => FALSE],
-        ],
-      ],
-    ];
-
-    $roles = user_roles();
-
-    $element_view_roles = ['element_view_roles' => ['#tree' => TRUE]];
-    foreach ($roles as $rid => $role) {
-      $element_view_roles['element_view_roles'][$rid] = [
-        '#type' => 'checkboxes',
-        '#title' => $this->t('View context settings for %role', ['%role' => $role->label()]),
-        '#options' => $behaviors['view'],
-        '#default_value' => isset($settings['element_view_roles'][$rid]) ? $settings['element_view_roles'][$rid] : $settings['element_view'],
-        '#states' => [
-          'visible' => [
-            ':input[name="element_view_per_role"]' => ['checked' => TRUE],
-          ],
-        ],
-      ];
-    }
-
-    $form += $element_view_roles;
 
     return $form;
   }

@@ -21,11 +21,15 @@ class ConditionalFieldForm extends FormBase {
   protected $deletePath = 'conditional_fields.delete_form';
 
   /**
+   * Uuid generator.
+   *
    * @var UuidInterface
    */
   protected $uuidGenerator;
 
   /**
+   * CF lists builder.
+   *
    * @var Conditions $list
    */
   protected $list;
@@ -35,7 +39,6 @@ class ConditionalFieldForm extends FormBase {
    *
    * @param Conditions $list
    *   Conditions list provider.
-   *
    * @param UuidInterface $uuid
    *   Uuid generator.
    */
@@ -110,8 +113,14 @@ class ConditionalFieldForm extends FormBase {
         }
         // Validate required field should be visible.
         $field_instance = $instances[$field];
-        if ($field_instance->isRequired() && in_array($state, ['!visible', 'disabled', '!required'])) {
-          $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array('!field' => $field_instance->getLabel() . ' (' . $field_instance->getName() . ')', '!state' => $all_states[$state])));
+        if (
+          $field_instance->isRequired() &&
+          in_array($state, ['!visible', 'disabled', '!required'])
+        ) {
+          $form_state->setErrorByName('state', $this->t('Field !field is required and can not have state !state.', array(
+            '!field' => $field_instance->getLabel() . ' (' . $field_instance->getName() . ')',
+            '!state' => $all_states[$state],
+          )));
         }
       }
     }

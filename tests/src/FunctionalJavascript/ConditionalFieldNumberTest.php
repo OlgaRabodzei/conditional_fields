@@ -3,22 +3,18 @@
 namespace Drupal\Tests\conditional_fields\FunctionalJavascript;
 
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
-use Drupal\field\Tests\EntityReference\EntityReferenceTestTrait;
-use Drupal\node\Entity\Node;
-use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldFilledEmptyInterface;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFieldValueInterface;
 use Drupal\Tests\RandomGeneratorTrait;
 
 /**
- * Test Conditional Fields Entity Reference Plugin.
+ * Test Conditional Fields Number Plugin.
  *
  * @group conditional_fields
  */
-class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase implements
-  ConditionalFieldValueInterface,
-  ConditionalFieldFilledEmptyInterface {
+class ConditionalFieldNumberTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
-  use EntityReferenceTestTrait;
   use RandomGeneratorTrait;
 
   /**
@@ -34,14 +30,14 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
   /**
    * {@inheritdoc}
    */
-  protected $screenshotPath = 'sites/simpletest/conditional_fields/entity_reference/';
+  protected $screenshotPath = 'sites/simpletest/conditional_fields/number_integer/';
 
   /**
    * The field name used in the test.
    *
    * @var string
    */
-  protected $fieldName = 'entity_reference';
+  protected $fieldName = 'number_integer';
 
   /**
    * Jquery selector of field in a document.
@@ -51,25 +47,11 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
   protected $fieldSelector;
 
   /**
-   * The field storage definition used to created the field storage.
+   * The value that trigger dependency.
    *
-   * @var array
+   * @var string
    */
-  protected $fieldStorageDefinition;
-
-  /**
-   * The list field storage used in the test.
-   *
-   * @var \Drupal\field\Entity\FieldStorageConfig
-   */
-  protected $fieldStorage;
-
-  /**
-   * The field to use in this test.
-   *
-   * @var \Drupal\field\Entity\FieldConfig
-   */
-  protected $field;
+  protected $validValue = '2017';
 
   /**
    * {@inheritdoc}
@@ -77,17 +59,33 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
   protected function setUp() {
     parent::setUp();
 
-    $this->fieldSelector = '[name="field_' . $this->fieldName . '[0][target_id]"]';
+    $this->fieldSelector = '[name="field_' . $this->fieldName . '[0][value]"]';
 
-    $handler_settings = [
-      'target_bundles' => [
-        'article' => 'article',
-      ],
-    ];
-    $this->createEntityReferenceField('node', 'article', 'field_' . $this->fieldName, $this->fieldName, 'node', 'default', $handler_settings, -1);
+    FieldStorageConfig::create(array(
+      'field_name' => 'field_' . $this->fieldName,
+      'entity_type' => 'node',
+      'type' => 'integer',
+      'cardinality' => 1,
+    ))->save();
+
+    FieldConfig::create([
+      'field_name' => 'field_' . $this->fieldName,
+      'entity_type' => 'node',
+      'bundle' => 'article',
+      'settings' => array(
+        'min' => '',
+        'max' => '',
+        'prefix' => '',
+      )
+    ])->save();
 
     EntityFormDisplay::load('node.article.default')
-      ->setComponent('field_' . $this->fieldName, ['type' => 'entity_reference_autocomplete'])
+      ->setComponent('field_' . $this->fieldName, [
+        'type' => 'number',
+        'settings' => [
+          'prefix_suffix' => FALSE,
+        ],
+      ])
       ->save();
   }
 
@@ -97,26 +95,15 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
   public function testVisibleValueWidget() {
     $this->baseTestSteps();
 
-    // Create a node that we will use in reference field.
-    $node = Node::create([
-      'type' => 'article',
-      'title' => 'Referenced node'
-    ]);
-    $node->save();
-
-    $referenced_format_1 = sprintf("%s (%d)", $node->label(), $node->id());
-    $referenced_format_2 = sprintf("%s", $node->label());
-    $referenced_format_wrong = sprintf("%s ", $node->label());
-
     // Visit a ConditionalFields configuration page for Content bundles.
     $this->createCondition('body', 'field_' . $this->fieldName, 'visible', 'value');
-    $this->createScreenshot($this->screenshotPath . '01-entity-reference-add-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '01-testNumberInteger-testVisibleValueWidget.png');
 
     // Set up conditions.
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET,
-      $this->fieldSelector => $referenced_format_1,
+      $this->fieldSelector => $this->validValue,
       '[name="grouping"]' => 'AND',
       '[name="state"]' => 'visible',
       '[name="effect"]' => 'show',
@@ -128,12 +115,12 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
     $this->getSession()->wait(1000, '!jQuery.active');
     $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '02-entity-reference-post-add-list-options-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '02-testNumberInteger-testVisibleValueWidget.png');
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
-    $this->createScreenshot($this->screenshotPath . '03-entity-reference-submit-entity-reference-filed-conditions.png');
+    $this->createScreenshot($this->screenshotPath . '03-testNumberInteger-testVisibleValueWidget.png');
     $this->assertSession()->pageTextContains('body field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
@@ -141,32 +128,27 @@ class ConditionalFieldEntityReferenceTest extends ConditionalFieldTestBase imple
     $this->assertSession()->statusCodeEquals(200);
 
     // Check that the field Body is not visible.
-    $this->createScreenshot($this->screenshotPath . '04-entity-reference-body-invisible-when-controlled-field-has-no-value.png');
+    $this->createScreenshot($this->screenshotPath . '04-testNumberInteger-testVisibleValueWidget.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change an entity reference field that should not show the body.
-    $this->changeField($this->fieldSelector, $this->randomMachineName());
-    $this->createScreenshot($this->screenshotPath . '05-entity-reference-body-invisible-when-controlled-field-has-wrong-value.png');
+    // Change the number field that should not show the body.
+    $this->changeField($this->fieldSelector, mt_rand(10, 100));
+    $this->createScreenshot($this->screenshotPath . '05-testNumberInteger-testVisibleValueWidget.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
 
-    // Change an entity reference field in format 'Node title (nid)' to show the body.
-    $this->changeField($this->fieldSelector, $referenced_format_1);
-    $this->createScreenshot($this->screenshotPath . '06-entity-reference-body-visible-when-controlled-field-has-value-format-1.png');
+    // Change the number field to show the body.
+    $this->changeField($this->fieldSelector, $this->validValue);
+    $this->createScreenshot($this->screenshotPath . '06-testNumberInteger-testVisibleValueWidget.png');
     $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
-    // Set wrong format for an entity reference field to hide the body.
-    $this->changeField($this->fieldSelector, $referenced_format_wrong);
-    $this->createScreenshot($this->screenshotPath . '07-entity-reference-body-invisible-when-controlled-field-has-value-in-wrong-format.png');
+    // Set wrong value for number field to hide the body.
+    $this->changeField($this->fieldSelector, mt_rand(10, 100));
+    $this->createScreenshot($this->screenshotPath . '07-testNumberInteger-testVisibleValueWidget.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
-
-    // Change an entity reference field in format 'Node title' to show the body.
-    $this->changeField($this->fieldSelector, $referenced_format_2);
-    $this->createScreenshot($this->screenshotPath . '08-entity-reference-body-visible-when-controlled-field-has-value-format-2.png');
-    $this->waitUntilVisible('.field--name-body', 50, 'Article Body field is visible');
 
     // Set an empty value to hide body.
     $this->changeField($this->fieldSelector, '');
-    $this->createScreenshot($this->screenshotPath . '09-entity-reference-body-invisible-when-controlled-field-has-no-value-again.png');
+    $this->createScreenshot($this->screenshotPath . '08-testNumberInteger-testVisibleValueWidget.png');
     $this->waitUntilHidden('.field--name-body', 50, 'Article Body field is not visible');
   }
 
