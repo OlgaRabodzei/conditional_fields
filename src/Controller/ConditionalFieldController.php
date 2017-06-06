@@ -174,7 +174,7 @@ class ConditionalFieldController extends ControllerBase {
    * @return ContentEntityTypeInterface[]
    *   List of content entity types.
    */
-  protected function getEntityTypes() {
+  public function getEntityTypes() {
     $entityTypes = [];
 
     foreach ($this->entityTypeManager->getDefinitions() as $key => $entityType) {
