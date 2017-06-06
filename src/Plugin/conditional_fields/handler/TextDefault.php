@@ -52,7 +52,7 @@ class TextDefault extends ConditionalFieldsHandlerBase {
           ];
         }
 
-        $state[] = [$options['state'] => $input_states];
+        $state[$options['state']] = $input_states;
         break;
       default:
         break;

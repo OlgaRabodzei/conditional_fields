@@ -74,6 +74,11 @@ class ConditionalFieldsHandlersManager extends DefaultPluginManager implements F
       'class' => '\Drupal\conditional_fields\Plugin\conditional_fields\handler\TextDefault',
       'type' => ['string'],
     ]);
+    $this->getDiscovery()->setDefinition('states_handler_text_textarea_with_summary', [
+      'label' => new TranslatableMarkup('Text textarea with summary'),
+      'class' => '\Drupal\conditional_fields\Plugin\conditional_fields\handler\TextDefault',
+      'type' => ['string'],
+    ]);
   }
 
   /**
