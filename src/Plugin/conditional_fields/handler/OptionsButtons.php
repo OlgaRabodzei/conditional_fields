@@ -33,7 +33,7 @@ class OptionsButtons extends ConditionalFieldsHandlerBase {
    */
   protected function radioHandler($field, $field_info, $options) {
     $select_states = [];
-    $values_array = explode("\r\n", $options['values']);
+    $values_array = empty($options['values']) ? $options['values'] : explode("\r\n", $options['values']);
     $state = [];
     switch ($options['values_set']) {
       case CONDITIONAL_FIELDS_DEPENDENCY_VALUES_WIDGET:
