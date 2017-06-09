@@ -12,7 +12,7 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
  *
  * @group conditional_fields
  */
-class ConditionalFieldSelectTest extends ConditionalFieldTestBase {
+class ConditionalFieldSelectTest extends ConditionalFieldTestBase implements ConditionalFieldValueInterface {
 
   /**
    * Modules to enable.
@@ -94,9 +94,9 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase {
       3 => '3',
     ];
     $this->fieldStorageDefinitions['select_single_list_float']['settings']['allowed_values'] = [
-      1.5 => '1.5',
-      2.5 => '2.5',
-      3.5 => '3.5',
+      '1.5' => '1.5',
+      '2.5' => '2.5',
+      '3.5' => '3.5',
     ];
     $this->fieldStorageDefinitions['select_single_list_string']['settings']['allowed_values'] = [
       'one' => 'One',
@@ -199,8 +199,50 @@ class ConditionalFieldSelectTest extends ConditionalFieldTestBase {
       // Return back to ConditionalFields configuration page for Article CT.
       $this->drupalGet('admin/structure/conditional_fields/node/article');
       $this->assertSession()->statusCodeEquals(200);
+
+      // Delete previous condition.
+      $this->click('li > button > .dropbutton-arrow');
+      $this->clickLink('Delete');
+      $this->assertSession()->statusCodeEquals(200);
+      $this->submitForm([], 'Confirm');
+      $this->assertSession()->statusCodeEquals(200);
+      $this->createScreenshot($this->screenshotPath . '08-' . $fieldName . '_' . __FUNCTION__ . '.png');
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueRegExp() {
+    $this->markTestIncomplete();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueAnd() {
+    $this->markTestIncomplete();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueOr() {
+    $this->markTestIncomplete();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueNot() {
+    $this->markTestIncomplete();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function testVisibleValueXor() {
+    $this->markTestIncomplete();
+  }
 
 }
