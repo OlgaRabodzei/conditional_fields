@@ -28,18 +28,6 @@ class ConditionalFieldDateListTest extends ConditionalFieldTestBase implements C
   protected $testName = 'DateList';
 
   /**
-   * The default display settings to use for the formatters.
-   */
-  protected $defaultSettings;
-
-  /**
-   * An array of display options to pass to entity_get_display()
-   *
-   * @var array
-   */
-  protected $displayOptions;
-
-  /**
    * The field name used in the test.
    *
    * @var string
@@ -54,27 +42,6 @@ class ConditionalFieldDateListTest extends ConditionalFieldTestBase implements C
   protected $fieldSelectors;
 
   /**
-   * The field storage definition used to created the field storage.
-   *
-   * @var array
-   */
-  protected $fieldStorageDefinition;
-
-  /**
-   * The list field storage used in the test.
-   *
-   * @var \Drupal\field\Entity\FieldStorageConfig
-   */
-  protected $fieldStorage;
-
-  /**
-   * The list field used in the test.
-   *
-   * @var \Drupal\field\Entity\FieldConfig
-   */
-  protected $field;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp() {
@@ -84,20 +51,20 @@ class ConditionalFieldDateListTest extends ConditionalFieldTestBase implements C
       'month' => "[name=\"{$this->fieldName}[0][value][month]\"]",
       'year' => "[name=\"{$this->fieldName}[0][value][year]\"]",
     );
-    $this->fieldStorageDefinition = [
+    $fieldStorageDefinition = [
       'field_name'  => $this->fieldName,
       'entity_type' => 'node',
       'type'        => 'datetime',
       'settings' => array('datetime_type' => 'date'),
     ];
-    $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
-    $this->fieldStorage->save();
+    $fieldStorage = FieldStorageConfig::create($fieldStorageDefinition);
+    $fieldStorage->save();
 
-    $this->field = FieldConfig::create([
-      'field_storage' => $this->fieldStorage,
+    $field = FieldConfig::create([
+      'field_storage' => $fieldStorage,
       'bundle'        => 'article',
     ]);
-    $this->field->save();
+    $field->save();
 
     EntityFormDisplay::load('node.article.default')
       ->setComponent($this->fieldName, [

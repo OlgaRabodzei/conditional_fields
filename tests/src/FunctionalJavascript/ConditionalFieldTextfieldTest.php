@@ -14,8 +14,8 @@ use Drupal\Tests\conditional_fields\FunctionalJavascript\TestCases\ConditionalFi
  * @group conditional_fields
  */
 class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
-  ConditionalFieldValueInterface,
-  ConditionalFieldFilledEmptyInterface {
+    ConditionalFieldValueInterface,
+    ConditionalFieldFilledEmptyInterface {
 
   /**
    * {@inheritdoc}
@@ -37,41 +37,20 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
   protected $fieldSelector;
 
   /**
-   * The field storage definition used to created the field storage.
-   *
-   * @var array
-   */
-  protected $fieldStorageDefinition;
-
-  /**
-   * The list field storage used in the test.
-   *
-   * @var \Drupal\field\Entity\FieldStorageConfig
-   */
-  protected $fieldStorage;
-
-  /**
-   * The field to use in this test.
-   *
-   * @var \Drupal\field\Entity\FieldConfig
-   */
-  protected $field;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp();
 
     $this->fieldSelector = '[name="field_' . $this->fieldName . '[0][value]"]';
-    $this->fieldStorageDefinition = [
+    $fieldStorageDefinition = [
       'field_name' => 'field_' . $this->fieldName,
       'entity_type' => 'node',
       'type' => 'text',
       'cardinality' => 1,
     ];
-    $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
-    $this->fieldStorage->save();
+    $fieldStorage = FieldStorageConfig::create($fieldStorageDefinition);
+    $fieldStorage->save();
 
     FieldConfig::create([
       'field_name' => 'field_' . $this->fieldName,
@@ -108,14 +87,15 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
     }
 
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $this->getSession()
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()
-      ->pageTextContains('body ' .'field_' . $this->fieldName . ' visible value');
+      ->pageTextContains('body ' . 'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -175,13 +155,15 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
     }
 
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $this->getSession()
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
 
     // Check if that configuration is saved.
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertSession()->pageTextContains('body ' . 'field_' . $this->fieldName . ' visible value');
+    $this->assertSession()
+      ->pageTextContains('body ' . 'field_' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -234,7 +216,8 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
-    $this->assertSession()->pageTextContains('body ' .'field_' . $this->fieldName . ' visible !empty');
+    $this->assertSession()
+      ->pageTextContains('body ' . 'field_' . $this->fieldName . ' visible !empty');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -273,7 +256,8 @@ class ConditionalFieldTextfieldTest extends ConditionalFieldTestBase implements
 
     // Check that configuration is saved.
     $this->drupalGet('admin/structure/conditional_fields/node/article');
-    $this->assertSession()->pageTextContains('body ' .'field_' . $this->fieldName . ' !visible empty');
+    $this->assertSession()
+      ->pageTextContains('body ' . 'field_' . $this->fieldName . ' !visible empty');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');

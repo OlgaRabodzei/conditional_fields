@@ -10,20 +10,6 @@ use Drupal\FunctionalJavascriptTests\JavascriptTestBase;
 abstract class ConditionalFieldTestBase extends JavascriptTestBase {
 
   /**
-   * The entity manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityManagerInterface
-   */
-  protected $entityManager;
-
-  /**
-   * Access controller.
-   *
-   * @var \Drupal\Core\Entity\EntityAccessControlHandlerInterface
-   */
-  protected $accessControlHandler;
-
-  /**
    * Path to create screenshot.
    *
    * @var string
