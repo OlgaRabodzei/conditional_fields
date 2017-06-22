@@ -21,11 +21,6 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
   protected $screenshotPath = 'sites/simpletest/conditional_fields/datetime/';
 
   /**
-   * The default display settings to use for the formatters.
-   */
-  protected $defaultSettings;
-
-  /**
    * An array of display options to pass to entity_get_display()
    *
    * @var array
@@ -47,46 +42,25 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
   protected $fieldSelector;
 
   /**
-   * The field storage definition used to created the field storage.
-   *
-   * @var array
-   */
-  protected $fieldStorageDefinition;
-
-  /**
-   * The list field storage used in the test.
-   *
-   * @var \Drupal\field\Entity\FieldStorageConfig
-   */
-  protected $fieldStorage;
-
-  /**
-   * The list field used in the test.
-   *
-   * @var \Drupal\field\Entity\FieldConfig
-   */
-  protected $field;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp();
     $this->fieldSelector = "[name=\"{$this->fieldName}[0][value][date]\"]";
-    $this->fieldStorageDefinition = [
-      'field_name'  => $this->fieldName,
+    $fieldStorageDefinition = [
+      'field_name' => $this->fieldName,
       'entity_type' => 'node',
-      'type'        => 'datetime',
+      'type' => 'datetime',
       'settings' => array('datetime_type' => 'date'),
     ];
-    $this->fieldStorage = FieldStorageConfig::create($this->fieldStorageDefinition);
-    $this->fieldStorage->save();
+    $fieldStorage = FieldStorageConfig::create($fieldStorageDefinition);
+    $fieldStorage->save();
 
-    $this->field = FieldConfig::create([
-      'field_storage' => $this->fieldStorage,
-      'bundle'        => 'article',
+    $field = FieldConfig::create([
+      'field_storage' => $fieldStorage,
+      'bundle' => 'article',
     ]);
-    $this->field->save();
+    $field->save();
 
     EntityFormDisplay::load('node.article.default')
       ->setComponent($this->fieldName, [
@@ -94,17 +68,19 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
       ])
       ->save();
 
-    $this->defaultSettings = array(
+    $defaultSettings = array(
       'timezone_override' => '',
     );
 
     $this->displayOptions = array(
       'type' => 'datetime_default',
       'label' => 'hidden',
-      'settings' => array('format_type' => 'medium') + $this->defaultSettings,
+      'settings' => array('format_type' => 'medium') + $defaultSettings,
     );
-    entity_get_display($this->field->getTargetEntityTypeId(), $this->field->getTargetBundle(), 'full')
-      ->setComponent($this->fieldName, $this->displayOptions)
+    $view_display = \Drupal::entityTypeManager()
+      ->getStorage('entity_view_display')
+      ->load($field->getTargetEntityTypeId() . '.' . $field->getTargetBundle() . '.' . 'full');
+    $view_display->setComponent($this->fieldName, $this->displayOptions)
       ->save();
   }
 
@@ -136,7 +112,8 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     }
 
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $this->getSession()
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '02-testDateTimeVisibleValueWidget.png');
 
@@ -144,7 +121,8 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '03-testDateTimeVisibleValueWidget.png');
-    $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
+    $this->assertSession()
+      ->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -198,7 +176,10 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueOr.png');
 
     // Set up conditions.
-    $dates = implode('\n', [$date->format(DATETIME_DATE_STORAGE_FORMAT), $date2->format(DATETIME_DATE_STORAGE_FORMAT)]);
+    $dates = implode('\n', [
+      $date->format(DATETIME_DATE_STORAGE_FORMAT),
+      $date2->format(DATETIME_DATE_STORAGE_FORMAT)
+    ]);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_OR,
@@ -212,7 +193,8 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     }
 
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $this->getSession()
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '02-testDateTimeVisibleValueOr.png');
 
@@ -220,7 +202,8 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '03-testDateTimeVisibleValueOr.png');
-    $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
+    $this->assertSession()
+      ->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
@@ -267,7 +250,10 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->createScreenshot($this->screenshotPath . '01-testDateTimeVisibleValueNot.png');
 
     // Set up conditions.
-    $dates = implode('\n', [$date->format(DATETIME_DATE_STORAGE_FORMAT), $date2->format(DATETIME_DATE_STORAGE_FORMAT)]);
+    $dates = implode('\n', [
+      $date->format(DATETIME_DATE_STORAGE_FORMAT),
+      $date2->format(DATETIME_DATE_STORAGE_FORMAT)
+    ]);
     $data = [
       '[name="condition"]' => 'value',
       '[name="values_set"]' => CONDITIONAL_FIELDS_DEPENDENCY_VALUES_NOT,
@@ -280,7 +266,8 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
       $this->changeField($selector, $value);
     }
     $this->getSession()->wait(1000, '!jQuery.active');
-    $this->getSession()->executeScript("jQuery('#conditional-field-edit-form').submit();");
+    $this->getSession()
+      ->executeScript("jQuery('#conditional-field-edit-form').submit();");
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '02-testDateTimeVisibleValueNot.png');
 
@@ -288,7 +275,8 @@ class ConditionalFieldDateTimeTest extends ConditionalFieldTestBase implements C
     $this->drupalGet('admin/structure/types/manage/article/conditionals');
     $this->assertSession()->statusCodeEquals(200);
     $this->createScreenshot($this->screenshotPath . '03-testDateTimeVisibleValueNot.png');
-    $this->assertSession()->pageTextContains('body ' . $this->fieldName . ' visible value');
+    $this->assertSession()
+      ->pageTextContains('body ' . $this->fieldName . ' visible value');
 
     // Visit Article Add form to check that conditions are applied.
     $this->drupalGet('node/add/article');
