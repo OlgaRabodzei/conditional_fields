@@ -37,15 +37,27 @@ function conditional_fields_update_8001() {
  *   Config entity to update.
  */
 function _conditional_fields_update_conditional_fields_settings(&$entity) {
-  foreach ($entity->getComponents() as $key => &$content) {
+  $needs_save = FALSE;
+
+  foreach ($entity->getComponents() as $key => $content) {
+
+    if (empty($content['third_party_settings']['conditional_fields'])) {
+      continue;
+    }
+
     foreach ($content['third_party_settings']['conditional_fields'] as $cid => $condition) {
       foreach ($condition['settings'] as $settings_key => $value) {
         if (strpos($settings_key, 'element_') !== FALSE) {
+          $needs_save = TRUE;
           unset($content['third_party_settings']['conditional_fields'][$cid]['settings'][$settings_key]);
         }
       }
-      $entity->setComponent($key, $content);
     }
+
+    $entity->setComponent($key, $content);
   }
-  $entity->save();
+
+  if ($needs_save) {
+    $entity->save();
+  }
 }
