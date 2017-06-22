@@ -80,6 +80,10 @@ function conditional_fields_form_after_build($form, FormStateInterface &$form_st
       $dependee_form_field = NestedArray::getValue($form, $dependee_info['parents']);
       $options = $dependency['options'];
 
+      if (!empty($options['values']) && is_string($options['values'])) {
+        $options['values'] = explode("\r\n", $options['values']);
+      }
+
       $options['selector'] = conditional_fields_get_selector($options['selector'], $dependee_form_field);
 
       $state = conditional_fields_get_state($form_display, $dependee, $dependee_form_field, $options);
