@@ -153,13 +153,9 @@ function conditional_fields_element_info_alter(array &$types) {
  * - Field dependencies data.
  */
 function conditional_fields_element_after_build($element, FormStateInterface &$form_state) {
-  if (!isset($element['#title']) && !isset($element['widget']['#title'])) {
-    return $element;
-  }
-
   // A container with a field widget.
   // Element::children() is probably a better fit.
-  if (isset($element['widget']['#title'])) {
+  if (isset($element['widget'])) {
     $field = $element['widget'];
   }
   else {
